@@ -1,0 +1,455 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<meta name="GENERATOR" content="TtH 3.59">
+ <style type="text/css"> div.p { margin-top: 7pt;}</style>
+ <style type="text/css"><!--
+ td div.comp { margin-top: -0.6ex; margin-bottom: -1ex;}
+ td div.comb { margin-top: -0.6ex; margin-bottom: -.6ex;}
+ td div.hrcomp { line-height: 0.9; margin-top: -0.8ex; margin-bottom: -1ex;}
+ td div.norm {line-height:normal;}
+ span.roman {font-family: serif; font-style: normal; font-weight: normal;} 
+ span.overacc2 {position: relative;  left: .8em; top: -1.2ex;}
+ span.overacc1 {position: relative;  left: .6em; top: -1.2ex;} --></style>
+ 
+
+   
+<title> ``Read Me'' for \CSSR </title>
+ 
+<h1 align="center">"Read Me" for <tt>CSSR</tt>&nbsp; </h1>
+
+<h3 align="center">Kristina Lisa Klinkner and Cosma Rohilla Shalizi<br />
+kklinkner@gmail.com, cshalizi@stat.cmu.edu </h3>
+
+<h3 align="center">Last revised 11 September 2005 </h3>
+
+
+<div class="p"><!----></div>
+
+<h1>Contents </h1><a href="#tth_sEc1"
+>1&nbsp; General</a><br />
+<a href="#tth_sEc2"
+>2&nbsp; Obtaining and Installing the Program</a><br />
+<a href="#tth_sEc3"
+>3&nbsp; Usage</a><br />
+<a href="#tth_sEc4"
+>4&nbsp; Some Suggestions About Parameters</a><br />
+<a href="#tth_sEc5"
+>5&nbsp; Known Issues</a><br />
+<a href="#tth_sEc6"
+>6&nbsp; Bug Reports, Fixes, Modifications</a><br />
+<a href="#tth_sEc7"
+>7&nbsp; Some Details on the Code</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#tth_sEc7.1"
+>7.1&nbsp; Revision History</a><br />
+<a href="#tth_sEc8"
+>8&nbsp; Credits and Acknowledgments</a><br />
+
+
+<div class="p"><!----></div>
+ <h2><a name="tth_sEc1">
+1</a>&nbsp;&nbsp;General</h2>
+
+<div class="p"><!----></div>
+<tt>CSSR</tt>&nbsp;tries to infer the minimal Markovian model capable of generating a
+time-series, or set of time-series from the same source.  The program
+implements the algorithm proposed in the paper ""Blind Construction of Optimal
+Nonlinear Recursive Predictors for Discrete Sequences", hereafter
+BC.<a href="#tthFtNtAAB" name="tthFrefAAB"><sup>1</sup></a>  We won't describe the algorithm
+in any detail here (see BC for that), but the next two paragraphs say a little
+about what it produces and how it does it.
+
+<div class="p"><!----></div>
+The output of the algorithm is a set of states which form a Markov chain.  Each
+state has a certain probability of emitting any of the symbols in the original
+time series.  The current state and the symbol it emits fix the next state.
+(The states are "future-resolving", if you're from nonlinear dynamics, or
+"deterministic", if you're from automata theory.)  Each state, moreover,
+corresponds to a distinct set of strings, in the following sense.  If the state
+<i>A</i> contains a string <i>w</i>, and at time <i>t</i> the time-series ends with <i>w</i>, then
+at time <i>t</i> the Markov chain is in state <i>A</i>.  The set of states, their
+transition probabilities and connections, is called the state machine.
+
+<div class="p"><!----></div>
+The algorithm uses a recursive inference procedure to find the simplest set of
+states with the above properties that can reproduce the statistical properties
+of the data.  If we could give the algorithm an infinitely long time series,
+and let it consider infinitely long sub-strings, it would produce the
+<i>causal states</i> of the process, which are its ideal predictors (see
+BC for a formal definition).  Since we have only finite data, there is
+always some probability that the inferred or estimated states are not the true
+causal states.  Nonetheless, for the rest of this file, when we say "causal
+states", we mean the estimated causal states.
+
+<div class="p"><!----></div>
+ <h2><a name="tth_sEc2">
+2</a>&nbsp;&nbsp;Obtaining and Installing the Program</h2>
+
+<div class="p"><!----></div>
+The code for <tt>CSSR</tt>&nbsp;can be obtained from <a href="http://bactra.org/CSSR/"><tt>http://bactra.org/CSSR/</tt></a>.  If
+you'd like to set up a new archive for it, we'd appreciate hearing about it.
+
+<div class="p"><!----></div>
+From any site, download the CSSR-v0.1.tar.gz file for the code.  When gunzipped
+and untarred, this will produce a directory called CSSR-v0.1, containing all
+the necessary header and source code files, a copy of this documentation, the
+release license, and a make file. Running <tt>make</tt> inside that directory
+will produce an executable, which should be moved to someplace in the command
+path. On most Unix systems, the following sequence of commands will create the
+executable and put it in the your <tt>bin</tt> directory, usually part of your
+command path.
+
+<pre>
+        gunzip CSSR-v0.1.tar.gz
+        tar xvf CSSR-v0.1.tar
+        cd CSSR-v0.1
+        make
+        cp CSSR ~/bin/
+
+</pre>
+
+<div class="p"><!----></div> The code has been successfully compiled with gcc
+3.1 on Macintosh OS X (10.2), with gcc 3.2 on Linux (Red Hat 9, SUSE 9), with
+gcc 3.3 on Macintosh OS X (10.3) and with Microsoft Visual C++ on Windows 98.
+On some systems, compilation may produce warnings about escape sequences or the
+use of deprecated headers.  These can be safely ignored.
+
+<div class="p"><!----></div>
+ <h2><a name="tth_sEc3">
+3</a>&nbsp;&nbsp;Usage</h2>
+<a name="usage">
+</a>
+
+<div class="p"><!----></div>
+<tt>CSSR</tt>&nbsp;is a command-line program.
+
+<div class="p"><!----></div>
+
+<center><tt>CSSR</tt>&nbsp;<i>alphabetfile</i> <i>datafile</i>
+<i>maxlength</i> <tt>[-m] [-s siglevel] [-ch]</tt>
+</center>
+
+<div class="p"><!----></div>
+The first argument is the name of a file which contains all the symbols in the
+alphabet used by your data.  The second argument is the name of the data file
+itself.  Only one data file can be used, but it may contain multiple lines.
+The third argument is the maximum length of history to examine, which we will
+abbreviate by <i>L</i> here.  The three trailing flags are optional arguments.  Set
+the <tt>-m</tt> flag if the data-file contains multiple lines (see below).  If
+the <tt>-s</tt> flag is set, it must be followed by a significance level; the
+default value is 0.001.  (For more on setting parameters, see Section
+<a href="#parameters">4</a>.)  If the <tt>-ch</tt> flag is set, the program will use
+the <font face="symbol">c</font
+><sup>2</sup> significance test, rather than the default Kolmogorov-Smirnov
+test.
+
+<div class="p"><!----></div>
+In multiple-line mode (entered through the <tt>-m</tt> flag), each line of the
+data file is treated as a distinct time series from the same source.
+(Technically, as independent realizations of a single stochastic process.)  The
+lines need not be of equal length.
+
+<div class="p"><!----></div>
+The program will create the following files after running, where
+<i>datafile</i> is the name of the file the data is in:
+
+<ol type="1">
+<li> <i>datafile</i>_results
+<div class="p"><!----></div>
+</li>
+
+<li> <i>datafile</i>_info
+<div class="p"><!----></div>
+</li>
+
+<li> <i>datafile</i>_state_series
+<div class="p"><!----></div>
+</li>
+
+<li> <i>datafile</i>_inf.dot
+<div class="p"><!----></div>
+</li>
+</ol>
+
+<div class="p"><!----></div>
+(1) contains the information on the inferred states and their properties.  For
+each state, it gives:
+
+<ul>
+<li> the histories of length <i>L</i><font face="symbol">-</font
+>1 and <i>L</i> in the state
+<div class="p"><!----></div>
+</li>
+
+<li> the probability that the state will emit different symbols (e.g.  <i>P</i>(<i>a</i>) = <i>x</i>) and the states transitioned to when those symbols are emitted (e.g. <i>T</i>(<i>a</i>) = <i>s</i>)
+<div class="p"><!----></div>
+</li>
+
+<li> the observed probability of the state in the data-stream
+<div class="p"><!----></div>
+</li>
+</ul>
+
+<div class="p"><!----></div>
+(2) is the file containing the metrics run on the causal state machine.  These
+are:
+
+<ul>
+<li> the number of states
+<div class="p"><!----></div>
+</li>
+
+<li> the statistical complexity (entropy of the states)
+<div class="p"><!----></div>
+</li>
+
+<li> the entropy rate
+<div class="p"><!----></div>
+</li>
+
+<li> three measures of the difference between the empirical distribution of
+  symbol sequences, and that generated by the inferred causal state machine.
+  These are: the divergence or relative entropy between the inferred and
+  empirical distribution; the relative entropy rate, or increase per symbol in
+  the divergence; the total variational distance ("variation") between the
+  two distributions.
+<div class="p"><!----></div>
+</li>
+</ul>
+
+<div class="p"><!----></div>
+Note that the relative entropy and the relative entropy rate can be infinite;
+this indicates that the inferred model gives a probability of zero to a
+sequence in the data.
+
+<div class="p"><!----></div>
+Note that sometimes, when the relative entropy should be very small (order of
+10<sup><font face="symbol">-</font
+>6</sup> bits or less), numerical rounding errors result in a negative
+number being calculated.  In these cases, the program outputs zero.  Similarly,
+the complexity of one-state machines is sometimes reported as <font face="symbol">-</font
+>0.
+
+<div class="p"><!----></div>
+(3) is the series of causal states in the data.  That is, the program scans
+through the data, looks up which state the history-to-date is in, and writes
+the corresponding symbol to this file.  What you see is then the trajectory
+through estimated causal state space of the data/process. Multiline data
+results in a multiline state-series file.
+
+<div class="p"><!----></div>
+(4) represents the state machine as a labeled directed graph, where each state
+has its own node, and each transition between states its own edge.  The file is
+for use with the program <tt>dot</tt>, available from
+<a href="http://www.graphviz.org/"><tt>http://www.graphviz.org/</tt></a>.
+
+<div class="p"><!----></div>
+ <h2><a name="tth_sEc4">
+4</a>&nbsp;&nbsp;Some Suggestions About Parameters</h2>
+<a name="parameters">
+</a>
+
+<div class="p"><!----></div>
+It is always good to use as much data as you can.  While it is generally good
+practice to hold back some data for testing or cross-validation, we recommend
+that this be minimized.  High-entropy processes are especially data-hungry.
+(See BC.)  For reference, let us call the number of data-points <i>N</i>.
+
+<div class="p"><!----></div>
+The two key parameters of the program are the maximum history length, <i>L</i>, and
+the significance level used in the test, <i>s</i>. For any given process, there is a
+minimum history length <font face="symbol">L</font
+>, such that the true states cannot be found if
+<i>L</i>  &lt;  <font face="symbol">L</font
+>.  The number of states returned may be less than the correct
+number <em>or higher</em>.  If <i>L</i>  <font face="symbol">³</font
+> <font face="symbol">L</font
+>, and there is enough data, there
+will generally be a "plateau" of values of <i>L</i> where the correct number of
+states is returned.  For fixed <i>N</i>, if we keep increasing <i>L</i>, then past a
+certain point there are not enough examples of each string in the data.  This
+tends to erroneously create new states, which spawn others through
+determinization.  Thus there is generally a "blow-up" when <i>L</i> is too large
+(relative to <i>N</i> and <i>s</i>).  A rough guide-line is to limit <i>L</i> to no more than
+log<sub>2</sub><i>N</i>/log<sub>2</sub><i>k</i>, where <i>k</i> is the alphabet size (see BC for
+details).
+
+<div class="p"><!----></div>
+In general, one should use as small an <i>L</i> as possible, since under-sampling,
+even before the blow-up, will reduce the accuracy of many probability
+estimates.  Blow-up can be delayed by reducing <i>s</i> - that is, reducing the
+probability of mistakenly splitting a state - but this carries the risk of
+failing to create valid new states.  We suggest exploring the data at low
+<i>L</i> and high <i>s</i> initially, and then increasing <i>L</i> and lowering <i>s</i>.  If a
+stable architecture is found, it should be recorded at the lowest possible <i>L</i>.
+
+<div class="p"><!----></div>
+ <h2><a name="tth_sEc5">
+5</a>&nbsp;&nbsp;Known Issues</h2>
+
+<div class="p"><!----></div>
+There are a few known issues with <tt>CSSR</tt>&nbsp;'s behavior.  These arise from certain
+unavoidable approximations in the determinization procedure.  (For details, see
+below.)
+
+<div class="p"><!----></div>
+After creating and determinizing the states, <tt>CSSR</tt>&nbsp;goes over the input data and
+attempts to produce the corresponding sequence of causal states, both as a
+filtering procedure, and as part of estimating the fit of the causal-state
+model (see Section <a href="#usage">3</a>, item (3)). Typically there will be some initial
+number of symbols which it must read before "synchronizing" to one of the
+causal states, after which it will follow the transitions deterministically,
+and never de-synchronize.  Because of the approximations mentioned, it can
+happen that certain transitions are deleted from the causal state model which
+shouldn't be.  This can lead to three kinds of problem: (1) <tt>CSSR</tt>&nbsp;can never
+synchronize to a state at all; (2) it has to re-synchronize at some point; (3)
+it encounters an apparently "impossible" sequence in the data.
+
+<div class="p"><!----></div>
+In case (1), <tt>CSSR</tt>&nbsp;writes the message "Error: Could not synchronize, cannot
+use this data" to standard error and halts execution.  In case (2), it
+produces a warning message on both standard error and the <tt>_info</tt>
+output file.  In case (3), it produces a warning, and discounts that particular
+string from various calculations.
+
+<div class="p"><!----></div>
+The best approach to these problems is to use a longer history length, if
+possible, and to provide more data.  In the case of a third error, it can
+sometimes arise if a particular string appears only once, at the very beginning
+of the data, and sometimes removing that string from the data-file fixes
+matters.
+
+<div class="p"><!----></div>
+All three errors arise because we have only finite-length histories available
+to us, while what we want are really infinite ones.  This forces us to make
+certain approximations in our implementation of the theory. Specifically, in
+the determinization procedure, we are forced to "guess" which state certain
+strings belong to, even though we have not directly examined these strings.
+The particular approximation scheme (or "closure") we have adopted may be
+investigated by consulting the code in AllStates.cpp. (Others are possible, but
+this one seemed to give the best over-all results.) Sometimes this closure will
+"guess wrong", and possible transitions will be labeled forbidden, etc.  In
+these cases, extending the history length <em>should</em> solve the problem, if
+enough data is available for reliable inference.  Similar approximations must
+be made in determining whether or not a given state is transient or recurrent
+on the basis of finite data. This occasionally leads to a recurrent state being
+labeled transient, which in turn is the most common cause of the code mistaking
+an actually-occurring string for an impossible one.  Again, the best approach
+is to provide more data, and a longer history.
+
+<div class="p"><!----></div>
+ <h2><a name="tth_sEc6">
+6</a>&nbsp;&nbsp;Bug Reports, Fixes, Modifications</h2>
+
+<div class="p"><!----></div>
+We welcome bug reports or reports of strange behavior.  These reports are
+welcomed with more enthusiasm when accompanied by successful modifications to
+the code!  (See the accompanying file on the Gnu Public License for information
+about modifying the code.)  Even if you can't fix it, however, please do tell
+us about it; at the least it will be documented for other users.
+
+<div class="p"><!----></div>
+If you modify <tt>CSSR</tt>&nbsp;, and want to make the resulting program available, please
+let us know.  We are happy to provide a link, and have a (limited) capability
+to host alternate versions and descendants.  Also, if you use <tt>CSSR</tt>&nbsp;
+successfully in some application, we'd love to hear about it.
+
+<div class="p"><!----></div>
+Please check <a href="http://bactra.org/CSSR/"><tt>http://bactra.org/CSSR/</tt></a> for up-to-date contact
+information.
+
+<div class="p"><!----></div>
+ <h2><a name="tth_sEc7">
+7</a>&nbsp;&nbsp;Some Details on the Code</h2>
+There are twelve classes in the program. They are each comprised
+of a .cpp file and a .h file, except for ArrayElem (contained in
+G_Array) and StringElem (contained in State), as well as a source
+file Main, and header files Common.h and Main.h. <br />
+
+<div class="p"><!----></div>
+
+<table>
+<tr><td>AllStates </td><td>Contains and manipulates growable array of states</td></tr>
+<tr><td>ArrayElem </td><td>Each element in the growable array </td></tr>
+<tr><td>G_Array </td><td>A generic growable array</td></tr>
+<tr><td>Hash </td><td>Hash table which points from histories to their parent states</td></tr>
+<tr><td>Hash2 </td><td>Hash table which points from indices to symbol/alpha values</td></tr>
+<tr><td>Machine </td><td>Manipulates the determinized state machine and runs metrics</td></tr>
+<tr><td>ParseTree </td><td>Reads in data file and stores all strings present in file</td></tr>
+<tr><td></td><td>up to length <i>L</i> the maximum length input at the command line</td></tr>
+<tr><td>States </td><td>A state, contains all data for a single state</td></tr>
+<tr><td>StringElem </td><td>the element containing the history for a single state</td></tr>
+<tr><td>Test </td><td>Performs statistical significance tests</td></tr>
+<tr><td>TransTable </td><td>Stores initially estimated transitions from all
+histories of length </td></tr>
+<tr><td></td><td><i>L</i> in any given state. This class is
+used by AllStates to check for</td></tr>
+<tr><td></td><td>transient states before
+determinization.
+</td></tr></table>
+
+
+
+<div class="p"><!----></div>
+For brief descriptions of the classes, see the top of their source files.  Note
+that the terms "string" and "history" are used interchangeably in the
+program.  The terms both correspond to the concept of a "history" (as
+described in BC), but the program implements these as strings of symbols.
+
+<div class="p"><!----></div>
+Also, after initial state splitting, all strings/histories of less than maximum
+length minus one are deleted.  This has no effect on the outcome of the
+algorithm and saves time and space.
+
+<div class="p"><!----></div>
+Lastly, the removal of transient states prior to determinization implemented in
+the <tt>AllStates::CheckConnComponents</tt> procedure is not strictly
+necessary.  With a different implementation, the deletion of these states could
+automatically occur during the determinization process itself (see the
+pseudocode in BC for details), and the outcome of the algorithm would be the
+same.  As it is implemented here the code is slightly redundant.
+
+<div class="p"><!----></div>
+     <h3><a name="tth_sEc7.1">
+7.1</a>&nbsp;&nbsp;Revision History</h3>
+
+<div class="p"><!----></div>
+
+<table>
+<tr><td>0.1 </td><td>11 September 2005 </td><td>Minor bug-fixes to multi-line mode</td></tr>
+<tr><td>0.1 </td><td>7 August 2005 </td><td>Corrects minor numerical bugs.  These only affected</td></tr>
+<tr><td></td><td></td><td>the calculations of relative entropy, relative entropy</td></tr>
+<tr><td></td><td></td><td>rate and total variation distance, and then only by</td></tr>
+<tr><td></td><td></td><td>about <i>O</i>(<i>k</i>/<i>N</i>).</td></tr>
+<tr><td>0.0 </td><td>7 August 2003 </td><td>First public release.
+</td></tr></table>
+
+
+<div class="p"><!----></div>
+ <h2><a name="tth_sEc8">
+8</a>&nbsp;&nbsp;Credits and Acknowledgments</h2>
+
+<div class="p"><!----></div>
+<tt>CSSR</tt>&nbsp;was written by KLK, with some help in debugging and testing from CRS;
+this documentation was jointly written.  Parts of the <tt>CSSR</tt>&nbsp;code were written
+at the Santa Fe Institute and at the University of San Francisco.  Support at
+SFI was provided by SFI's core grants from the National Science Foundation and
+the MacArthur Foundation, by the NSF's Research Experience for Undergraduates
+program, and by the Dynamics of Learning group, under DARPA contractual
+agreement F30602-00-2-0583.  Support at USF came from the Clare Boothe Luce
+Foundation.
+
+<div class="p"><!----></div>
+<hr /><h3>Footnotes:</h3>
+
+<div class="p"><!----></div>
+<a name="tthFtNtAAB"></a><a href="#tthFrefAAB"><sup>1</sup></a>Cosma Rohilla Shalizi and Kristina Lisa Shalizi, pp. 504-511 of
+  Max Chickering and Joseph Halpern (eds.), <em>Uncertainty in Artificial
+    Intelligence: Proceedings of the Twentieth Conference</em>, available from
+  <a href="http://arxiv.org/abs/cs.LG/0406011"><tt>http://arxiv.org/abs/cs.LG/0406011</tt></a>.
+<br /><br /><hr /><small>File translated from
+T<sub><font size="-1">E</font></sub>X
+by <a href="http://hutchinson.belmont.ma.us/tth/">
+T<sub><font size="-1">T</font></sub>H</a>,
+version 3.59.<br />On  9 Aug 2005, 19:11.</small>
+</html>
