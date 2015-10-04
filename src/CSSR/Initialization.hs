@@ -8,9 +8,12 @@
 -- parsetree, not the data. This procedure is therefore @O(N)@,and this is the
 -- only sub-procedure whose time depends on N.
 -- ----------------------------------------------------------------------------
-module Initialization where
+module CSSR.Initialization where
 
 import qualified Data.Map as Map
+
+-- | SET DEFAULTS =======
+-- ----------------------
 
 -- significance level
 type SignificanceLevel = Integer
@@ -19,7 +22,15 @@ significanceLevel = 1
 
 -- max length of a string
 maxLength :: Integer
-maxLength = 3
+maxLength = 1
+
+-- start with a simple alphabet and dataFile
+alphabet, dataFile :: String
+alphabet = "a"
+dataFile = take 1000 (cycle alphabet)
+
+-- | DEFINE PARSE TREE =======
+-- ----------------------
 
 -- TreeNode is a state representation of the input file
 data TreeNode a = Empty | Leaf a | Node (TreeNode a) (TreeNode a)
@@ -28,5 +39,11 @@ data TreeNode a = Empty | Leaf a | Node (TreeNode a) (TreeNode a)
 parseTree :: Map.Map String (TreeNode a)
 parseTree = Map.empty
 
+-- | Initialize a single state containing the null suffix =======
+-- ----------------------
+sigma :: String
+sigma = ""
+l :: Integer
+l = 0
 
 
