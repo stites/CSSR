@@ -10,3 +10,23 @@
 -- ----------------------------------------------------------------------------
 module Initialization where
 
+import qualified Data.Map as Map
+
+-- significance level
+type SignificanceLevel = Integer
+significanceLevel :: SignificanceLevel
+significanceLevel = 1
+
+-- max length of a string
+maxLength :: Integer
+maxLength = 3
+
+-- TreeNode is a state representation of the input file
+data TreeNode a = Empty | Leaf a | Node (TreeNode a) (TreeNode a)
+
+-- parseTree is a hashmap of the state
+parseTree :: Map.Map String (TreeNode a)
+parseTree = Map.empty
+
+
+
