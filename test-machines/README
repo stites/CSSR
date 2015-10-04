@@ -1,0 +1,58 @@
+This directory contains the Perl scripts written to provide test cases for
+CSSR.  They're all supposed to output information about the generating machine
+in a specific format, as well as time series.
+- It would have been smarter to write one program which read in a file
+  describing the desired machine, and unify the format of that description file
+  with the one CSSR uses for its output.  I was not that smart.
+- It's been so long that I am not sure all of these programs work
+  properly; some may have been abandoned in mid-writing.  See below.
+
+Directory contents (alphabetically):
+- all-same-symbol.pl produces constant time series.
+- alternating-biased-coins.pl produces time series which deterministically
+  alternate between two biased coins (i.e. Bernoulli random variables).
+- biased-coin.pl simulates a Bernoulli process.
+- biased-drift-on-ring.pl is a first-order Markov process where some number of
+  states are arranged in a circle, only transitions between adjacent states
+  are allowed, and there is a biased towards moving in one direction or the
+  other.
+- even-process.pl simulates a two-state deterministic process which is not
+  Markov at any finite order ("sofic").
+- flip_per_holmes_isbell.pl simulates the "flip" process of Holmes and
+  Isbell's 2006 paper.
+- foulkes.pl simulates the seven-state process introduced by the oldest
+  known paper in this area, by Foulkes in the 1950s.
+- hidden-drift.pl: three-state hidden process, with three states in a ring.
+  Not sure if this one was ever finished.
+- hidden-markov.pl: another three-state hidden process simulator.  Not sure
+  if this one was ever finished/debugged.
+- misiurewicz.pl: Simulates the "Misiurewicz process", named after a Polish
+  mathematician.  Four states.
+- noisy-period-two.pl: Process with two states which repeat periodically,
+  but noise in the observations.
+- periodic-with-noise.pl: repeats an input string, with bits flipped with
+  a given probability.
+- random-hidden-markov.pl: was supposed to create a random deterministic
+  hidden process and then simulate it.  Not sure if this was ever
+  finished/debugged.
+- snd.pl: The "simple nondeterministic source", a 2-state non-deterministic
+  HMM.
+- state-periodic-and-synching.pl: Repeat states periodically, noisy
+  observations but supposed to be "synchronizing" patterns fixing the
+  state.  (Thus generalizing noisy-period-two.pl.)  Not sure this was ever
+  finished.
+- tricky-hidden-markov.pl: three-state hidden process, where
+  identification requires deterministic transitions.
+
+The "alphabet" subdirectory contains:
+- binary, the 01 alphabet used for most of these test machines.
+- flip_alpha, the four-symbol alphabet for the "flip" process.
+
+
+
+
+History:
+- Most files written 2000--2002
+- Directory created 2005-05
+- Moved specific realizations to a separate directory 2015 summer
+- added README, alphabet subdirectory 2015-09-26

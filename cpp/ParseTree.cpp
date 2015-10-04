@@ -35,13 +35,13 @@
 ///////////////////////////////////////////////////////////////////////////
 // Function: ParseTree::MakeAlphaHash
 // Purpose: creates a hash table which returns the index of an alphabet
-//			symbol
+//          symbol
 // In Params: none
 // Out Params: none
 // In/Out Params: none
 // Pre- Cond: alphabet file has been read in
 // Post-Cond: hash table contains all alpha info and has returned table
-//			  to calling function
+//            to calling function
 //////////////////////////////////////////////////////////////////////////
 HashTable2* ParseTree::MakeAlphaHash()
 {
@@ -181,13 +181,13 @@ void ParseTree::DecStringCount(char* stringToDec)
 // Post-Cond: strings of length 'length' have been put in an array
 //            along with the counts of their children strings
 //////////////////////////////////////////////////////////////////////////
-void ParseTree::FindStrings(TreeNode* root, int length, char* parentString, 
-			    G_Array* array)
+void ParseTree::FindStrings(TreeNode* root, int length, char* parentString,
+          G_Array* array)
 {
   //if strings do not exist at this branch return
   if(root == NULL)
     return;
-  
+
   //when at the desired level of the tree cycle thru list of siblings and add
   //each symbol to parent string
   else if(length < 2)
@@ -195,45 +195,45 @@ void ParseTree::FindStrings(TreeNode* root, int length, char* parentString,
       //determine length of parentString
       int stringLength = 0;
       if(parentString != '\0')
-	stringLength = strlen(parentString);
+        stringLength = strlen(parentString);
 
       char* tempString = new char[stringLength +2];
       TreeNode* tempChild;
       char* symbol = new char[2];
       int* counts = new int[m_alphaSize];
       while(root!= NULL)
-	{
-	  //copy over any parent string information
-	  symbol[0] = root->m_symbol;
-	  symbol[1] = '\0';
-	  if(stringLength != 0)
-	    {
-	      strcpy(tempString, parentString);
-	      strcat(tempString, symbol);
-	    }
-	  else
-	    strcpy(tempString, symbol);
+  {
+    //copy over any parent string information
+    symbol[0] = root->m_symbol;
+    symbol[1] = '\0';
+    if(stringLength != 0)
+      {
+        strcpy(tempString, parentString);
+        strcat(tempString, symbol);
+      }
+    else
+      strcpy(tempString, symbol);
 
-	  //initialize array
-	  for(int i = 0; i< m_alphaSize;i++)
-	    counts[i] = 0;
+    //initialize array
+    for(int i = 0; i< m_alphaSize;i++)
+      counts[i] = 0;
 
-	  //add counts of each child node to array
-	  //in order of alphabet symbols
-	  tempChild = root->m_child;
-	  while (tempChild !=NULL)
-	    {
-	      for(int k=0; k < m_alphaSize; k++)
-		{
-		  if(m_alpha[k] == tempChild->m_symbol)
-		    counts[k] = tempChild->m_count;
-		}
-	      tempChild = tempChild->m_sibling;
-	    }
-	  //input each in growable array class
-	  array->Insert(tempString, counts, m_alphaSize);
-	  root = root->m_sibling;
-	}
+    //add counts of each child node to array
+    //in order of alphabet symbols
+    tempChild = root->m_child;
+    while (tempChild !=NULL)
+      {
+        for(int k=0; k < m_alphaSize; k++)
+    {
+      if(m_alpha[k] == tempChild->m_symbol)
+        counts[k] = tempChild->m_count;
+    }
+        tempChild = tempChild->m_sibling;
+      }
+    //input each in growable array class
+    array->Insert(tempString, counts, m_alphaSize);
+    root = root->m_sibling;
+  }
       //free memory
       delete[] tempString;
       delete[] symbol;
@@ -247,28 +247,28 @@ void ParseTree::FindStrings(TreeNode* root, int length, char* parentString,
       //determine length of parentString
       int stringLength2 = 0;
       if(parentString != '\0')
-	stringLength2 = strlen(parentString);
+        stringLength2 = strlen(parentString);
 
       char* newParent = new char[stringLength2 +2];
       char* symbol2 = new char[2];
       while(root!= NULL)
-	{
-	  //attach present symbol to parent string
-	  symbol2[0] = root->m_symbol;
-	  symbol2[1] = '\0';
-	   
-	  if(stringLength2 != 0) 
-	    { 
-	      strcpy(newParent, parentString);
-	      strcat(newParent, symbol2);
-	    }
-	  else
-	    strcpy(newParent,symbol2);
+  {
+    //attach present symbol to parent string
+    symbol2[0] = root->m_symbol;
+    symbol2[1] = '\0';
 
-	  //call each sibling recursively
-	  FindStrings(root->m_child, length - 1, newParent, array);
-	  root = root->m_sibling;
-	}
+    if(stringLength2 != 0)
+      {
+        strcpy(newParent, parentString);
+        strcat(newParent, symbol2);
+      }
+    else
+      strcpy(newParent,symbol2);
+
+    //call each sibling recursively
+    FindStrings(root->m_child, length - 1, newParent, array);
+    root = root->m_sibling;
+  }
       //free memory
       delete[] newParent;
       delete[] symbol2;
