@@ -57,21 +57,18 @@ int main(int argc, char *argv[])
   bool isSigLevel = false;
   bool isChi = false;
 
-  //read in info from command line
-  //check for proper arguments
-  if(argc !=4 )	  
+  // read in info from command line
+  // check for proper arguments
+  if(argc !=4 )
     {
       if (argc == 5)
-	FiveArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
-
+          FiveArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
       else if (argc == 6)
-	SixArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
-
-	  else if (argc == 7)
-	SevenArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
-
+          SixArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
+      else if (argc == 7)
+          SevenArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
       else
-	PrintError();
+          PrintError();
     }
 
   PrintCopyrightInfo();
@@ -81,8 +78,8 @@ int main(int argc, char *argv[])
   data_file = argv[2];
   alpha_file = argv[1];
 
-  //if no significance level is set, use default
-  //(should be set already, just to be careful)
+  // if no significance level is set, use default
+  // (should be set already, just to be careful)
   if(!isSigLevel)
     sigLevel = SIGLEVEL;
   else
@@ -94,21 +91,21 @@ int main(int argc, char *argv[])
   //if using multi-line input, read in data and enter
   //tree one line at a time
   if(isMulti)
-    {
-      parsetree.ReadProcessMultiLine(alpha_file, data_file);
-      cout << "Multi-line option is set.\n"
-		   << "Max line length is "<< MAX_LINE_SIZE
-		   << "\n";
-    }
+  {
+    parsetree.ReadProcessMultiLine(alpha_file, data_file);
+    cout << "Multi-line option is set.\n"
+         << "Max line length is "<< MAX_LINE_SIZE
+         << "\n";
+  }
 
   //otherwise do data read first, then enter in tree
   else
-    {
-      //read in data and alphabet from files
-      parsetree.ReadInput(alpha_file, data_file);
-      //enter data in tree
-      parsetree.FillTree();
-    }
+  {
+    //read in data and alphabet from files
+    parsetree.ReadInput(alpha_file, data_file);
+    //enter data in tree
+    parsetree.FillTree();
+  }
 
   //make hash table of alpha symbols and indices
   alphaHash = parsetree.MakeAlphaHash();
