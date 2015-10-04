@@ -1,6 +1,6 @@
 name:                CSSR
 version:             0.1.0.0
-synopsis:            CSSR tries to infer the minimal Markovian model capable of generating a time-series, or set of time-series from the same source.
+synopsis:            An Algorithm for Building Markov Models from Time Series
 description:         See README.md
 homepage:            https://github.com/stites/CSSR
 license:             BSD3
