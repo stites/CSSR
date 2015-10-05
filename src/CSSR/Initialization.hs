@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 -- | = Phase I: Initialization
 --
 --   Phase I computes the relative frequency of all wordsin the data stream, up
@@ -11,33 +12,35 @@
 module CSSR.Initialization where
 
 import qualified Data.Map as Map
+import qualified Data.Vector as Vector
+import CSSR.ParseTree
 
 -- | SET DEFAULTS =======
 -- ----------------------
-
 -- significance level
-type SignificanceLevel = Integer
+type SignificanceLevel = Float
 significanceLevel :: SignificanceLevel
-significanceLevel = 1
+significanceLevel = 0
 
+-- Same as initializing the ParseTree
 -- max length of a string
-maxLength :: Integer
-maxLength = 1
+maxLength = 5
 
 -- start with a simple alphabet and dataFile
-alphabet, dataFile :: String
-alphabet = "a"
-dataFile = take 1000 (cycle alphabet)
+alphabet :: String
+alphabet = "ab"
 
--- | DEFINE PARSE TREE =======
--- ----------------------
+dataFile :: Vector.Vector Char
+dataFile = Vector.fromList $ take 100 (cycle "a")
+dataLength = Vector.length dataFile
+dataIdx = [0..dataLength]
 
--- TreeNode is a state representation of the input file
-data TreeNode a = Empty | Leaf a | Node (TreeNode a) (TreeNode a)
-
--- parseTree is a hashmap of the state
-parseTree :: Map.Map String (TreeNode a)
-parseTree = Map.empty
+x = fmap (\ idx ->
+      fmap (\ len ->
+        Vector.slice idx len dataFile
+      ) [1..maxLength]
+    ) $
+      take (dataLength - maxLength) dataIdx
 
 -- | Initialize a single state containing the null suffix =======
 -- ----------------------
