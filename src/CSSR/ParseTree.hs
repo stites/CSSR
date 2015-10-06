@@ -24,6 +24,7 @@ exampleBranchArray = [
 
 exampleParseTree = Root exampleBranchArray
 
+-- This is just a trie. Check out some cleaner implimentations.
 build :: [ParseTreeBranch] -> [Char] -> [ParseTreeBranch]
 build bs@(Branch(bChar, children):[])       (char:[])   = if (char == bChar)
                                                           then bs
@@ -42,5 +43,4 @@ build [] (char:[]) = build [Branch(char,[])] []
 build [] chars@(char:path) = build [Branch(char,[])] chars
 
 build branches [] = branches
-
 

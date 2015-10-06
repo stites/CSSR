@@ -6,20 +6,18 @@
 
 The Original CSSR is split into three phases which look like the following (note that P^, or S^ is P/S with a circumflex):
 
-CSSR(A, xbar, L_max, alpha) =
+CSSR(Alphabet, xbar, L_max, significanceLevel) =
   Phase I- Initialization:
     L <- 0
-    Sigma <- {{unit}}
+    States <- {{emptyState}}
 
   Phase II- Sufficiency:
     while L < Lmax
-      for each s in Sigma
-        estimate P^ (X_t | S^=s)
-        for each x in s
-          for each a in A
-            estimate p <- P^(X_t | X[t-L,t-1] =ax)
-            TEST(Sigma, p, ax, s, alpha)
-       L <- L+1
+      TEST(States,
+           prob <- P(Xt | X{t-1, t-L} == ax),
+           ax | a <- Alphabet, x <- state
+           significanceLevel)
+      L+1
     (loopend)
 
   Phase III- Recursion:
