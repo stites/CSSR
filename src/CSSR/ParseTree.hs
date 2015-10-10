@@ -24,23 +24,27 @@ exampleBranchArray = [
 
 exampleParseTree = Root exampleBranchArray
 
--- This is just a trie. Check out some cleaner implimentations.
-build :: [ParseTreeBranch] -> [Char] -> [ParseTreeBranch]
-build bs@(Branch(bChar, children):[])       (char:[])   = if (char == bChar)
-                                                          then bs
-                                                          else Branch(char,[]):bs
-build bs@(Branch(bChar, children):[])       chars@(char:path) = if (char == bChar)
-                                                          then [Branch(bChar, (build children path))]
-                                                          else build ( Branch(char,[]):bs ) chars
-build bs@(Branch(bChar, children):siblings) (char:[])   = if (char == bChar)
-                                                          then bs
-                                                          else Branch(char,[]):bs
-build bs@(Branch(bChar, children):siblings) chars@(char:path) = if (char == bChar)
-                                                          then Branch(bChar, (build children path)):siblings
-                                                          else build ( Branch(char,[]):bs ) chars
-
-build [] (char:[]) = build [Branch(char,[])] []
-build [] chars@(char:path) = build [Branch(char,[])] chars
-
-build branches [] = branches
+-- | buildParseTree takes a list of characters and generates a ParseTree
+buildParseTree :: [ParseTreeBranch] -> [Char] -> [ParseTreeBranch]
+-- | if we have a sparse tree and a char-sequence
+buildParseTree branches@(Branch(bChar, children):[])
+                  chars@(char:path)                  = if (char == bChar)
+                                                       then if (null path)
+                                                            then branches
+                                                            else [Branch(bChar, (buildParseTree children path))]
+                                                       else if (null path)
+                                                            then Branch(char, []):branches
+                                                            else buildParseTree ( Branch(char,[]):branches ) chars
+-- | if we have a full tree and a char-sequence
+buildParseTree branches@(Branch(bChar, children):siblings)
+                  chars@(char:path)                  = if (char == bChar)
+                                                       then if (null path)
+                                                            then branches
+                                                            else Branch(bChar, (buildParseTree children path)):siblings
+                                                       else if (null path)
+                                                            then Branch(char,[]):branches
+                                                             else buildParseTree ( Branch(char,[]):branches ) chars
+-- | if we have an empty tree
+buildParseTree []       (char:[])   = buildParseTree [Branch(char,[])] []
+buildParseTree [] chars@(char:path) = buildParseTree [Branch(char,[])] chars
 
