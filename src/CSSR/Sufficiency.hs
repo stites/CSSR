@@ -1,26 +1,48 @@
+-------------------------------------------------------------------------------
+-- | = Phase II: Sufficiency
+--
+-- "Phase II iteratively tests the successive versions of the null hypothesis"
+-- ...but in haskell we'll do this recursively : )
+-------------------------------------------------------------------------------
 module CSSR.Sufficiency where
 
 import CSSR.CausalState.State (probability, State)
 import CSSR.CausalState.History (Moment, History)
 import CSSR.Initialization (
-    lMax,              -- default = 5
-    significanceLevel, -- default = 0.05
-    sigma,             -- is      = []
-    l,                 -- is      = 0
-    alphabet,          -- given
-    parseTree          -- given
+    lMax,              -- | default = 5
+    significanceLevel, -- | default = 0.05
+    sigma,             -- | is      = []
+    l,                 -- | is      = 0
+    alphabet,          -- | given
+    parseTree          -- | given
   )
 
--- -- TODO: TCO at a later point
--- loop :: [State] -> Integer -> [State]
--- loop allStates@(s:[])     l | l < lMax = loop
---                                        $ test allStates (proba
--- loop allStates@(s:states) l | l < lMax = loop
---                                        $ test allStates (proba
+---------------------------------------------------------------------------
+-- | loop
 --
--- -- for everything else (should just be the l's):
--- loop allStates _ = allStates
+-- Will iterate through the ParseTree
+-- in the causal state. If it does not, it will perform a restricted
+-- hypothesis test to see if the history belongs in any existing state.
+--
+-- If neither test succeeds, we will generate a new state for this history.
+-- ========================================================================
+-- TODO: TCO at a later point
+---------------------------------------------------------------------------
+loop :: [State] -> Integer -> [State]
+loop all@(s:[])     l | l < lMax = loop (test all (constructedHistory) s alpha) (l+1)
+loop all@(s:states) l | l < lMax = loop (test all (constructedHistory) (expandStates) alpha) (l+1)
 
+loop all _ = all -- for everything else
+
+---------------------------------------------------------------------------
+-- | test
+--
+-- Will take a history and perform a hypothesis test to see if it belongs
+-- in the causal state. If it does not, it will perform a restricted
+-- hypothesis test to see if the history belongs in any existing state.
+--
+-- If neither test succeeds, we will generate a new state for this history.
+---------------------------------------------------------------------------
 test :: Fractional p => [State] -> History -> State -> Float -> [State]
 test allStates history state alpha = let
     nullHypothesis = hypothesisTest state
@@ -35,7 +57,14 @@ test allStates history state alpha = let
     moveStatesTo state'= move history state state'
     hypothesisTest inState = (probability history inState) < (1 - alpha)
 
--- TODO: I've removed re-estimation. Is it redundant?
+---------------------------------------------------------------------------
+-- | move
+--
+-- takes two states and a history and moves it from the first state to the
+-- second.
+-- ========================================================================
+-- TODO: re-estimation doesn't seem to fit here - could it be redundant?
+---------------------------------------------------------------------------
 move :: History -> State -> State -> [State, State]
 move x s1 s2 = [s1', s2']
   where

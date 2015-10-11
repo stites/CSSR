@@ -1,3 +1,4 @@
+-------------------------------------------------------------------------------
 -- | = Phase I: Initialization
 --
 --   Phase I computes the relative frequency of all wordsin the data stream, up
@@ -7,7 +8,7 @@
 -- length does not exceed @L_max + 1@. There after we need only refer to the
 -- parsetree, not the data. This procedure is therefore @O(N)@,and this is the
 -- only sub-procedure whose time depends on N.
--- ----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 module CSSR.Initialization where
 
 import qualified CSSR.Parse.Tree as PT
