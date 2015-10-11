@@ -54,12 +54,12 @@ MOVE(x,s1,s2)
 -}
 module CSSR where
 
-import System.Environment
-import CSSR.Cli
+import System.Environment(getArgs)
 
 main :: IO ()
 main = do
   args <- getArgs
-  getFlags args
+  mapM putStrLn args
+  -- getFlags args
   return ()
 

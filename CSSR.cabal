@@ -8,7 +8,7 @@ license-file:        LICENSE
 author:              Sam Stites
 maintainer:          sam@stites.io
 -- copyright:
-category:            Machine Learning
+category:            Machine Learning, Markov Models
 build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10
