@@ -11,9 +11,11 @@
 -- ----------------------------------------------------------------------------
 module CSSR.Initialization where
 
-import qualified Data.Map as Map
-import qualified Data.Vector as Vector
-import CSSR.ParseTree
+import Debug.Trace
+import qualified CSSR.ParseTree as PT
+-- TODO: benchmark before swapping the lists
+import qualified Data.Vector as V
+import Data.List (nub)
 
 -- | SET DEFAULTS =======
 -- ----------------------
@@ -27,25 +29,29 @@ significanceLevel = 0
 maxLength = 5
 
 -- start with a simple alphabet and dataFile
-alphabet :: String
+alphabet :: [Char]
 alphabet = "ab"
 
-dataFile :: Vector.Vector Char
-dataFile = Vector.fromList $ take 100 (cycle "a")
-dataLength = Vector.length dataFile
+dataFile :: [Char]
+dataFile =  take 100 (cycle "a")
+dataLength = length dataFile
 dataIdx = [0..dataLength]
 
-x = fmap (\ idx ->
-      fmap (\ len ->
-        Vector.slice idx len dataFile
-      ) [1..maxLength]
-    ) $
-      take (dataLength - maxLength) dataIdx
+sequences = nub $ concat $ findSequences dataFile
+  where
+     findSequences dataFile = let
+            getWindowFromList start len dataFile = V.toList $ V.slice start len ( V.fromList dataFile )
+
+         in fmap (\ idx -> fmap (\ len -> getWindowFromList idx len dataFile) [1..maxLength]) $
+            take (dataLength - maxLength) dataIdx
+
+parseTree :: PT.ParseTree
+parseTree = PT.Root $ foldl PT.build [] sequences
 
 -- | Initialize a single state containing the null suffix =======
 -- ----------------------
-sigma :: String
-sigma = ""
+sigma :: [[Char]]
+sigma = []
 l :: Integer
 l = 0
 
