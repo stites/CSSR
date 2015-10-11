@@ -1,7 +1,4 @@
--- Parse Tree
-module CSSR.ParseTree (parseTree) where
-
-import Debug.Trace
+module CSSR.ParseTree where
 
 data ParseTree = Root [ParseTreeBranch] deriving Show
 
@@ -24,27 +21,31 @@ exampleBranchArray = [
 
 exampleParseTree = Root exampleBranchArray
 
--- | buildParseTree takes a list of characters and generates a ParseTree
-buildParseTree :: [ParseTreeBranch] -> [Char] -> [ParseTreeBranch]
+-- | build takes a list of characters and generates a ParseTree
+build :: [ParseTreeBranch] -> [Char] -> [ParseTreeBranch]
 -- | if we have a sparse tree and a char-sequence
-buildParseTree branches@(Branch(bChar, children):[])
+build branches@(Branch(bChar, children):[])
                   chars@(char:path)                  = if (char == bChar)
                                                        then if (null path)
                                                             then branches
-                                                            else [Branch(bChar, (buildParseTree children path))]
+                                                            else [Branch(bChar, (build children path))]
                                                        else if (null path)
                                                             then Branch(char, []):branches
-                                                            else buildParseTree ( Branch(char,[]):branches ) chars
+                                                            else build ( Branch(char,[]):branches ) chars
 -- | if we have a full tree and a char-sequence
-buildParseTree branches@(Branch(bChar, children):siblings)
+build branches@(Branch(bChar, children):siblings)
                   chars@(char:path)                  = if (char == bChar)
                                                        then if (null path)
                                                             then branches
-                                                            else Branch(bChar, (buildParseTree children path)):siblings
+                                                            else Branch(bChar, (build children path)):siblings
                                                        else if (null path)
                                                             then Branch(char,[]):branches
-                                                             else buildParseTree ( Branch(char,[]):branches ) chars
+                                                             else build ( Branch(char,[]):branches ) chars
 -- | if we have an empty tree
-buildParseTree []       (char:[])   = buildParseTree [Branch(char,[])] []
-buildParseTree [] chars@(char:path) = buildParseTree [Branch(char,[])] chars
+build []       (char:[])   = build [Branch(char,[])] []
+build [] chars@(char:path) = build [Branch(char,[])] chars
+
+build branches _ = branches
+
+-- | fold a collection of lists into a parsetree
 
