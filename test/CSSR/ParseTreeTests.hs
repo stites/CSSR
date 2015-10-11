@@ -1,11 +1,12 @@
 import Test.Hspec
 import Test.QuickCheck
 import Control.Exception (evaluate)
+import CSSR.ParseTree
 
 main :: IO ()
 main = hspec $ do
-  describe "Prelude.head" $ do
-    it "returns the first element of a list" $ do
+  describe "ParseTree.build" $ do
+    it "should construct an empty ParseTree when given an empty list" $ do
       head [23 ..] `shouldBe` (23 :: Int)
 
     it "returns the first element of an *arbitrary* list" $
