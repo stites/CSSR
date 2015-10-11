@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 -- | = Phase I: Initialization
 --
 --   Phase I computes the relative frequency of all wordsin the data stream, up
@@ -11,7 +10,6 @@
 -- ----------------------------------------------------------------------------
 module CSSR.Initialization where
 
-import Debug.Trace
 import qualified CSSR.Parse.Tree as PT
 -- TODO: benchmark before swapping the lists
 import qualified Data.Vector as V
@@ -22,11 +20,11 @@ import Data.List (nub)
 -- significance level
 type SignificanceLevel = Float
 significanceLevel :: SignificanceLevel
-significanceLevel = 0
+significanceLevel = 0.05
 
 -- Same as initializing the ParseTree
 -- max length of a string
-maxLength = 5
+lMax = 5
 
 -- start with a simple alphabet and dataFile
 alphabet :: [Char]
@@ -42,8 +40,8 @@ sequences = nub $ concat $ findSequences dataFile
      findSequences dataFile = let
             getWindowFromList start len dataFile = V.toList $ V.slice start len ( V.fromList dataFile )
 
-         in fmap (\ idx -> fmap (\ len -> getWindowFromList idx len dataFile) [1..maxLength]) $
-            take (dataLength - maxLength) dataIdx
+         in fmap (\ idx -> fmap (\ len -> getWindowFromList idx len dataFile) [1..lMax]) $
+            take (dataLength - lMax) dataIdx
 
 parseTree :: PT.ParseTree
 parseTree = PT.Root $ foldl PT.build [] sequences

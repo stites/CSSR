@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
--- | = Commandline interface for CSSR
--- THIS IS A WORK IN PROGRESS FILE
--- See https://wiki.haskell.org/Tutorials/Programming_Haskell/Argument_handling
-module CSSR.Cli (getFlags) where
+-- | Commandline interface for CSSR
+-- THIS IS A WORK IN PROGRESS FILE THAT NEEDS A LOT MORE ATTENTION
+module CSSR.Parse.Cli (getFlags) where
 
 import System.Console.GetOpt
 import System.Exit
@@ -30,6 +29,8 @@ getFlags["-ml"]            = stuff
 getFlags["--multiline"]    = stuff
 getFlags["-cs"]            = stuff
 getFlags["--chi-squared"]  = stuff
+-- for everything else
+getFlags _ = stuff
 
 help    = putStrLn $ unlines helpstring
 version = putStrLn "CSSR, v0.1.0"
