@@ -1,4 +1,4 @@
-module CSSR.ParseTree where
+module CSSR.Parse.Tree where
 
 data ParseTree = Root [ParseTreeBranch] deriving Show
 

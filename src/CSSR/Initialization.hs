@@ -12,7 +12,7 @@
 module CSSR.Initialization where
 
 import Debug.Trace
-import qualified CSSR.ParseTree as PT
+import qualified CSSR.Parse.Tree as PT
 -- TODO: benchmark before swapping the lists
 import qualified Data.Vector as V
 import Data.List (nub)
