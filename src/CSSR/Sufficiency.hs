@@ -28,7 +28,7 @@ import CSSR.Initialization (
 -- ========================================================================
 -- TODO: TCO at a later point
 ---------------------------------------------------------------------------
-loop :: [State] -> Integer -> [State]
+loop :: [State] -> Int -> [State]
 loop all@(state:_) l | l < lMax = let histories = constructFrom state
 --  [['']]                            [['a'],['b'],['c']]
   in concat [loop (test all history state alpha) (l+1) | history <- histories]
@@ -38,7 +38,7 @@ loop all _ = all -- for everything else
 constructFrom :: State -> [History]
 constructFrom state = [ a:h | a<-alphabet, h<-state]
 
-alpha = significanceLevel --shorthand
+alpha = significanceLevel -- ^ shorthand
 ---------------------------------------------------------------------------
 -- | test
 --
@@ -54,9 +54,9 @@ test allStates history state alpha = let
     someState = find hypothesisTest allStates
   in
     if nullHypothesis
-    then state
+    then allStates -- ^ if the null hypothesis is true, keep as-is
     else if (isJust someState)
-         then (moveStatesTo fromJust someState) ++ allStates
+         then (moveStatesTo $ fromJust someState) ++ allStates
          else (moveStatesTo                 []) ++ allStates
   where
     moveStatesTo state'= move history state state'

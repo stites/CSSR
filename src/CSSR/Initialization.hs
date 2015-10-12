@@ -11,16 +11,17 @@
 -------------------------------------------------------------------------------
 module CSSR.Initialization where
 
-import qualified CSSR.Parse.Tree as PT
--- TODO: benchmark before swapping the lists
-import qualified Data.Vector as V
+-- TODO: benchmark Vectorsbefore swapping the lists with them
 import Data.List (nub)
+import qualified Data.Vector as V
+import qualified CSSR.Parse.Tree as PT
+import CSSR.CausalState.History (Moment)
+import CSSR.CausalState.State (State)
 
 -- | SET DEFAULTS =======
 -- ----------------------
 -- significance level
-type SignificanceLevel = Float
-significanceLevel :: SignificanceLevel
+significanceLevel :: Float
 significanceLevel = 0.05
 
 -- Same as initializing the ParseTree
@@ -28,10 +29,10 @@ significanceLevel = 0.05
 lMax = 5
 
 -- start with a simple alphabet and dataFile
-alphabet :: [Char]
+alphabet :: [Moment]
 alphabet = "ab"
 
-dataFile :: [Char]
+dataFile :: [Moment]
 dataFile =  take 100 (cycle "a")
 dataLength = length dataFile
 dataIdx = [0..dataLength]
@@ -49,7 +50,7 @@ parseTree = PT.Root $ foldl PT.build [] sequences
 
 -- | Initialize a single state containing the null suffix =======
 -- ----------------------
-sigma :: [[Char]]
+sigma :: [State]
 sigma = []
 l :: Integer
 l = 0

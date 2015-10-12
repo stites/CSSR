@@ -13,8 +13,8 @@ import CSSR.CausalState.History (History)
 -- to have the State be a monad
 type State = [History]
 
-probability :: Fractional p => State -> History -> p
-probability state x = counted / stateSize
+probability :: Fractional p => History -> State -> p
+probability x state = counted / stateSize
   where
     divisibleLength = realToFrac.length
     counted         = divisibleLength (filter ((==) x) state)
