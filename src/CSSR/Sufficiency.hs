@@ -19,18 +19,23 @@ import CSSR.Initialization (
     parseTree          -- | given
   )
 
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 -- | loop
 --
--- Will iterate through the states in a breadth-first manner. As we pass
+-- Will iterate through the parseTree in a breadth-first manner. As we pass
 -- through each tree node, we construct new states by prefixing characters
 -- from the given alphabet.
--- ========================================================================
+-- ============================================================================
 -- TODO: TCO at a later point
----------------------------------------------------------------------------
+-- TODO: Looks like I have omitted the parse tree altogether. Oops!
+-------------------------------------------------------------------------------
+
+-- check:
+-- all starts as [['']]
+-- the first returned histories will look something like [['a'],['b'],['c']]
+
 loop :: [State] -> Int -> [State]
 loop all@(state:_) l | l < lMax = let histories = constructFrom state
---  [['']]                            [['a'],['b'],['c']]
   in concat [loop (test all history state alpha) (l+1) | history <- histories]
 
 loop all _ = all -- for everything else
@@ -39,7 +44,8 @@ constructFrom :: State -> [History]
 constructFrom state = [ a:h | a<-alphabet, h<-state]
 
 alpha = significanceLevel -- ^ shorthand
----------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
 -- | test
 --
 -- Will take a history and perform a hypothesis test to see if it belongs
@@ -47,7 +53,7 @@ alpha = significanceLevel -- ^ shorthand
 -- hypothesis test to see if the history belongs in any existing state.
 --
 -- If neither test succeeds, we will generate a new state for this history.
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 test :: Fractional p => [State] -> History -> State -> Float -> [State]
 test allStates history state alpha = let
     nullHypothesis = hypothesisTest state
@@ -62,18 +68,21 @@ test allStates history state alpha = let
     moveStatesTo state'= move history state state'
     hypothesisTest inState = (probability history inState) < (1 - alpha)
 
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 -- | move
 --
 -- takes two states and a history and moves it from the first state to the
 -- second.
--- ========================================================================
+-- ============================================================================
 -- TODO: re-estimation doesn't seem to fit here - could it be redundant?
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 move :: History -> State -> State -> [State]
 move x s1 s2 = [s1', s2']
   where
     s1' = filter ((/=) x) s1
+    -- | TODO:
+    -- WARNING, this will lessen redundancy and, perhaps, make probabilities
+    -- incorrect. verify.
     s2' = if (x `elem` s2) then s2 else x:s2
 
 
