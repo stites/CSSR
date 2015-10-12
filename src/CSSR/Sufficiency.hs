@@ -6,6 +6,8 @@
 -------------------------------------------------------------------------------
 module CSSR.Sufficiency where
 
+import qualified CSSR.Parse.Tree as PT
+
 import Data.List (find)
 import Data.Maybe (isJust, fromJust)
 import CSSR.CausalState.State (probability, State)
@@ -15,8 +17,8 @@ import CSSR.Initialization (
     significanceLevel, -- | default = 0.05
     sigma,             -- | is      = [""]
     l,                 -- | is      = 0
-    alphabet,          -- | given
-    parseTree          -- | given
+    alphabet,                    -- | given
+    parseTree -- | given
   )
 
 -------------------------------------------------------------------------------
@@ -27,23 +29,23 @@ import CSSR.Initialization (
 -- from the given alphabet.
 -- ============================================================================
 -- TODO: TCO at a later point
--- TODO: Looks like I have omitted the parse tree altogether. Oops!
 -------------------------------------------------------------------------------
-
--- check:
--- all starts as [['']]
--- the first returned histories will look something like [['a'],['b'],['c']]
-
 loop :: [State] -> Int -> [State]
-loop all@(state:_) l | l < lMax = let histories = constructFrom state
-  in concat [loop (test all history state alpha) (l+1) | history <- histories]
+loop all@(state:_) l | l < lMax = concat $
+    -- BREAKING: inputs are wrong. Need to double-check this part
+    [loop (test all history observed alpha) (l+1) | history  <- newState,
+                                                    observed <- observedState ]
+  where
+    newState = constructFrom state
+    observedState = PT.walk (PT.getBranches parseTree) l
 
 loop all _ = all -- for everything else
 
+alpha :: Float
+alpha = significanceLevel -- ^ shorthand
+
 constructFrom :: State -> [History]
 constructFrom state = [ a:h | a<-alphabet, h<-state]
-
-alpha = significanceLevel -- ^ shorthand
 
 -------------------------------------------------------------------------------
 -- | test

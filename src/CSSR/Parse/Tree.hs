@@ -1,6 +1,7 @@
 module CSSR.Parse.Tree where
 
-import CSSR.CausalState.History (Moment, History)
+import CSSR.CausalState.History
+import CSSR.CausalState.State
 
 data ParseTree = Root [ParseTreeBranch] deriving Show
 
@@ -49,7 +50,7 @@ build [] chars@(char:path) = build [Branch(char,[])] chars
 
 build branches _ = branches
 
-walk :: [ParseTreeBranch] -> Int -> [History]
+walk :: [ParseTreeBranch] -> Int -> State
 walk tree@(    Branch(m,          []):[]    ) depth | depth >= 0 = [[m]]
 walk tree@(    Branch(m, children:[]):[]    ) depth | depth >= 0 = map ((:) m) (walk [children] $ depth-1)
 -- MISSING: a branch having many children and no siblings
