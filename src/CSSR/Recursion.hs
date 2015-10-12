@@ -35,12 +35,17 @@ import CSSR.Sufficiency ( move, test, loop )
 -------------------------------------------------------------------------------
 
 recurse :: [State] -> [State]
-recurse all@(state:_)  = concat $ map (\ a ->
+recurse all@(state:[])  = concat $ map (\ a ->
       split [ a:h | h<-state]
     ) alphabet
 
-recurse all = all -- for everything else
+recurse all@(state:states)  = recurse [state] ++ recurse states
+recurse all = all
 
+-- I think this intrinsically seperates out histories in such a way
+-- that we don't need to move them. Testing! that's what we need here.
+-- This may also do the same thing that the Transitioning was supposed
+-- to do.
 split :: [History] -> [State]
 split (h:hs) = h':(split noth)
     where
