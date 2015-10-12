@@ -1,11 +1,5 @@
 CSSR
 =======
-Kristina Lisa Klinkner (kklinkner@gmail.com) and Cosma Rohilla Shalizi
-(cshalizi@stat.cmu.edu)
-
-
-General
----------
 CSSR tries to infer the minimal Markovian model capable of generating a
 time-series, or set of time-series from the same source.  The program
 implements the algorithm proposed in the paper "Blind Construction of Optimal
@@ -273,27 +267,3 @@ occur during the determinization process itself (see the pseudocode in BC
 for details), and the outcome of the algorithm would be the same.  As it is
 implemented here the code is slightly redundant.
 
-
-Revision History
----------------------------
-
-Version  | Date          | Description
----------|---------------|-------------------------------------------------------
-`0.1.1`  | 18 April 2008 | Modified output of \_info file to include command-line settings
-`0.1`    | 11 Sept. 2005 | Minor bug-fixes to multi-line mode
-`0.1`    | 7 August 2005 | Corrects minor numerical bugs.  These only affected the calculations of relative entropy, relative entropy rate and total variation distance; their effect was small, about O(k/N).
-`0.0`    | 7 August 2003 | First public release.
-
-
-Credits and Acknowledgments
------------------------------
-CSSR was written by KLK, with some help in debugging and testing from CRS; this
-documentation was jointly written.  Parts of the CSSR code were written at the
-Santa Fe Institute and at the University of San Francisco.  Support at SFI was
-provided by SFI's core grants from the National Science Foundation and the
-MacArthur Foundation, by the NSF's Research Experience for Undergraduates
-program, and by the Dynamics of Learning group, under DARPA contractual
-agreement F30602-00-2-0583.  Support at USF came from the Clare Boothe Luce
-Foundation.
-
-[cssr]: http://bactra.org/CSSR
