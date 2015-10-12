@@ -13,12 +13,16 @@ CSSR(Alphabet, xbar, L_max, significanceLevel) =
 
   Phase II- Sufficiency:
     while L < Lmax
-      TEST(States,
-           prob <- P(Xt | X{t-1, t-L} == ax),
-           ax | a <- Alphabet, x <- state
-           significanceLevel)
+      for each s in Sigma
+        estimate P^(X_t|S=s)
+          for each w in s
+            for each a in A
+              TEST(States,
+                   p <- P(Xt | X{t-1, t-L} == aw),
+                   aw | a <- Alphabet, w <- state
+                   state
+                   significanceLevel)
       L+1
-    (loopend)
 
   Phase III- Recursion:
     Remove Transient states from Sigma
