@@ -17,8 +17,8 @@ import CSSR.Initialization (
     significanceLevel, -- | default = 0.05
     sigma,             -- | is      = [""]
     l,                 -- | is      = 0
-    alphabet,                    -- | given
-    parseTree -- | given
+    alphabet,          -- | given
+    parseTree          -- | given
   )
 
 -------------------------------------------------------------------------------
@@ -32,11 +32,10 @@ import CSSR.Initialization (
 -------------------------------------------------------------------------------
 loop :: [State] -> Int -> [State]
 loop all@(state:_) l | l < lMax = concat $
-    -- BREAKING: inputs are wrong. Need to double-check this part
-    [loop (test all history observed alpha) (l+1) | history  <- newState,
-                                                    observed <- observedState ]
+    [loop (test all observedHistory newState alpha) (l+1) | observedHistory <- observedState ]
   where
     newState = constructFrom state
+    observedState::[History]
     observedState = PT.walk (PT.getBranches parseTree) l
 
 loop all _ = all -- for everything else
