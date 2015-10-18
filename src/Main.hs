@@ -56,7 +56,7 @@ MOVE(x,s1,s2)
   re-estimate P^(X_t | S^ = s2)
 
 -}
-module CSSR where
+module Main where
 
 import CSSR.Parse.Cli(getFlags)
 import System.Environment(getArgs)
