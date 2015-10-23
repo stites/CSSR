@@ -1,41 +1,28 @@
-{-# LANGUAGE OverloadedStrings #-}
 -- | Commandline interface for CSSR
--- THIS IS A WORK IN PROGRESS FILE THAT NEEDS A LOT MORE ATTENTION
-module CSSR.Parse.Cli (getFlags) where
+module CSSR.Parse.Cli where
 
-import System.Console.GetOpt
-import System.Exit
+import Options.Applicative
+import Options.Applicative.Builder
 
-getFlags :: [String] -> IO ()
--- System flags
-getFlags[]            = version >> help >> exit
-getFlags["-h"]        = version >> help >> exit
-getFlags["--help"]    = version >> help >> exit
-getFlags["-v"]        = version >> exit
-getFlags["--version"] = version >> exit
+data Sample = Sample { alphabet :: String , version :: Bool }
 
--- required flags
-getFlags["-a"]           = stuff
-getFlags["--alphabet"]   = stuff
-getFlags["-d"]           = stuff
-getFlags["--data"]       = stuff
-getFlags["-m"]           = stuff
-getFlags["--max-length"] = stuff
+sample :: Parser Sample
+sample = Sample
+     <$> alphabetFile
+     <*> getVersion
 
--- optional flags
-getFlags["-s"]             = stuff
-getFlags["--significance"] = stuff
-getFlags["-ml"]            = stuff
-getFlags["--multiline"]    = stuff
-getFlags["-cs"]            = stuff
-getFlags["--chi-squared"]  = stuff
--- for everything else
-getFlags _ = stuff
+getVersion = switch
+    ( long "version"
+   <> short 'v'
+   <> help "Show the version" )
 
-help    = putStrLn $ unlines helpstring
-version = putStrLn "CSSR, v0.1.0"
-exit    = exitWith ExitSuccess
-stuff   = version
+-- -- required flags
+alphabetFile :: Parser String
+alphabetFile = strOption
+   ( long "alphabet"
+  <> short 'a'
+  <> metavar "FILE"
+  <> help "Required. A file containing the alphabet of all possible symbols." )
 
 helpstring = [
     "Usage: cssr [-adlsm] [-cs]",
