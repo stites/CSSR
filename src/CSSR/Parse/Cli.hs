@@ -16,9 +16,20 @@ getVersion = switch
    <> short 'v'
    <> help "Show the version" )
 
--- -- required flags
-alphabetFile :: Parser String
-alphabetFile = strOption
+-- ==============================
+-- Regular Options
+-- ------------------------------
+-- these are considered mandatory and have both short and long forms A regular
+-- option in CSSR has both a long and short name, and can be specified on the
+-- commandline as one of the following (here "alphabet" or "a" is used as an
+-- example):
+--     --alphabet filename.txt
+--     --alphabet=filename.txt
+--     --a filename.txt
+--     --afilename.txt
+
+alphabetOption :: Parser String
+alphabetOption = strOption
    ( long "alphabet"
   <> short 'a'
   <> metavar "FILE"
@@ -29,7 +40,6 @@ helpstring = [
     "  -h, --help           print this dialouge",
     "  -v, --version        print the program version",
     "\nRequired:",
-    "  -a, --alphabet       alphabet file",
     "  -d, --data           data file",
     "  -m, --max-length     maximum string length",
     "\nOptional:",
