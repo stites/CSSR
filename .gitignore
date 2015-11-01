@@ -1,3 +1,8 @@
 .stack-work
 cpp/CSSR
 dist
+.stites
+test-machines/EP.dot
+test-machines/EP_machine
+test-machines/EP_stateseq
+test-machines/EP_timeseq
