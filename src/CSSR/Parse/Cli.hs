@@ -35,13 +35,23 @@ alphabetOption = strOption
   <> metavar "FILE"
   <> help "Required. A file containing the alphabet of all possible symbols." )
 
+dataOption :: Parser String
+dataOption = strOption
+   ( long "data"
+  <> short 'd'
+  <> metavar "FILE"
+  <> help "Required. A file containing the data to be modelled." )
+
+maxLengthOption :: Parser Int
+maxLengthOption  = option auto
+   ( long "max-length"
+  <> short 'l'
+  <> metavar "N"
+  <> help "Required. The maximum size of events that a state can contain." )
+
 helpstring = [
     "Usage: cssr [-adlsm] [-cs]",
-    "  -h, --help           print this dialouge",
     "  -v, --version        print the program version",
-    "\nRequired:",
-    "  -d, --data           data file",
-    "  -m, --max-length     maximum string length",
     "\nOptional:",
     "  -s,  --significance  significance level",
     "  -ml, --multiline     parse file and consider multiline",
