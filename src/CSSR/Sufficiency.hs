@@ -8,6 +8,9 @@ module CSSR.Sufficiency where
 
 import qualified CSSR.Parse.Tree as PT
 
+-- TODO: REMOVE THIS
+import Debug.Trace
+
 import Data.List (find)
 import Data.Maybe (isJust, fromJust)
 import CSSR.CausalState.State (probability, State, Events)
@@ -59,7 +62,7 @@ test allStates history state alpha = let
     nullHypothesis = hypothesisTest state
     someState = find hypothesisTest allStates
   in
-    if nullHypothesis
+    if (trace "in test" nullHypothesis)
     then allStates -- ^ if the null hypothesis is true, keep as-is
     else if (isJust someState)
          then (moveStatesTo $ fromJust someState) ++ allStates
