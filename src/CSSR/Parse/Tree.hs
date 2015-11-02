@@ -1,11 +1,16 @@
-module CSSR.Parse.Tree where
+module CSSR.Parse.Tree (
+  ParseTree(Root),
+  ParseTreeBranch(Branch),
+  build,
+  walk,
+  getBranches
+  ) where
 
-import CSSR.CausalState.History
-import CSSR.CausalState.State
+import CSSR.CausalState.State (Event, State)
 
 data ParseTree = Root [ParseTreeBranch] deriving Show
 
-data ParseTreeBranch = Branch (Moment, [ParseTreeBranch]) deriving Show
+data ParseTreeBranch = Branch (Event, [ParseTreeBranch]) deriving Show
 
 parseTree :: ParseTree
 parseTree = Root []
@@ -25,7 +30,7 @@ exampleBranchArray = [
 exampleParseTree = Root exampleBranchArray
 
 -- | build takes a list of characters and generates a ParseTree
-build :: [ParseTreeBranch] -> [Moment] -> [ParseTreeBranch]
+build :: [ParseTreeBranch] -> [Event] -> [ParseTreeBranch]
 -- | if we have a sparse tree and a char-sequence
 build branches@(Branch(bChar, children):[])
                   chars@(char:path)                  = if (char == bChar)

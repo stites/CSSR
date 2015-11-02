@@ -15,24 +15,23 @@ module CSSR.Initialization where
 import Data.List (nub)
 import qualified Data.Vector as V
 import qualified CSSR.Parse.Tree as PT
-import CSSR.CausalState.History (Moment)
-import CSSR.CausalState.State (State)
+import CSSR.CausalState.State (State, Event)
 
 -- | SET DEFAULTS =======
 -- ----------------------
 -- significance level
 significanceLevel :: Float
-significanceLevel = 0.05
+significanceLevel = 0.5
 
 -- Same as initializing the ParseTree
 -- max length of a string
-lMax = 5
+lMax = 10
 
 -- start with a simple alphabet and dataFile
-alphabet :: [Moment]
-alphabet = "ab"
+alphabet :: [Event]
+alphabet = "AB"
 
-dataFile :: [Moment]
+dataFile :: [Event]
 dataFile =  take 100 (cycle "a")
 dataLength = length dataFile
 dataIdx = [0..dataLength]

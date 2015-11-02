@@ -10,8 +10,7 @@ import qualified CSSR.Parse.Tree as PT
 
 import Data.List (find)
 import Data.Maybe (isJust, fromJust)
-import CSSR.CausalState.State (probability, State)
-import CSSR.CausalState.History (Moment, History)
+import CSSR.CausalState.State (probability, State, Events)
 import CSSR.Initialization (
     lMax,              -- | default = 5
     significanceLevel, -- | default = 0.05
@@ -35,7 +34,7 @@ loop all@(state:_) l | l < lMax = concat $
     [loop (test all observedHistory newState alpha) (l+1) | observedHistory <- observedState ]
   where
     newState = constructFrom state
-    observedState::[History]
+    observedState::[Events]
     observedState = PT.walk (PT.getBranches parseTree) l
 
 loop all _ = all -- for everything else
@@ -43,7 +42,7 @@ loop all _ = all -- for everything else
 alpha :: Float
 alpha = significanceLevel -- ^ shorthand
 
-constructFrom :: State -> [History]
+constructFrom :: State -> [Events]
 constructFrom state = [ a:h | a<-alphabet, h<-state]
 
 -------------------------------------------------------------------------------
@@ -55,7 +54,7 @@ constructFrom state = [ a:h | a<-alphabet, h<-state]
 --
 -- If neither test succeeds, we will generate a new state for this history.
 -------------------------------------------------------------------------------
-test :: Fractional p => [State] -> History -> State -> Float -> [State]
+test :: Fractional p => [State] -> Events -> State -> Float -> [State]
 test allStates history state alpha = let
     nullHypothesis = hypothesisTest state
     someState = find hypothesisTest allStates
@@ -77,7 +76,7 @@ test allStates history state alpha = let
 -- ============================================================================
 -- TODO: re-estimation doesn't seem to fit here - could it be redundant?
 -------------------------------------------------------------------------------
-move :: History -> State -> State -> [State]
+move :: Events -> State -> State -> [State]
 move x s1 s2 = [s1', s2']
   where
     s1' = filter ((/=) x) s1

@@ -8,8 +8,7 @@
 -------------------------------------------------------------------------------
 module CSSR.Recursion where
 
-import CSSR.CausalState.History (History)
-import CSSR.CausalState.State (State)
+import CSSR.CausalState.State (State, Events)
 import CSSR.Initialization (
     lMax,
     significanceLevel,
@@ -46,7 +45,7 @@ recurse all = all
 -- that we don't need to move them. Testing! that's what we need here.
 -- This may also do the same thing that the Transitioning was supposed
 -- to do.
-split :: [History] -> [State]
+split :: [Events] -> [State]
 split (h:hs) = h':(split noth)
     where
       h'   = filter ((==) h) hs

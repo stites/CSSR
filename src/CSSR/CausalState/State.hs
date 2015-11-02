@@ -5,15 +5,16 @@
 -- that make up a causal state
 --
 -----------------------------------------------------------------------
-module CSSR.CausalState.State (State, probability) where
-
-import CSSR.CausalState.History (History)
+module CSSR.CausalState.State where
 
 -- TODO: these are just a bunch of alias' right now - It may be cleaner
 -- to have the State be a monad
-type State = [History]
 
-probability :: Fractional p => History -> State -> p
+type Event  = Char -- TODO: can also be ints... basically whatever the alphabet is
+type Events = [Event]
+type State  = [Events]
+
+probability :: Fractional p => Events -> State -> p
 probability x state = counted / stateSize
   where
     divisibleLength = realToFrac.length
