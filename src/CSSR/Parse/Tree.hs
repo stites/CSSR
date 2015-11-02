@@ -9,25 +9,7 @@ module CSSR.Parse.Tree (
 import CSSR.CausalState.State (Event, State)
 
 data ParseTree = Root [ParseTreeBranch] deriving Show
-
 data ParseTreeBranch = Branch (Event, [ParseTreeBranch]) deriving Show
-
-parseTree :: ParseTree
-parseTree = Root []
-
-exampleBranchArray = [
-  Branch ('a', [
-    Branch ('b',[
-      Branch ('c',[]),
-      Branch ('a',[])
-    ]),
-    Branch ('c',[
-      Branch ('c',[]),
-      Branch ('a',[])
-    ])
-  ]) ]
-
-exampleParseTree = Root exampleBranchArray
 
 -- | build takes a list of characters and generates a ParseTree
 build :: [ParseTreeBranch] -> [Event] -> [ParseTreeBranch]

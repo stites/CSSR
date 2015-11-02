@@ -4,6 +4,7 @@ module Cli where
 import Options.Applicative
 import Options.Applicative.Builder
 
+{-
 data Arguments = Arguments {
   version      :: Bool,
   alphabet     :: String,
@@ -97,3 +98,4 @@ chiSquaredFlag = switch
    <> short 'c'
    <> help "Use the Chi-Squared test." )
 
+-}

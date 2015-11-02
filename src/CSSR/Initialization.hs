@@ -25,7 +25,7 @@ significanceLevel = 0.5
 
 -- Same as initializing the ParseTree
 -- max length of a string
-lMax = 1
+lMax = 2
 
 -- start with even process alphabet and dataFiles located in:
 alphabetURI :: FilePath

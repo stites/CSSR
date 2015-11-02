@@ -11,6 +11,9 @@ import Options.Applicative
 import System.Environment(getArgs)
 import Cli
 
+
+main = return ()
+{-
 main :: IO ()
 main = execParser opts >>= greet
   where
@@ -18,4 +21,5 @@ main = execParser opts >>= greet
         ( fullDesc
       <> header "hello - a test for optparse-applicative"
       <> progDesc "Print a greeting for TARGET" )
+-}
 
