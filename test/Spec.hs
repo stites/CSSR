@@ -1,6 +1,7 @@
 import Test.Hspec
 import Test.QuickCheck
 import Control.Exception (evaluate)
+import CSSR.Initialization
 
 main :: IO ()
 main = hspec $ do
@@ -14,3 +15,7 @@ main = hspec $ do
     it "throws an exception if used with an empty list" $ do
       evaluate (head []) `shouldThrow` anyException
 
+  describe "CSSR with Even Process" $ do
+    describe "\"AB\" alphabet with lMax=1" $ do
+      it "should return two states with 'A' and 'B'" $
+        lMax `shouldBe` (1 :: Int)

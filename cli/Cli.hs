@@ -1,5 +1,5 @@
 -- | Commandline interface for CSSR
-module CSSR.Parse.Cli where
+module Cli where
 
 import Options.Applicative
 import Options.Applicative.Builder

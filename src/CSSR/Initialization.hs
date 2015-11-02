@@ -15,7 +15,7 @@ module CSSR.Initialization where
 import Data.List (nub)
 import qualified Data.Vector as V
 import qualified CSSR.Parse.Tree as PT
-import CSSR.CausalState.State (State, Event)
+import CSSR.CausalState.State (State, Event, Events)
 
 -- | SET DEFAULTS =======
 -- ----------------------
@@ -25,17 +25,28 @@ significanceLevel = 0.5
 
 -- Same as initializing the ParseTree
 -- max length of a string
-lMax = 10
+lMax = 1
 
--- start with a simple alphabet and dataFile
-alphabet :: [Event]
-alphabet = "AB"
+-- start with even process alphabet and dataFiles located in:
+alphabetURI :: FilePath
+alphabetURI = "../test-machines/alphabets/EP_alpha"
+-- alphabet :: [Event]
+-- alphabet = "AB"
+alphabet :: IO [Event]
+alphabet = readFile alphabetURI
 
-dataFile :: [Event]
+dataURI :: FilePath
+dataURI = "../test-machines/EP_stateseq"
+-- dataFile :: Events
+-- dataFile =  take 100 (cycle "a")
+dataFile :: Events
 dataFile =  take 100 (cycle "a")
+dataLength :: Int
 dataLength = length dataFile
+dataIdx :: [Int]
 dataIdx = [0..dataLength]
 
+sequences :: [Events]
 sequences = nub $ concat $ findSequences dataFile
   where
      findSequences dataFile = let

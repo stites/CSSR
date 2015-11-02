@@ -8,12 +8,8 @@
 module Main where
 
 import Options.Applicative
-import CSSR.Parse.Cli
 import System.Environment(getArgs)
-
-greet :: Sample -> IO ()
-greet (Sample h False) = putStrLn $ "Hello, " ++ h
-greet _ = return ()
+import Cli
 
 main :: IO ()
 main = execParser opts >>= greet

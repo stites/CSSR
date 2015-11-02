@@ -6,3 +6,7 @@ test-machines/EP.dot
 test-machines/EP_machine
 test-machines/EP_stateseq
 test-machines/EP_timeseq
+test-machines/EP_stateseq_inf.dot
+test-machines/EP_stateseq_info
+test-machines/EP_stateseq_results
+test-machines/EP_stateseq_state_series
