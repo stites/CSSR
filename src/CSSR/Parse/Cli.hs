@@ -4,29 +4,54 @@ module CSSR.Parse.Cli where
 import Options.Applicative
 import Options.Applicative.Builder
 
-data Sample = Sample { alphabet :: String , version :: Bool }
+data Arguments = Arguments {
+  version      :: Bool,
+  alphabet     :: String,
+  dataUri      :: String,
+  maxLength    :: Int,
+  significance :: String,
+  multiline    :: String,
+  chiSquared   :: String
+  }
 
-sample :: Parser Sample
-sample = Sample
-     <$> alphabetFile
-     <*> getVersion
+cli :: Parser Arguments
+cli = Arguments
+     -- Meta:
+     <$> versionFlag
 
-getVersion = switch
+     -- Required:
+     <*> alphabetOption
+     <*> dataOption
+     <*> maxLengthOption
+
+     -- Optional:
+     <*> significanceOption
+     <*> multilineFlag
+     <*> chiSquaredFlag
+
+-- ==============================
+-- Program Flags
+-- ------------------------------
+-- TODO: update this
+versionFlag :: Parser Bool
+versionFlag = switch
     ( long "version"
    <> short 'v'
    <> help "Show the version" )
 
 -- ==============================
--- Regular Options
+-- Required Options
 -- ------------------------------
--- these are considered mandatory and have both short and long forms A regular
--- option in CSSR has both a long and short name, and can be specified on the
--- commandline as one of the following (here "alphabet" or "a" is used as an
--- example):
+-- these are options which are mandatory to run CSSR. All required options have
+-- both short and long forms A regular option in CSSR has both a long and short
+-- name, and can be specified on the commandline as one of the following (here
+-- "alphabet" or "a" is used as an example):
+--
 --     --alphabet filename.txt
 --     --alphabet=filename.txt
 --     --a filename.txt
 --     --afilename.txt
+-- ------------------------------
 
 alphabetOption :: Parser String
 alphabetOption = strOption
@@ -49,12 +74,26 @@ maxLengthOption  = option auto
   <> metavar "N"
   <> help "Required. The maximum size of events that a state can contain." )
 
-helpstring = [
-    "Usage: cssr [-adlsm] [-cs]",
-    "  -v, --version        print the program version",
-    "\nOptional:",
-    "  -s,  --significance  significance level",
-    "  -ml, --multiline     parse file and consider multiline",
-    "  -cs, --chi-squared   use chi-squared test"
-  ]
+-- ==============================
+-- Optional Flags and Options
+-- ------------------------------
+-- TODO: ensure that this has respectable defaults
+significanceOption :: Parser Integer -- should be a float
+significanceOption = option auto
+    ( long "significance"
+   <> short 's'
+   <> metavar "S"
+   <> help "Set the significance level (defaults to 0.5)." )
+
+multilineFlag :: Parser Bool
+multilineFlag = switch
+    ( long "multi-line"
+   <> short 'm'
+   <> help "Indicate that multiple lines should be considered when parsing the data file." )
+
+chiSquaredFlag :: Parser Bool
+chiSquaredFlag = switch
+    ( long "chi-squared"
+   <> short 'c'
+   <> help "Use the Chi-Squared test." )
 
