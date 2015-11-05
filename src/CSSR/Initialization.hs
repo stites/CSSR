@@ -79,6 +79,7 @@ parseTree = PT.Root $ foldl PT.build [] sequences
 -- ----------------------
 sigma :: [State]
 sigma = []
+
 l :: Int
 l = 0
 

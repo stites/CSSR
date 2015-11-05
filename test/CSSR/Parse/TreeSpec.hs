@@ -5,23 +5,29 @@ import Test.QuickCheck
 import Control.Exception (evaluate)
 import CSSR.Parse.Tree
 
-main :: IO ()
-main = hspec $ do
-    describe "ParseTree.build" $ do
-      it "should transform a simple sequence" $ do
-        build [] "abc" `shouldBe` (abcTree :: [ParseTreeBranch])
-          where
-            abcTree   = [Branch ('a',[Branch ('b',[Branch ('c',[])])])]
+abcTree, abcaTree, abcaaTree, ab_caTree :: [ParseTreeBranch]
 
-      it "should build a tree given multiple calls" $ do
-        build (build [] "abc") "aba" `shouldBe` (abcaTree :: [ParseTreeBranch])
-        build (build [] "ab" ) "ca"  `shouldBe` (ab_caTree :: [ParseTreeBranch])
-          where
-            abcaTree  = [Branch ('a',[Branch ('b',[Branch ('c',[]), Branch ('a',[])])])]
-            ab_caTree = [Branch ('a',[Branch ('b',[])]),Branch ('c',[Branch ('a',[])])]
+abcTree   = [Branch ('a',[Branch ('b',[Branch ('c',[])])])]
+abcaTree  = [Branch ('a',[Branch ('b',[Branch ('a',[]), Branch ('c',[])])])]
+ab_caTree = [Branch ('c',[Branch ('a',[])]),Branch ('a',[Branch ('b',[])])]
+abcaaTree = [Branch ('a',[Branch ('b',[Branch ('a',[Branch ('a',[])]),Branch ('c',[])])])]
 
---   describe "ParseTree.walk" $ do
---     it "should walk down a simple tree" $ do
---       walk abcTree   1 `shouldBe` ["a"]
---       walk ab_caTree 1 `shouldBe` ["a", "c"]
+spec :: IO ()
+spec = hspec $ do
+  describe "ParseTree.build" $ do
+    it "should transform a simple sequence" $ do
+      (build [] "abc") `shouldBe` abcTree
+
+    -- TODO: make building a parseTree monadic
+    -- TODO: define Eq on parseTree so that it interprets sets
+    it "should build a tree given more than one call" $ do
+      build (build [] "abc") "aba"                `shouldBe` abcaTree
+      build (build [] "ab" ) "ca"                 `shouldBe` ab_caTree
+      build (build (build [] "abc") "aba") "abaa" `shouldBe` abcaaTree
+
+  describe "ParseTree.walk" $ do
+    it "should walk down a simple tree" $ do
+      pending
+--        walk abcTree   1 `shouldBe` ["a"]
+--        walk ab_caTree 1 `shouldBe` ["a", "c"]
 

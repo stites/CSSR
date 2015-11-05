@@ -8,20 +8,21 @@ module CSSR.Parse.Tree (
 
 import CSSR.CausalState.State (Event, State)
 
-data ParseTree = Root [ParseTreeBranch] deriving Show
-data ParseTreeBranch = Branch (Event, [ParseTreeBranch]) deriving Show
+data ParseTree       = Root [ParseTreeBranch]            deriving (Show, Eq)
+data ParseTreeBranch = Branch (Event, [ParseTreeBranch]) deriving (Show, Eq)
 
 -- | build takes a list of characters and generates a ParseTree
 build :: [ParseTreeBranch] -> [Event] -> [ParseTreeBranch]
+
 -- | if we have a sparse tree and a char-sequence
 build branches@(Branch(bChar, children):[])
-                  chars@(char:path)                  = if (char == bChar)
-                                                       then if (null path)
-                                                            then branches
-                                                            else [Branch(bChar, (build children path))]
-                                                       else if (null path)
-                                                            then Branch(char, []):branches
-                                                            else build ( Branch(char,[]):branches ) chars
+                  chars@(char:path)         = if (char == bChar)
+                                              then if (null path)
+                                                   then branches
+                                                   else [Branch(bChar, (build children path))]
+                                              else if (null path)
+                                                   then Branch(char, []):branches
+                                                   else build ( Branch(char,[]):branches ) chars
 -- | if we have a full tree and a char-sequence
 build branches@(Branch(bChar, children):siblings)
                   chars@(char:path)                  = if (char == bChar)
