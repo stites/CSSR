@@ -12,8 +12,11 @@ abcaTree  = [Branch ('a',[Branch ('b',[Branch ('a',[]), Branch ('c',[])])])]
 ab_caTree = [Branch ('c',[Branch ('a',[])]),Branch ('a',[Branch ('b',[])])]
 abcaaTree = [Branch ('a',[Branch ('b',[Branch ('a',[Branch ('a',[])]),Branch ('c',[])])])]
 
-spec :: IO ()
-spec = hspec $ do
+main :: IO ()
+main = hspec spec
+
+spec :: Spec
+spec = do
   describe "ParseTree.build" $ do
     it "should transform a simple sequence" $ do
       (build [] "abc") `shouldBe` abcTree

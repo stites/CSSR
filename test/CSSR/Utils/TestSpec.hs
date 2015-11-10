@@ -1,4 +1,4 @@
-module CSSR.Utils.TestSpec (main, spec) where
+module CSSR.Utils.TestSpec where
 
 import Test.Hspec
 import Test.QuickCheck
