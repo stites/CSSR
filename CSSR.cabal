@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Sam Stites
 maintainer:          sam@stites.io
--- copyright:
+copyright:           2002-2015
 category:            Machine Learning, Markov Models
 build-type:          Simple
 cabal-version:       >=1.10
@@ -15,8 +15,10 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     CSSR
+  default-extensions:  OverloadedStrings
   build-depends:       base, vector, containers >= 0.5
   default-language:    Haskell2010
+  ghc-options:         -fwarn-incomplete-patterns -Wall
 
 -- executable CSSR
 --   hs-source-dirs:      cli
