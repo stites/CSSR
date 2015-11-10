@@ -11,7 +11,7 @@ main = hspec spec
 
 state1 = [ "AAAA",  "AABA",  "ABAA",  "BAAA",  "BABA",
           "AAABA", "AABAA", "ABAAA", "ABABA", "BAABA",
-          "BABAA", "BAAAA", "ABAAA", "AAAAA" ]
+          "BABAA", "BAAAA", "AAAAA" ]
 sigLevel = 0.5
 
 spec :: Spec
