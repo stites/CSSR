@@ -11,5 +11,5 @@ test-machines/EP_stateseq_info
 test-machines/EP_stateseq_results
 test-machines/EP_stateseq_state_series
 .idea
-scala
 cpp/CMakeLists.txt
+scala/scala.iml
