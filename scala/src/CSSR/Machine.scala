@@ -1,33 +1,31 @@
 package CSSR
 
-class Machine {
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::CalcStringProbs
-  // Purpose: calculates the probability of all the max length strings in the
-  //          data based on the inferred machine
-  // In Params: the array of states (machine), array of max length strings
-  //            and their conditional frequencies, a hashtable of alpha values
-  //            and their indices
-  // Out Params: a pointer to an array of the string probabilities
-  // In/Out Params: none
-  // Pre- Cond: array of states (the machine) has been inferred
-  // Post-Cond: the string probabilities have been calculated and stored
-  //            in an array
-  //////////////////////////////////////////////////////////////////////////
-  void Machine::CalcStringProbs(G_Array *g_array, int maxLength,
-    HashTable2 *hashtable, double stringProbs[]) {
-    int stringArraySize = g_array->getSize();
-    char *string = NULL;
+import CSSR.states.State
 
-    for (int k = 0; k < stringArraySize; k++) {
-      string = (g_array->getList())[k]->getString();
-      stringProbs[k] = CalcStringProb(string, hashtable);
+import scala.collection.immutable.HashMap
+
+class Machine (val alpha:HashMap[String, Int]) {
+
+  var machine:Array[State] = Array()
+
+  /**
+    * Calculates the probability of all the max length strings in the data based on the inferred machine
+    * @param maxLength  array of max length strings
+    * @param conditionalFrequencies their conditional frequencies
+    * @param stringProbs a hashtable of alpha values
+    * @return a pointer to an array of the string probabilities
+    */
+  def calcStringProbs(maxLength:Int, conditionalFrequencies:HashMap[State, Int] , stringProbs:HashMap[String, Double]) = {
+    for (
+      state <- machine;
+      string <- state
+    ) {
+      stringProbs += (string -> CalcStringProb(string, conditionalFrequencies)
     }
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::CalcStringProb
+
   // Purpose: calculates the probability of a string in the
   //          data based on the inferred machine
   // In Params: the array of states (machine), a string and
@@ -38,20 +36,21 @@ class Machine {
   // Post-Cond: the string probability been calculated and returned to the
   //            calling function
   //////////////////////////////////////////////////////////////////////////
-  double Machine::CalcStringProb(char *string, HashTable2 *hashtable) {
-    double totalPerString = 0;
-    double totalPerState;
-    double total = 0;
-    State *currentState;
-    State *startState;
-    int stateArraySize = m_allstates->getArraySize();
-    int index;
-    double frequency;
-    char *symbol = new char[2];
-    symbol[1] = '\0';
-    bool isNullTrans = false;
-    int transition;
-    int length = strlen(string);
+  def CalcStringProb(string:String, machine:State):Double = {
+    var totalPerString:Double  = 0
+    var totalPerState:Double;
+    var total:Double = 0;
+    var currentState:State;
+    var startState:State;
+//    int stateArraySize = m_allstates->getArraySize();
+//    int index;
+    var frequency:Double;
+    var isNullTrans:Boolean = false
+    var transition:Int;
+    var length:Int= string.length
+    for (state <- AllStates) {
+    }
+  }
 
     for (int i = 0; i < stateArraySize; i++) {
       totalPerState = 1;
@@ -83,8 +82,7 @@ class Machine {
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::CalcRelEnt
+
   // Purpose: calculates the relative entropy based on the inferred machine
   // In Params: parstree of strings, hashtable of alpha and index values,
   //            boolean denoting multi-string input
@@ -94,7 +92,7 @@ class Machine {
   // Post-Cond: the relative entropy has been calculated and stored in the
   //            machine class as a member variable
   //////////////////////////////////////////////////////////////////////////
-  void Machine::CalcRelEnt(ParseTree &parsetree, HashTable2 *hashtable,
+  def CalcRelEnt(ParseTree &parsetree, HashTable2 *hashtable: void = ,
     bool isMulti) {
     G_Array g_array;
     int dataSize = parsetree.getDataSize();
@@ -139,8 +137,7 @@ class Machine {
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::CalcRelEntRate
+
   // Purpose: calculates the relative entropy rate based on the inferred machine
   // In Params: parstree of strings, hashtable of alpha and index values,
   //            and boolean denoting multi-string input
@@ -150,7 +147,7 @@ class Machine {
   // Post-Cond: the relative entropy rate has been calculated and stored in the
   //            machine class as a member variable
   //////////////////////////////////////////////////////////////////////////
-  void Machine::CalcRelEntRate(ParseTree &parsetree, HashTable2 *hashtable,
+  def CalcRelEntRate(ParseTree &parsetree, HashTable2 *hashtable: void = ,
     bool isMulti) {
     G_Array g_array;
     int dataSize = parsetree.getDataSize();
@@ -185,8 +182,7 @@ class Machine {
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::CalcRelEntRateHist
+
   // Purpose: calculates the relative entropy rate based on the inferred machine
   //          for a given history
   // In Params: an array of history probabilities, a list of histories, hashtable
@@ -198,7 +194,7 @@ class Machine {
   // Post-Cond: the relative entropy rate of the history has been calculated
   //            and returned to the calling function
   //////////////////////////////////////////////////////////////////////////
-  double Machine::CalcRelEntRateHist(double *stringProbs, ArrayElem **list,
+  def CalcRelEntRateHist(double *stringProbs, ArrayElem **list: double = ,
     HashTable2 *hashtable, int index,
     char *alpha, int alphaSize, int adjustedDataSize) {
     int *counts = list[index]->getCounts();
@@ -237,8 +233,7 @@ class Machine {
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::CalcRelEntRateAlpha
+
   // Purpose: calculates the relative entropy rate based on the inferred machine
   //          for one alphabet symbol given a specific history
   // In Params: the history probability, the history, the frequency of occurence
@@ -250,7 +245,7 @@ class Machine {
   // Post-Cond: the relative entropy rate of the symbol given a history has been
   //            calculated and returned to the calling function
   //////////////////////////////////////////////////////////////////////////
-  double Machine::CalcRelEntRateAlpha(double stringProb, char *history,
+  def CalcRelEntRateAlpha(double stringProb, char *history: double = ,
     double &accumulatedInferredRatio,
     double dataDist, char alphaElem,
     HashTable2 *hashtable) {
@@ -280,7 +275,7 @@ class Machine {
         //neglect this ratio but continue with program
         cerr << "\nWarning: Inferred machine says actual history ("
         << history << ") is"
-        << " impossible in Machine::CalcRelEntRateAlpha.\n\n"
+        def << " impossible CalcRelEntRateAlpha.\n\n: in = "
         << "Note: It is likely that this sequence only occurs once, in the "
         << "beginning of the data, and has been treated as transitory by "
         << "the code and mistakenly deleted from the machine. See 'ReadMe' for details.\n"
@@ -305,8 +300,7 @@ class Machine {
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::CalcVariation
+
   // Purpose: calculates the variation rate based on the inferred machine
   // In Params: parstree of strings, hashtable of alpha and index values,
   //            and boolean denoting multi-string input
@@ -316,7 +310,7 @@ class Machine {
   // Post-Cond: the relative entropy rate has been calculated and stored in the
   //            machine class as a member variable
   //////////////////////////////////////////////////////////////////////////
-  void Machine::CalcVariation(ParseTree &parsetree, HashTable2 *hashtable,
+  def CalcVariation(ParseTree &parsetree, HashTable2 *hashtable: void = ,
     bool isMulti) {
     G_Array g_array;
     int dataSize = parsetree.getDataSize();
@@ -361,8 +355,7 @@ class Machine {
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::CalcCmu
+
   // Purpose: calculates the statistical complexity based on the inferred machine
   // In Params: the array of states (machine)
   // Out Params: none
@@ -371,7 +364,7 @@ class Machine {
   // Post-Cond: the statistical complexity has been calculated and stored in the
   //            machine class as a member variable
   //////////////////////////////////////////////////////////////////////////
-  void Machine::CalcCmu() {
+  def CalcCmu() : void = {
     State *state = NULL;
     int size = m_allstates->getArraySize();
     double cMu = 0;
@@ -387,8 +380,7 @@ class Machine {
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::CalcEntRate
+
   // Purpose: calculates the entropy rate based on the inferred machine
   // In Params: the array of states (machine)
   // Out Params: none
@@ -397,7 +389,7 @@ class Machine {
   // Post-Cond: the entropy rate has been calculated and stored in the
   //            machine class as a member variable
   //////////////////////////////////////////////////////////////////////////
-  void Machine::CalcEntRate() {
+  def CalcEntRate() : void = {
     State *state = NULL;
     int size = m_allstates->getArraySize();
     double entRate = 0;
@@ -419,8 +411,7 @@ class Machine {
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::PrintOut
+
   // Purpose: prints out all the information values calculated by machine
   //          to a file
   // In Params: the name of the input file used for program
@@ -430,7 +421,7 @@ class Machine {
   //            been calculated
   // Post-Cond: output file exists with information listed inside
   //////////////////////////////////////////////////////////////////////////
-  void Machine::PrintOut(char input[], const char *alpha_file, const char *data_file, const int &max_length,
+  def PrintOut(char input[], const char *alpha_file, const char *data_file, const int &max_length: void = ,
   const double &sigLevel, const bool &isMulti, const bool &isChi, int alphaSize) {
     char *output = new char[strlen(input) + 6];
 
@@ -481,8 +472,7 @@ class Machine {
   }
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: Machine::PrintDot
+
   // Purpose: prints out all the machine to a .dot file
   // In Params: the name of the input file used for program, the alphabet
   // Out Params: none
@@ -490,7 +480,7 @@ class Machine {
   // Pre- Cond: all values in array of states have been set
   // Post-Cond: output .dot file exists with machine
   //////////////////////////////////////////////////////////////////////////
-  void Machine::PrintDot(char input[], char alpha[]) {
+  def PrintDot(char input[], char alpha[]) : void = {
     char *output = new char[strlen(input) + 9];
 
     strcpy(output, input);

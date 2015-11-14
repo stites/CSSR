@@ -1,6 +1,22 @@
 package CSSR.test
 
-class Test {
+object Test {
+
+  def RunTest(dist1:Array[Double], count1:Int, dist2:Array[Double], count2:Int, distSize:Int):Double = {
+    runKSTest(dist1, count1, dist2, count2, distSize)
+  }
+
+
+  def RunKSTest(dist1:Array[Double], count1:Int, dist2:Array[Double], count2:Int, distSize:Int):Double = {
+    KSstat:Double;              //KS statistic
+    sigLevel:Double;            //significance level for KS test
+
+    KStwo(dist1, count1, dist2, count2, &KSstat, &sigLevel, distSize);
+    return sigLevel;
+  }
+
+
+
   ///////////////////////////////////////////////////////////////////////////
   // Function: Test::KStwo
   // Purpose: calculates KS statistic and significance level (after

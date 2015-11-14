@@ -40,4 +40,56 @@ class State {
     */
   }
 
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Function: AllStates::Compare
+  // Purpose: calls the KS statistic
+  // In Params: the state to compare,the new distribution, the new data points
+  // Out Params: significance level
+  // In/Out Params: none
+  // Pre- Cond: distributions have been calculated and set into arrays
+  // Post-Cond: sig level is  known
+  //////////////////////////////////////////////////////////////////////////
+  /**
+    * Calls the KS Statistic
+    * @param newDistribution
+    * @param count
+    * @return
+    */
+  def compare(newDistribution:Array[Double], count:Int) :Double = {
+    runTest(this.getCurrentDistance(), this.getCount(), newDistribution, count, m_distSize);
+  }
+
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Function: AllStates::Compare
+  // Purpose: calls the KS statistic
+  // In Params: the states to compare
+  // Out Params: significance level
+  // In/Out Params: none
+  // Pre- Cond: distributions have been calculated and set into arrays
+  // Post-Cond: sig level is  known
+  //////////////////////////////////////////////////////////////////////////
+  double AllStates::Compare(int k, int j) {
+    return m_test->RunTest(m_StateArray[k]->getCurrentDist(),
+      m_StateArray[k]->getCount(),
+      m_StateArray[j]->getCurrentDist(),
+      m_StateArray[j]->getCount(), m_distSize);
+  }
+
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Function: AllStates::Compare
+  // Purpose: calls the KS statistic
+  // In Params: the state to compare,the new distribution, the new data points
+  // Out Params: significance level
+  // In/Out Params: none
+  // Pre- Cond: distributions have been calculated and set into arrays
+  // Post-Cond: sig level is  known
+  //////////////////////////////////////////////////////////////////////////
+  double AllStates::Compare(int k, double newDist[], int count) {
+    return m_test->RunTest(m_StateArray[k]->getCurrentDist(),
+      m_StateArray[k]->getCount(), newDist, count,
+      m_distSize);
+  }
 }

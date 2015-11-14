@@ -2,7 +2,7 @@ package CSSR.states
 
 class AllStates {
 
-  ///////////////////////////////////////////////////////////////////////////
+  /*
   // Function: AllStates::PrintOut
   // Purpose: prints out all states in array to a file
   // In Params: the name of the input file used for program, the alphabet
@@ -37,123 +37,13 @@ class AllStates {
     outData.close();
     delete[] output;
   }
+  */
 
 
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: AllStates::Grow
+  // Grow
   // Purpose: enlarges array of states by 'INCREMENT'
-  // In Params: size of new array
-  // Out Params: new array
-  // In/Out Params: old array
-  // Pre- Cond: Array of states is full, m_arraySize = m_maxArraySize -1
-  // Post-Cond: Array is now able to insert new states
-  //////////////////////////////////////////////////////////////////////////
-  void AllStates::Grow(int newsize) {
-    //check if index is valid
-    State **newBuffer = NULL;
-    int i;
-
-    newBuffer = new State *[newsize];
-
-    if (newBuffer == NULL) {
-      cerr << "Out of memory." << endl;
-      exit(1);
-    }
-
-    //set each pointer to NULL
-    for (i = 0; i < newsize; i++)
-    newBuffer[i] = NULL;
-
-    //copy buffer contents into newBuffer
-    for (i = 0; i <= m_arraySize; i++) {
-      newBuffer[i] = m_StateArray[i];
-    }
-
-    delete[] m_StateArray;
-    m_StateArray = NULL;
-
-    //point the array buffer at the newly created buffer
-    m_StateArray = newBuffer;
-    m_maxArraySize = newsize;
-  }
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: AllStates::Insert
-  // Purpose: adds a new array element to the specified state
-  // In Params: string for new state, state in which to insert the string
-  // Out Params: new state
-  // In/Out Params: hash table of pointers to strings and states
-  // Pre- Cond: Array of states has been initialized, new distribution has
-  //            been checked for uniqueness
-  // Post-Cond: string has been added to new state, new state added to array
-  //            array size increased by one
-  ///////////////////////////////////////////////////////////////////////////
-  void AllStates::Insert(ArrayElem *elem, State *state) {
-    state->Insert(elem, m_table);
-  }
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: AllStates::Insert
-  // Purpose: adds a new state to the array of states, or attaches a string
-  //          to existing state
-  // In Params: array element for new state, index of insertion for elem
-  // Out Params: new state
-  // In/Out Params: hash table of pointers to strings and states
-  // Pre- Cond: Array of states has been initialized, new distribution has
-  //            been checked for uniqueness
-  // Post-Cond: string has been added to new state, new state added to array
-  //            array size increased by one
-  ///////////////////////////////////////////////////////////////////////////
-  void AllStates::Insert(ArrayElem *elem, int index) {
-    //to add a new state
-    if (index == m_arraySize) {
-      if (Is_Full()) {
-        Grow(m_maxArraySize + INCREMENT);
-      }
-
-      State *temp = new State(m_distSize, m_arraySize);
-      m_StateArray[m_arraySize] = temp;
-      m_StateArray[m_arraySize]->Insert(elem, m_table);
-      m_arraySize++;
-    }
-    //otherwise add a string to an existing state
-    else {
-      m_StateArray[index]->Insert(elem, m_table);
-    }
-  }
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: AllStates::Insert
-  // Purpose: adds a new state to the array of states, or attaches a string
-  //          to existing state
-  // In Params: string element for new state, index of insertion for elem
-  // Out Params: new state
-  // In/Out Params: hash table of pointers to strings and states
-  // Pre- Cond: Array of states has been initialized, new distribution has
-  //            been checked for uniqueness
-  // Post-Cond: string has been added to new state, new state added to array
-  //            array size increased by one
-  ///////////////////////////////////////////////////////////////////////////
-  void AllStates::Insert(StringElem *elem, int index) {
-    //to add a new state
-    if (index == m_arraySize) {
-      if (Is_Full()) {
-        Grow(m_maxArraySize + INCREMENT);
-      }
-      State *temp = new State(m_distSize, m_arraySize);
-      m_StateArray[m_arraySize] = temp;
-      m_StateArray[m_arraySize]->Insert(elem, m_table);
-      m_arraySize++;
-    }
-    //otherwise add a string to an existing state
-    else {
-      m_StateArray[index]->Insert(elem, m_table);
-    }
-  }
-
+  // Insert
+  // add a string to a state in the state array
 
   ///////////////////////////////////////////////////////////////////////////
   // Function: AllStates::CalcNewDist
@@ -1410,89 +1300,4 @@ class AllStates {
     delete[] string;
     return state;
   }
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: ~AllStates
-  // Purpose: destructor for AllStates
-  ///////////////////////////////////////////////////////////////////////////
-  AllStates::~AllStates() {
-    if (m_StateArray) {
-      for (int i = 0; i < m_arraySize; i++) {
-        delete m_StateArray[i];
-        m_StateArray[i] = NULL;
-      }
-      delete[] m_StateArray;
-    }
-    if (m_table)
-      delete m_table;
-  }
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: AllStates
-  // Purpose: constructor for AllStates
-  ///////////////////////////////////////////////////////////////////////////
-  AllStates::AllStates(int distSize, double sigLevel, bool isChi) {
-    m_reSynch = false;
-    m_sigLevel = sigLevel;
-    m_test = new Test(isChi);
-    m_distSize = distSize;
-    m_arraySize = 0;
-    m_maxArraySize = INITIAL_SIZE;
-    m_StateArray = new State *[INITIAL_SIZE];
-    for (int i = 0; i < INITIAL_SIZE; i++)
-    m_StateArray[i] = NULL;
-    m_table = new HashTable;
-  }
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: AllStates::Compare
-  // Purpose: calls the KS statistic
-  // In Params: the states to compare
-  // Out Params: significance level
-  // In/Out Params: none
-  // Pre- Cond: distributions have been calculated and set into arrays
-  // Post-Cond: sig level is  known
-  //////////////////////////////////////////////////////////////////////////
-  double AllStates::Compare(int k, int j) {
-    return m_test->RunTest(m_StateArray[k]->getCurrentDist(),
-      m_StateArray[k]->getCount(),
-      m_StateArray[j]->getCurrentDist(),
-      m_StateArray[j]->getCount(), m_distSize);
-  }
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: AllStates::Compare
-  // Purpose: calls the KS statistic
-  // In Params: the state to compare,the new distribution, the new data points
-  // Out Params: significance level
-  // In/Out Params: none
-  // Pre- Cond: distributions have been calculated and set into arrays
-  // Post-Cond: sig level is  known
-  //////////////////////////////////////////////////////////////////////////
-  double AllStates::Compare(int k, double newDist[], int count) {
-    return m_test->RunTest(m_StateArray[k]->getCurrentDist(),
-      m_StateArray[k]->getCount(), newDist, count,
-      m_distSize);
-  }
-
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Function: AllStates::Compare
-  // Purpose: calls the KS statistic
-  // In Params: the state to compare,the new distribution, the new data points
-  // Out Params: significance level
-  // In/Out Params: none
-  // Pre- Cond: distributions have been calculated and set into arrays
-  // Post-Cond: sig level is  known
-  //////////////////////////////////////////////////////////////////////////
-  double AllStates::Compare(State *state, double newDist[], int count) {
-    return m_test->RunTest(state->getCurrentDist(), state->getCount(), newDist,
-      count, m_distSize);
-  }
-
-
 }
