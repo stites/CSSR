@@ -51,8 +51,7 @@ class State
   void RemoveString(StringElem *element);
   int getNumber(){return m_number;}
   void setCurrentDist(double dist, int index){m_currentDist[index] = dist;}
-  void setTransitions(int index, int childState){m_transitions[index] =
-      childState;}
+  void setTransitions(int index, int childState){m_transitions[index] = childState;}
   int getTransitions(int index){return m_transitions[index];}
   void setFrequency(double freq){m_frequency = freq;}
   void decrementNumber(){m_number--;}

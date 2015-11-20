@@ -91,19 +91,15 @@ TransTable::~TransTable()
 
 
 
-void TransTable::setTrans(int transState, StringElem* string, int parentState)
-{
+void TransTable::setTrans(int transState, StringElem* string, int parentState) {
   if(transState == NULL_STATE)
     return;
-  else
-    {
+  else {
       //create a new TransNode and put it at the front of the list
-      if((transState >= 0) && (transState < m_arraySize))
-	{
+      if((transState >= 0) && (transState < m_arraySize)) {
 	  TransNode* temp1 = new TransNode;
 	  TransNode* temp3 = new TransNode;
-	  if(temp1 == NULL || temp3 == NULL)
-	    {
+	  if(temp1 == NULL || temp3 == NULL) {
 	      cerr << "Out of memory." << endl;
 	      exit(1);
 	    }
@@ -136,8 +132,7 @@ void TransTable::setTrans(int transState, StringElem* string, int parentState)
 }
 
 
-void TransTable::RemoveStringsAndState(int removalState, int removeAdjust,
-				       int lowest)
+void TransTable::RemoveStringsAndState(int removalState, int removeAdjust, int lowest)
 {
   TransNode* removeTemp;
   TransNode* removeTemp2;
