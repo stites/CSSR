@@ -1,7 +1,7 @@
-package CSSR.parse
+package com.typeclassified.cssr.parse
 
 class ParseTree {
-  var tree:ParseTreeNode
+  var tree:ParseTreeNode = new ParseTreeNode()
 
   def addString (str:String) :ParseTree = {
     tree = addString(str, new ParseTreeNode())
@@ -22,6 +22,7 @@ class ParseTree {
 //    getDepth(int, tree.children.toList, List(tree.value))
 //  }
 
+  /*
   protected def getDepth (int: Int, nodes:List[ParseTreeNode], strings:List[String]):List[String] = {
     if (int <= 0) strings else {
       var nextStrings = Array()
@@ -32,9 +33,11 @@ class ParseTree {
       getDepth(int - 1, nextNodes, nextStrings)
     }
   }
+  */
 }
 
-class ParseTreeNode (val value:Char = "") {
+class ParseTreeNode (val value:Char = 0.toChar) {
+
   var children:Set[ParseTreeNode] = Set()
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[ParseTreeNode]
