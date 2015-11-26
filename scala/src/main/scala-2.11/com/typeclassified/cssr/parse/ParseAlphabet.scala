@@ -9,4 +9,8 @@ class ParseAlphabet (alphabetRaw:List[Char]) {
   var size = alphabetRaw.size
 }
 
+object AlphabetHolder {
+  var alphabet:ParseAlphabet = _
+}
+
 
