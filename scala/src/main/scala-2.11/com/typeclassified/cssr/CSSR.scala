@@ -9,6 +9,8 @@ class CSSR {
   val datasize = 1000
   val A = List('a', 'b')
   var alphabet:ParseAlphabet = ParseAlphabet(A)
+  AlphabetHolder.alphabet = alphabet
+
   var obs:ListBuffer[Char] = new ListBuffer[Char]()
   val Lmax = 5
   val sig = 0.7
@@ -18,8 +20,11 @@ class CSSR {
   1 to datasize foreach { i => obs += A(i%2) }
 
   // ======================================================================================
+  object AlphabetHolder {
+    var alphabet:ParseAlphabet = _
+  }
 
-  class ParseTree {
+  class ParseTree (val alphabet: ParseAlphabet) {
     var root:List[ParseNode] = List()
 
     def updatePredictiveDistribution(x0:Char, x_hist:List[Char]) = {
@@ -34,9 +39,7 @@ class CSSR {
   }
 
   object ParseTree {
-    var alphabet:ParseAlphabet = ParseAlphabet(A) // <= lols
-
-    def apply() = new ParseTree()
+    def apply(alphabet: ParseAlphabet) = new ParseTree(alphabet)
 
     def loadData(tree:ParseTree, xs:List[Char], n:Int) = {
       //  Yield successive n-sized windows from the x's. Does not work with a length of 0.
@@ -50,8 +53,8 @@ class CSSR {
   }
 
   trait Probablistic {
-    var frequency:DenseVector[Double] = DenseVector.zeros[Double](ParseTree.alphabet.size)
-    var normalDistribution:DenseVector[Double] = DenseVector.zeros[Double](ParseTree.alphabet.size)
+    var frequency:DenseVector[Double] = DenseVector.zeros[Double](AlphabetHolder.alphabet.size)
+    var normalDistribution:DenseVector[Double] = DenseVector.zeros[Double](AlphabetHolder.alphabet.size)
     var totalCounts:Int = 0
   }
 
@@ -92,7 +95,7 @@ class CSSR {
     var children:List[ParseNode] = List()
 
     def updateDistribution(xNext:Char) = {
-      val idx:Int = ParseTree.alphabet.map(xNext)
+      val idx:Int = AlphabetHolder.alphabet.map(xNext)
       frequency(idx) += 1
       totalCounts += 1
       normalDistribution = frequency :/ totalCounts.toDouble
