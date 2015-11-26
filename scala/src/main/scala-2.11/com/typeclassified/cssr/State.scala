@@ -4,30 +4,28 @@ import com.typeclassified.cssr.parse.ParseNode
 
 import scala.collection.mutable.ListBuffer
 
+object State { def apply(c:Char) = new State(c) }
+
 class State (val value:Char) extends Probablistic {
   var histories:ListBuffer[ParseNode] = ListBuffer()
 
   def addHistory (h:ParseNode)= {
     histories += h
-    normalize_across_histories()
+    normalizeAcrossHistories()
   }
 
   def rmHistory (x:ParseNode) = {
     histories = histories.filter( y => y != x)
-    normalize_across_histories()
+    normalizeAcrossHistories()
   }
 
-  def normalize_across_histories() = {
-    frequency = histories
-      .map(parseNode => parseNode.frequency)
-      .reduceRight((nodeFreq, accFreq) => nodeFreq :+ accFreq)(frequency)
+  def normalizeAcrossHistories() = {
+    frequency = histories.foldRight(frequency)((history, totalFreq) => totalFreq :+ history.frequency)
 
-    totalCounts = frequency.reduceRight(_+_).toInt
+    totalCounts = frequency.foldRight(0d)(_+_).toInt
 
-    normalDistribution = frequency :/ totalCounts
+    normalDistribution = frequency:/(totalCounts)
   }
 
 }
-
-object State { def apply(c:Char) = new State(c) }
 

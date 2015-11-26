@@ -7,9 +7,9 @@ import scala.collection.mutable.ListBuffer
 
 object CSSR {
   var parseTree:ParseTree = _
-  var Lmax = _
-  var sig = _
-  var emptyState = _
+  var Lmax:Int = _
+  var sig:Double = _
+  var emptyState:State = _
   var allStates:ListBuffer[State] = _
 
   def initialization (): Unit = {
@@ -49,7 +49,7 @@ object CSSR {
               p = s.normalized_distribution
               test(S, p, aXt, s, sig)
      */
-    println(obs.toList)
+    println(parseTree)
   }
 }
 
