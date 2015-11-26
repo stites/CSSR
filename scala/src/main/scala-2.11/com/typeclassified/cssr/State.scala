@@ -4,9 +4,9 @@ import com.typeclassified.cssr.parse.ParseNode
 
 import scala.collection.mutable.ListBuffer
 
-object State { def apply(c:Char) = new State(c) }
+object State { def apply() = new State() }
 
-class State (val value:Char) extends Probablistic {
+class State extends Probablistic {
   var histories:ListBuffer[ParseNode] = ListBuffer()
 
   def addHistory (h:ParseNode)= {
