@@ -121,8 +121,7 @@ void State::Insert(ArrayElem* elem, HashTable* table)
 // Pre- Cond: state has been initialized
 // Post-Cond: string has been added to state
 //////////////////////////////////////////////////////////////////////////
-void State::Insert(StringElem* elem, HashTable* table)
-{    
+void State::Insert(StringElem* elem, HashTable* table) {
   //create temporary String Element
   StringElem *temp = new StringElem(*elem);
 
@@ -130,14 +129,12 @@ void State::Insert(StringElem* elem, HashTable* table)
   table->Insert(temp, this);
 
   //if first in list, set up head and tail pointers
-  if(m_listSize == 0)
-    {
+  if(m_listSize == 0) {
       m_StringList = m_listTail = temp;
       m_listSize++;
     }
   //otherwise put new element last in list
-  else
-    {
+  else {
       m_listTail->m_nextPtr = temp;
       m_listTail = temp;
       temp = NULL;
@@ -153,14 +150,14 @@ void State::Insert(StringElem* elem, HashTable* table)
 // In Params: input to program (alphabet and time-series)
 // Out Params: any new states created
 // In/Out Params: the alphabet and data strings
-// Pre- Cond: Alphabet and Data arrays are set, all strings of length one 
+// Pre- Cond: Alphabet and Data arrays are set, all strings of length one
 //            have been examined, initial states  have been created
-// Post-Cond: State has array of probabilities of occurence for each 
-//            element in the alphabet             
+// Post-Cond: State has array of probabilities of occurence for each
+//            element in the alphabet
 //////////////////////////////////////////////////////////////////////////
-void State::CalcCurrentDist()
-{
-  StringElem* stringElem;         //points to current string
+void State::CalcCurrentDist() {
+  //points to current string
+  StringElem* stringElem;
 
   //initialize the occurence count for all strings in state
   m_occurenceCount = 0;
@@ -169,24 +166,28 @@ void State::CalcCurrentDist()
   stringElem = m_StringList;
 
   //initialize distribution
-  for(int j =0; j< m_distributionSize;j++)
+  for(int j =0; j< m_distributionSize;j++) {
     m_currentDist[j] = 0;
-  
-  while(stringElem!= NULL)
-    {
-      for(int i = 0; i < m_distributionSize; i++)
-	{
-	  m_occurenceCount+=stringElem->m_counts[i];
-	  m_currentDist[i]+= (double)stringElem->m_counts[i];
-	}
-      stringElem = stringElem->m_nextPtr;
+  }
+
+  // iterate through each of the "histories" in the state
+  while(stringElem!= NULL) {
+    // for each of these histories
+    for(int i = 0; i < m_distributionSize; i++) {
+      // get the total counts for the history
+      m_occurenceCount+=stringElem->m_counts[i];
+      // and start aggregating these counts for their
+      // respective symbol in the full state
+      m_currentDist[i]+= (double)stringElem->m_counts[i];
     }
+    stringElem = stringElem->m_nextPtr;
+  }
   //divide all counts by total number of strings in state
-  if(m_occurenceCount !=0)
-    {				  
-      for(int k =0; k< m_distributionSize;k++)
-	m_currentDist[k] =((m_currentDist[k])/((double)m_occurenceCount));
+  if(m_occurenceCount !=0) {
+    for(int k =0; k< m_distributionSize;k++) {
+      m_currentDist[k] =((m_currentDist[k])/((double)m_occurenceCount));
     }
+  }
 }
 
 
