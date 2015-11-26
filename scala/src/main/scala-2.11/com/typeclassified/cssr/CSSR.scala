@@ -12,6 +12,8 @@ class CSSR {
   var obs:ListBuffer[Char] = new ListBuffer[Char]()
   val Lmax = 5
   val sig = 0.7
+  val emptyState = State(0.toChar)
+  val allStates:List[State] = List(emptyState)
 
   1 to datasize foreach { i => obs += A(i%2) }
 
@@ -27,7 +29,7 @@ class CSSR {
 
     def navigateHistory(history:List[Char]) : ParseNode = {
       // TODO
-      return new ParseNode("arst", this)
+      return new ParseNode("arst", this, emptyState)
     }
   }
 
@@ -77,15 +79,16 @@ class CSSR {
     }
 
   }
+
   object State { def apply(c:Char) = new State(c) }
 
-  class ParseNode (string:String, parseTree: ParseTree) extends Probablistic {
+  class ParseNode (string:String, parseTree: ParseTree, initializingState:State) extends Probablistic {
     /* history = 00
      * next_x  = 1
      *       ==> 001
      */
     val history:String = string
-    var currentState:State = None
+    var currentState:State = initializingState
     var children:List[ParseNode] = List()
 
     def updateDistribution(xNext:Char) = {
@@ -95,10 +98,6 @@ class CSSR {
       normalDistribution = frequency :/ totalCounts.toDouble
     }
 
-    """ take 'windows', track current depth in form of history
-    take all next "steps" and calculate conditional probabilities
-    """
-
     def changeState(s:State):Unit = {
       // s.append(this) # see null hypothesis and uncomment one
       currentState = s
@@ -106,66 +105,6 @@ class CSSR {
       children foreach( child => child.changeState(s) )
     }
   }
-
-  /*
-
-  }
-  class ParseTree {
-  var tree:ParseTreeNode = new ParseTreeNode()
-
-  def addString (str:String) :ParseTree = {
-    tree = addString(str, new ParseTreeNode())
-    this
-  }
-
-  protected def addString (str:String, tree:ParseTreeNode): ParseTreeNode = {
-    if (str.isEmpty) {
-      tree
-    } else {
-      val nextNode = new ParseTreeNode(str.head)
-      tree.children += nextNode
-      addString(str.tail, nextNode)
-    }
-  }
-
-  //  def getDepth (int: Int): List[String] = {
-  //    getDepth(int, tree.children.toList, List(tree.value))
-  //  }
-
-  /*
-  protected def getDepth (int: Int, nodes:List[ParseTreeNode], strings:List[String]):List[String] = {
-    if (int <= 0) strings else {
-      var nextStrings = Array()
-      for (node <- nodes){
-        nextStrings ++= strings.map(s => node.value + s)
-      }
-      val nextNodes = nodes.reduce(List())(acc, node => )
-      getDepth(int - 1, nextNodes, nextStrings)
-    }
-  }
-  */
-  }
-
-  class ParseTreeNode (val value:Char = 0.toChar) {
-
-  var children:Set[ParseTreeNode] = Set()
-
-  def canEqual(other: Any): Boolean = other.isInstanceOf[ParseTreeNode]
-
-  override def equals(other: Any): Boolean = other match {
-    case that: ParseTreeNode =>
-      (that canEqual this) &&
-        value == that.value
-    case _ => false
-  }
-
-  override def hashCode(): Int = {
-    val state = Seq(value)
-    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-  }
-  }
-  */
-  val allStates:List[State] = List(State(0.toChar))
 
   // ======================================================================================
 }
