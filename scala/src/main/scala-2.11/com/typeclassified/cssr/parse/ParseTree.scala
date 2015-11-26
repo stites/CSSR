@@ -1,9 +1,9 @@
 package com.typeclassified.cssr.parse
 
-import com.typeclassified.cssr.{Probablistic, State}
+import com.typeclassified.cssr.{CSSR, Probablistic, State}
 
 object ParseTree {
-  def apply(alphabet: ParseAlphabet) = new ParseTree(alphabet)
+  def apply() = new ParseTree()
 
   def loadData(tree:ParseTree, xs:List[Char], n:Int) = {
     //  Yield successive n-sized windows from the x's. Does not work with a length of 0.
@@ -16,7 +16,7 @@ object ParseTree {
   }
 }
 
-class ParseTree (val alphabet: ParseAlphabet) {
+class ParseTree {
   var root:List[ParseNode] = List()
 
   def updatePredictiveDistribution(x0:Char, x_hist:List[Char]) = {
@@ -26,7 +26,7 @@ class ParseTree (val alphabet: ParseAlphabet) {
 
   def navigateHistory(history:List[Char]) : ParseNode = {
     // TODO
-    return new ParseNode("arst", this, emptyState)
+    return new ParseNode("arst", this, CSSR.emptyState)
   }
 }
 
