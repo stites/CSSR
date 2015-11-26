@@ -47,11 +47,14 @@ class CSSR {
     }
   }
 
-  class State (val value:Char) {
-    var histories:List[ParseNode] = List()
-    val counts:DenseVector[Int] = DenseVector.zeros[Int](histories.size)
-    var normalDistribution:DenseVector[Double] = DenseVector.zeros[Double](histories.size)
-    var count = 0
+  trait Probablistic {
+    var frequency:DenseVector[Double] = DenseVector.zeros[Double](ParseTree.alphabet.size)
+    var normalDistribution:DenseVector[Double] = DenseVector.zeros[Double](ParseTree.alphabet.size)
+    var totalCounts:Int = 0
+  }
+
+  class State (val value:Char) extends Probablistic {
+    var histories:ListBuffer[ParseNode] = ListBuffer()
 
     def addHistory (h:ParseNode)= {
       histories += h
@@ -64,34 +67,29 @@ class CSSR {
     }
 
     def normalize_across_histories() = {
-      for (node <- histories) {
-        count += node.totalCounts
-      }
+      frequency = histories
+        .map(parseNode => parseNode.frequency)
+        .reduceRight((nodeFreq, accFreq) => nodeFreq :+ accFreq)(frequency)
 
-      normalDistribution() =
-      normalized_distribution += node.normalized * node.total_count
+      totalCounts = frequency.reduceRight(_+_).toInt
 
-      normalized_distribution / count
+      normalDistribution = frequency :/ totalCounts
     }
 
   }
   object State { def apply(c:Char) = new State(c) }
 
-  class ParseNode (string:String, parseTree: ParseTree) {
+  class ParseNode (string:String, parseTree: ParseTree) extends Probablistic {
     /* history = 00
      * next_x  = 1
      *       ==> 001
      */
-    var totalCounts:Int = 0
     val history:String = string
     var currentState:State = None
     var children:List[ParseNode] = List()
 
-    val frequency:DenseVector[Int] = DenseVector.zeros[Int](ParseTree.alphabet.size)
-    var normalDistribution:DenseVector[Double] = DenseVector.zeros[Double](ParseTree.alphabet.size)
-
     def updateDistribution(xNext:Char) = {
-      val idx:Int = parseTree.alphabet.map(xNext)
+      val idx:Int = ParseTree.alphabet.map(xNext)
       frequency(idx) += 1
       totalCounts += 1
       normalDistribution = frequency :/ totalCounts.toDouble
