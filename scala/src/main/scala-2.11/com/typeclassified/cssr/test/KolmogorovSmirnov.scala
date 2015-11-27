@@ -1,7 +1,6 @@
 package com.typeclassified.cssr.test
 
 import breeze.linalg.{DenseVector, max}
-import breeze.numerics.abs
 
 object KolmogorovSmirnov {
   // TODO: Look up tables for control values and verification
@@ -13,11 +12,11 @@ object KolmogorovSmirnov {
     assert(dist1.length == dist2.length)
 
     // obtain cumulative distributions
-    val cdf1 = dist1.scanRight(0d)(_ + _)
-    val cdf2 = dist2.scanRight(0d)(_ + _)
+    val cdf1 = dist1.scanRight[Double](0d)(_ + _)
+    val cdf2 = dist2.scanRight[Double](0d)(_ + _)
 
     // calculate KS statistic - take max difference between 2 values
-    val largestDiff: Double = max(abs(cdf1 - cdf2))
+    val largestDiff = max((cdf1 - cdf2).map(math.abs))
 
     val x: Double = (dist1Total * dist2Total) / (dist1Total + dist2Total)
     val en: Double = math.sqrt(x)
