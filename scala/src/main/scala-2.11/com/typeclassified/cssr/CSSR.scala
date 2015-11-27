@@ -5,7 +5,7 @@ import breeze.linalg._
 
 import scala.collection.mutable.ListBuffer
 
-object CSSR {
+package object CSSR {
   var parseTree:ParseTree = _
   var Lmax:Int = _
   var sig:Double = _
@@ -41,7 +41,7 @@ object CSSR {
           var aXt = xt.children.find(child => child.history(0) == a)
           s.normalizeAcrossHistories()
           var p = s.normalDistribution
-          test(S, p, aXt, s, sig)
+          Test.test(S, p, aXt, s, sig)
         }
       }
     }
