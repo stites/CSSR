@@ -9,17 +9,17 @@ object CSSR {
   var parseTree:ParseTree = _
   var Lmax:Int = _
   var sig:Double = _
-  var emptyState:State = _
-  var allStates:ListBuffer[State] = _
+  var emptyState:CSSRState = _
+  var allStates:ListBuffer[CSSRState] = _
 
   def initialization (): Unit = {
     val A = List('a', 'b')
+    AlphabetHolder.alphabet = ParseAlphabet(A)
+
     Lmax = 5
     sig = 0.7
-    emptyState = State(0.toChar)
+    emptyState = CSSRState()
     parseTree = ParseTree()
-
-    AlphabetHolder.alphabet = ParseAlphabet(A)
 
     def parseTreeLoading() = {
       // initialize psuedo-observations:
@@ -31,7 +31,7 @@ object CSSR {
     }
 
     // technically, this all that is needed in the "initialization" phase:
-    val allStates:List[State] = List(emptyState)
+    val allStates:List[CSSRState] = List(emptyState)
   }
 
   def main(args: Array[String]) = {
@@ -49,6 +49,7 @@ object CSSR {
               p = s.normalized_distribution
               test(S, p, aXt, s, sig)
      */
+    initialization()
     println(parseTree)
   }
 }

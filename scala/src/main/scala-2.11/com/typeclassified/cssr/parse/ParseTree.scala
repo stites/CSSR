@@ -1,6 +1,6 @@
 package com.typeclassified.cssr.parse
 
-import com.typeclassified.cssr.{CSSR, Probablistic, State}
+import com.typeclassified.cssr.{CSSR, Probablistic, CSSRState}
 
 object ParseTree {
   def apply() = new ParseTree()
@@ -30,13 +30,13 @@ class ParseTree {
   }
 }
 
-class ParseNode (string:String, parseTree: ParseTree, initializingState:State) extends Probablistic {
+class ParseNode (string:String, parseTree: ParseTree, initializingState:CSSRState) extends Probablistic {
   /* history = 00
    * next_x  = 1
    *       ==> 001
    */
   val history:String = string
-  var currentState:State = initializingState
+  var currentState:CSSRState = initializingState
   var children:List[ParseNode] = List()
 
   def updateDistribution(xNext:Char) = {
@@ -46,7 +46,7 @@ class ParseNode (string:String, parseTree: ParseTree, initializingState:State) e
     normalDistribution = frequency :/ totalCounts.toDouble
   }
 
-  def changeState(s:State):Unit = {
+  def changeState(s:CSSRState):Unit = {
     // s.append(this) # see null hypothesis and uncomment one
     currentState = s
     // we ought to update transitions here (but for phase II it's not terribly important)

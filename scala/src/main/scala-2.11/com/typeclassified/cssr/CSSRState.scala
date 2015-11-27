@@ -2,15 +2,15 @@ package com.typeclassified.cssr
 
 import com.typeclassified.cssr.parse.ParseNode
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
-object State { def apply() = new State() }
+object CSSRState { def apply() = new CSSRState() }
 
-class State extends Probablistic {
-  var histories:ListBuffer[ParseNode] = ListBuffer()
+class CSSRState extends Probablistic {
+  var histories:ArrayBuffer[ParseNode] = ArrayBuffer()
 
-  def addHistory (h:ParseNode)= {
-    histories += h
+  def addHistory (h:ParseNode) = {
+    histories :+ h
     normalizeAcrossHistories()
   }
 
@@ -24,8 +24,7 @@ class State extends Probablistic {
 
     totalCounts = frequency.foldRight(0d)(_+_).toInt
 
-    normalDistribution = frequency:/(totalCounts)
+    normalDistribution = frequency :/ totalCounts.toDouble
   }
-
 }
 
