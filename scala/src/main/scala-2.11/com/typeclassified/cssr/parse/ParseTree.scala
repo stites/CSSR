@@ -66,4 +66,8 @@ class ParseNode(string: String, parseTree: ParseTree, initializingState: CSSRSta
     // we ought to update transitions here (but for phase II it's not terribly important)
     children foreach (child => child.changeState(s))
   }
+
+  def findChildWithAdditionalHistory(xNext: Char):Option[ParseNode] = {
+    children.find(child => child.history(0) == xNext)
+  }
 }
