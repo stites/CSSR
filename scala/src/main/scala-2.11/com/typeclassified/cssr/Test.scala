@@ -30,7 +30,12 @@ object Test {
   }
 
   def nullHypothesis(s:CSSRState, aXt:ParseNode): Double = {
-    ksTest(s.normalized, s.counts, aXt.normalized, aXt.total_counts)
+    KolmogorovSmirnov
+      .test(
+        s.normalDistribution,
+        s.totalCounts,
+        aXt.normalDistribution,
+        aXt.totalCounts)
   }
 
   def restrictedHypothesesTesting( S:List[CSSRState],
