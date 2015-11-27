@@ -13,9 +13,7 @@ object CSSR {
   var allStates:ListBuffer[CSSRState] = _
 
   def initialization (): Unit = {
-    val A = List('a', 'b')
-    AlphabetHolder.alphabet = ParseAlphabet(A)
-
+    AlphabetHolder.alphabet = ParseAlphabet(List('a', 'b'))
     Lmax = 5
     sig = 0.7
     emptyState = CSSRState()
@@ -25,7 +23,7 @@ object CSSR {
       // initialize psuedo-observations:
       val datasize = 1000
       var obs:ListBuffer[Char] = new ListBuffer[Char]()
-      1 to datasize foreach { i => obs += A(i%2) }
+      1 to datasize foreach { i => obs += AlphabetHolder.alphabet.alphabetRaw(i%2) }
 
       ParseTree.loadData(parseTree, obs.toList, Lmax)
     }
