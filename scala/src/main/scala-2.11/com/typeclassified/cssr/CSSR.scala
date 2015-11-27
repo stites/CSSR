@@ -1,6 +1,6 @@
 package com.typeclassified.cssr
 
-import com.typeclassified.cssr.parse.{ParseTree, AlphabetHolder, ParseAlphabet}
+import com.typeclassified.cssr.parse.{ParseNode, ParseTree, AlphabetHolder, ParseAlphabet}
 import breeze.linalg._
 
 import scala.collection.mutable.ListBuffer
@@ -29,25 +29,27 @@ object CSSR {
     }
 
     // technically, this all that is needed in the "initialization" phase:
-    val allStates:List[CSSRState] = List(emptyState)
+    allStates = ListBuffer(emptyState)
+  }
+
+  def sufficiency(parseTree: ParseTree, S:ListBuffer[CSSRState], Lmax:Int) = {
+    for (l <- 1 to Lmax) {
+      for (xt <- parseTree.getDepth(l)){
+        var s = xt.currentState
+        for ((a, v) <- AlphabetHolder.alphabet.map){
+          // node in the parse tree with predictive dist
+          var aXt = xt.children.find(child => child.history(0) == a)
+          s.normalizeAcrossHistories()
+          var p = s.normalDistribution
+          test(S, p, aXt, s, sig)
+        }
+      }
+    }
   }
 
   def main(args: Array[String]) = {
-    /*
-      def sufficiency():
-        for L in range(1,Lmax):
-          # get a list of parse_nodes with len(history) == L
-          for Xt in parse_nodes:
-            s = Xt.current_state
-            for a in A:
-              # NOTE: latent MMs
-              # node in the parse tree with predictive dist
-              aXt = Xt.children.find(lambda child: child.history[0] == a)
-              s.normalize_across_histories()
-              p = s.normalized_distribution
-              test(S, p, aXt, s, sig)
-     */
     initialization()
+    sufficiency(parseTree, allStates, Lmax)
     println(parseTree)
   }
 }

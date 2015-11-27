@@ -2,6 +2,8 @@ package com.typeclassified.cssr.parse
 
 import com.typeclassified.cssr.{CSSR, Probablistic, CSSRState}
 
+import scala.collection.mutable.ArrayBuffer
+
 object ParseTree {
   def apply() = new ParseTree()
 
@@ -17,7 +19,7 @@ object ParseTree {
 }
 
 class ParseTree {
-  var root:List[ParseNode] = List()
+  var root:ArrayBuffer[ParseNode] = ArrayBuffer()
 
   def updatePredictiveDistribution(x0:Char, x_hist:List[Char]) = {
     // navigate from root to x_hist-leaf and update the distribution with x0
@@ -26,8 +28,20 @@ class ParseTree {
 
   def navigateHistory(history:List[Char]) : ParseNode = {
     // TODO
-    return new ParseNode("arst", this, CSSR.emptyState)
+    return ParseNode("arst", this, CSSR.emptyState)
   }
+
+  def getDepth(depth:Int): Array[ParseNode] = {
+    def subroutine(nodes:ArrayBuffer[ParseNode], depth:Int):Array[ParseNode] = {
+      if (depth <= 0) nodes.toArray
+      else subroutine(nodes.flatMap(_.children), depth-1)
+    }
+    subroutine(root, depth)
+  }
+}
+
+object ParseNode {
+  def apply(str: String, tree: ParseTree, initState: CSSRState) = new ParseNode(str, tree, initState)
 }
 
 class ParseNode (string:String, parseTree: ParseTree, initializingState:CSSRState) extends Probablistic {
