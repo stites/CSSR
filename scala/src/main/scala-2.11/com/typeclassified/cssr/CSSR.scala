@@ -1,16 +1,16 @@
 package com.typeclassified.cssr
 
 import com.typeclassified.cssr.test.Test
-import com.typeclassified.cssr.parse.{ParseNode, AlphabetHolder, ParseAlphabet, ParseTree}
+import com.typeclassified.cssr.parse.{AlphabetHolder, ParseAlphabet, ParseTree}
 
 import scala.collection.mutable.ListBuffer
 
 package object CSSR {
   var parseTree: ParseTree = _
-  var allStates: ListBuffer[CSSRState] = _
+  var allStates: ListBuffer[EquivalenceClass] = _
   var lMax: Int = 5
   var sig: Double = 0.7
-  var emptyState: CSSRState = CSSRState()
+  var emptyState: EquivalenceClass = EquivalenceClass()
 
   def main(args: Array[String]) = {
     parseTreeLoading()
@@ -35,10 +35,10 @@ package object CSSR {
     // allStates = ListBuffer(emptyState)
   }
 
-  def sufficiency(parseTree: ParseTree, S: ListBuffer[CSSRState], lMax: Int) = {
+  def sufficiency(parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
     for (l <- 1 to lMax) {
       for (xt <- parseTree.getDepth(l)) {
-        val s = xt.currentState
+        val s = xt.currentEquivalenceClass
         for ((a, alphaIdx) <- AlphabetHolder.alphabet.map) {
           // node in the parse tree with predictive dist
           val aXt = xt.findChildWithAdditionalHistory(a)
@@ -50,7 +50,7 @@ package object CSSR {
     }
   }
 
-  def recursion (parseTree: ParseTree, S: ListBuffer[CSSRState], lMax: Int) = {
+  def recursion (parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
     var recursive = false
     while (!recursive) {
       recursive = true
@@ -66,7 +66,7 @@ package object CSSR {
               allStates += sNew
               val TransitionStateBNew = TransitionStateB
               for (y <- s.histories) {
-                val temp:Option[ParseNode] = y.findChildWithAdditionalHistory(a)
+                val temp:Option[CausalState] = y.findChildWithAdditionalHistory(a)
                 if (temp.get == TransitionStateBNew) {
                   Test.move(y, s, sNew)
                 }
@@ -79,7 +79,7 @@ package object CSSR {
     }
   }
 
-  def equivalenceClass(hist:ParseNode) = {
+  def equivalenceClass(hist:CausalState) = {
     // TODO: equivalenceClass
   }
 }

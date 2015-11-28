@@ -1,35 +1,35 @@
 package com.typeclassified.cssr.test
 
-import com.typeclassified.cssr.parse.ParseNode
-import com.typeclassified.cssr.CSSRState
+import com.typeclassified.cssr.CausalState
+import com.typeclassified.cssr.EquivalenceClass
 
 import scala.collection.mutable.ListBuffer
 
 object Test {
-  def test(S: ListBuffer[CSSRState],
+  def test(S: ListBuffer[EquivalenceClass],
            p: Double,
-           aXt: ParseNode,
-           s: CSSRState,
+           aXt: CausalState,
+           s: EquivalenceClass,
            sig: Double
           ) = {
     if (nullHypothesis(s, aXt) > sig) {
       if (!s.histories.contains(aXt)) {
-        aXt.changeState(s)
+        aXt.changeEquivalenceClass(s)
         s.addHistory(aXt)
       }
     } else {
-      val sStar: Option[CSSRState] = restrictedHypothesesTesting(S.toList, s, aXt, sig)
+      val sStar: Option[EquivalenceClass] = restrictedHypothesesTesting(S.toList, s, aXt, sig)
       if (sStar.nonEmpty) {
         move(aXt, s, sStar.get)
       } else {
-        var sNew = CSSRState()
+        var sNew = EquivalenceClass()
         S += sNew
         move(aXt, s, sNew)
       }
     }
   }
 
-  def nullHypothesis(s: CSSRState, aXt: ParseNode): Double = {
+  def nullHypothesis(s: EquivalenceClass, aXt: CausalState): Double = {
     KolmogorovSmirnov
       .test(
         s.normalDistribution,
@@ -38,11 +38,11 @@ object Test {
         aXt.totalCounts)
   }
 
-  def restrictedHypothesesTesting(S: List[CSSRState],
-                                  s: CSSRState,
-                                  ax: ParseNode,
+  def restrictedHypothesesTesting(S: List[EquivalenceClass],
+                                  s: EquivalenceClass,
+                                  ax: CausalState,
                                   sig: Double
-                                 ): Option[CSSRState] = {
+                                 ): Option[EquivalenceClass] = {
     val SStar = S.filter(_ != s)
     for (sStar <- SStar) {
       if (nullHypothesis(sStar, ax) > sig) {
@@ -52,7 +52,7 @@ object Test {
     Option.empty
   }
 
-  def move(x: ParseNode, s1: CSSRState, s2: CSSRState): Unit = {
+  def move(x: CausalState, s1: EquivalenceClass, s2: EquivalenceClass): Unit = {
     s1.rmHistory(x)
     s2.addHistory(x)
   }

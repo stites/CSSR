@@ -1,22 +1,20 @@
 package com.typeclassified.cssr
 
-import com.typeclassified.cssr.parse.ParseNode
-
 import scala.collection.mutable.ArrayBuffer
 
-object CSSRState {
-  def apply() = new CSSRState()
+object EquivalenceClass {
+  def apply() = new EquivalenceClass()
 }
 
-class CSSRState extends Probablistic {
-  var histories: ArrayBuffer[ParseNode] = ArrayBuffer()
+class EquivalenceClass extends Probablistic {
+  var histories: ArrayBuffer[CausalState] = ArrayBuffer()
 
-  def addHistory(h: ParseNode) = {
+  def addHistory(h: CausalState) = {
     histories :+ h
     normalizeAcrossHistories()
   }
 
-  def rmHistory(x: ParseNode) = {
+  def rmHistory(x: CausalState) = {
     histories = histories.filter(y => y != x)
     normalizeAcrossHistories()
   }
