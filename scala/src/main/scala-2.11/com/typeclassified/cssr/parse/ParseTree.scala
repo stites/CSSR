@@ -2,7 +2,7 @@ package com.typeclassified.cssr.parse
 
 import com.typeclassified.cssr.{CausalState, CSSR, EquivalenceClass, Probablistic}
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ListBuffer, ArrayBuffer}
 
 object ParseTree {
   def apply() = new ParseTree()
@@ -19,24 +19,48 @@ object ParseTree {
 }
 
 class ParseTree {
-  var root: ArrayBuffer[CausalState] = ArrayBuffer()
+  var root:CausalState = CausalState(0.toChar, this, EquivalenceClass())
 
-  def updatePredictiveDistribution(x0: Char, x_hist: List[Char]) = {
-    // navigate from root to x_hist-leaf and update the distribution with x0
-    navigateHistory(x_hist).updateDistribution(x0)
+  /**
+    * navigate from root to x_hist leaf and update the distribution with x0
+    * @param x0
+    * @param x_hist
+    */
+  def updatePredictiveDistribution(x0: Char, x_hist: List[Char]):Unit = {
+    val maybeState = navigateHistory(x_hist)
+    if (maybeState.nonEmpty) {
+      maybeState.get.updateDistribution(x0)
+    }
   }
 
-  def navigateHistory(history: List[Char]): CausalState = {
-    // TODO
-    CausalState("dummy", this, EquivalenceClass())
+  def navigateHistory(history: List[Char]): Option[CausalState] = {
+    def subroutine(active:CausalState, history:List[Char]): CausalState = {
+      val maybeNext:Option[CausalState] = active.findChildWithAdditionalHistory(history.head)
+      var next:CausalState = null
+
+      if (maybeNext.nonEmpty) {
+        next = maybeNext.get
+      } else {
+        next = CausalState(history.head, this, active.currentEquivalenceClass)
+        active.children += next
+      }
+
+      return if (history.tail.isEmpty) next else subroutine(next, history.tail)
+    }
+    return if (history.isEmpty) Option.empty else Option.apply(subroutine(root, history))
   }
 
   def getDepth(depth: Int): Array[CausalState] = {
-    def subroutine(nodes: ArrayBuffer[CausalState], depth: Int): Array[CausalState] = {
-      if (depth <= 0) nodes.toArray
-      else subroutine(nodes.flatMap(_.children), depth - 1)
+    def subroutine(nodes: ListBuffer[CausalState], depth: Int): Array[CausalState] = {
+      if (depth <= 0) {
+        nodes.toArray
+      } else {
+        val ns = nodes.flatMap(_.children)
+        subroutine(ns, depth - 1)
+      }
     }
-    subroutine(root, depth)
+    val a = subroutine(root.children, depth)
+    return a
   }
 }
 

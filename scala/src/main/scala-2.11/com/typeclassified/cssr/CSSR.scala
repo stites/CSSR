@@ -6,15 +6,17 @@ import com.typeclassified.cssr.parse.{AlphabetHolder, ParseAlphabet, ParseTree}
 import scala.collection.mutable.ListBuffer
 
 package object CSSR {
-  var parseTree: ParseTree = _
-  var allStates: ListBuffer[EquivalenceClass] = _
+  AlphabetHolder.alphabet = ParseAlphabet(List('a', 'b'))
+  var parseTree: ParseTree = ParseTree()
+  var allStates: ListBuffer[EquivalenceClass] = ListBuffer(EquivalenceClass())
   var lMax: Int = 5
   var sig: Double = 0.7
 
   def main(args: Array[String]) = {
+    parseTreeLoading()
     initialization()
     sufficiency(parseTree, allStates, lMax)
-    recursion (parseTree, allStates, lMax)
+//    recursion (parseTree, allStates, lMax)
     println(parseTree)
   }
 
@@ -33,9 +35,6 @@ package object CSSR {
     * distribution.
     */
   def initialization(): Unit = {
-    AlphabetHolder.alphabet = ParseAlphabet(List('a', 'b'))
-    allStates = ListBuffer(EquivalenceClass())
-    parseTreeLoading()
     // technically, this all that is needed in the "initialization" phase:
     // allStates = ListBuffer(emptyState)
   }
@@ -53,8 +52,9 @@ package object CSSR {
     * @param lMax
     */
   def sufficiency(parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
-    for (l <- 1 to lMax) {
-      for (xt <- parseTree.getDepth(l)) {
+    for (l <- 0 to lMax) {
+      val y =  parseTree.getDepth(l)
+      for (xt <- y) {
         val s = xt.currentEquivalenceClass
         for ((a, alphaIdx) <- AlphabetHolder.alphabet.map) {
           // node in the parse tree with predictive dist

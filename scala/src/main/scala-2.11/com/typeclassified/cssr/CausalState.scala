@@ -2,20 +2,22 @@ package com.typeclassified.cssr
 
 import com.typeclassified.cssr.parse.{AlphabetHolder, ParseTree}
 
+import scala.collection.mutable.ListBuffer
+
 object CausalState {
-  def apply(str: String, tree: ParseTree, initState: EquivalenceClass) = new CausalState(str, tree, initState)
+  def apply(c: Char, tree: ParseTree, initState: EquivalenceClass) = new CausalState(c, tree, initState)
 }
 
-class CausalState(string: String, parseTree: ParseTree, initializingState: EquivalenceClass) extends Probablistic {
+class CausalState(observation: Char, parseTree: ParseTree, initialEquivClass: EquivalenceClass) extends Probablistic {
   /* history = 00
    * next_x  = 1
    *       ==> 001
    */
-  val history: String = string
-  var currentEquivalenceClass: EquivalenceClass = initializingState
-  var children: List[CausalState] = List()
+  val value: Char = observation
+  var currentEquivalenceClass: EquivalenceClass = initialEquivClass
+  var children: ListBuffer[CausalState] = ListBuffer()
 
-  def updateDistribution(xNext: Char) = {
+  def updateDistribution(xNext: Char):Unit = {
     val idx: Int = AlphabetHolder.alphabet.map(xNext)
     frequency(idx) += 1
     totalCounts += 1
@@ -30,7 +32,7 @@ class CausalState(string: String, parseTree: ParseTree, initializingState: Equiv
   }
 
   def findChildWithAdditionalHistory(xNext: Char):Option[CausalState] = {
-    children.find(child => child.history(0) == xNext)
+    children.find(child => child.value == xNext)
   }
 }
 
