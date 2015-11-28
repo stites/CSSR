@@ -144,13 +144,11 @@ double Machine::CalcStringProb(char* string, HashTable2* hashtable)
 // Post-Cond: the relative entropy has been calculated and stored in the 
 //            machine class as a member variable
 //////////////////////////////////////////////////////////////////////////
-void Machine::CalcRelEnt(ParseTree& parsetree, HashTable2* hashtable,
-			 bool isMulti)
-{
+void Machine::CalcRelEnt(ParseTree& parsetree, HashTable2* hashtable, bool isMulti) {
   G_Array g_array;
   int dataSize = parsetree.getDataSize();
   int alphaSize = parsetree.getAlphaSize();
-  int maxLength = parsetree.getMaxLength();  
+  int maxLength = parsetree.getMaxLength();
   int adjustedDataSize = parsetree.getAdjustedDataSize();
   // We can't begin a substring of length maxLength at the last (maxLength-1)
   // positions in the data string
@@ -166,27 +164,27 @@ void Machine::CalcRelEnt(ParseTree& parsetree, HashTable2* hashtable,
 
   CalcStringProbs(&g_array, maxLength, hashtable, stringProbs);
 
-  for(int i = 0; i < size; i++)
-    {
-      occurrence = 0;
-      counts = ((list[i])->getCounts());
-      for(int k = 0; k < alphaSize; k++)
-	occurrence += counts[k];
-
-      dataProb = ((double)occurrence)/((double) adjustedDataSize);
-
-      if (dataProb)
-	{
-	  logRatio = log(dataProb) -log(stringProbs[i]);
-	  logRatio *= dataProb;
-	  relEntropy += logRatio;
-	}
+  for(int i = 0; i < size; i++) {
+    occurrence = 0;
+    counts = ((list[i])->getCounts());
+    for(int k = 0; k < alphaSize; k++) {
+      occurrence += counts[k];
     }
+
+    dataProb = ((double)occurrence)/((double) adjustedDataSize);
+
+    if (dataProb) {
+      logRatio = log(dataProb) -log(stringProbs[i]);
+      logRatio *= dataProb;
+      relEntropy += logRatio;
+    }
+  }
 
   relEntropy = relEntropy/log(2);
   m_relEnt = 0;
-  if (relEntropy > 0)
+  if (relEntropy > 0) {
     m_relEnt = relEntropy;
+  }
 
   delete[] stringProbs;
 }
@@ -203,13 +201,11 @@ void Machine::CalcRelEnt(ParseTree& parsetree, HashTable2* hashtable,
 // Post-Cond: the relative entropy rate has been calculated and stored in the 
 //            machine class as a member variable
 //////////////////////////////////////////////////////////////////////////
-void Machine::CalcRelEntRate(ParseTree& parsetree, HashTable2* hashtable, 
-			     bool isMulti)
-{
+void Machine::CalcRelEntRate(ParseTree& parsetree, HashTable2* hashtable, bool isMulti) {
   G_Array g_array;
   int dataSize = parsetree.getDataSize();
   int alphaSize = parsetree.getAlphaSize();
-  int maxLength = parsetree.getMaxLength();  
+  int maxLength = parsetree.getMaxLength();
   int adjustedDataSize = parsetree.getAdjustedDataSize();
   // We can't begin a substring of length maxLength at the last (maxLength-1)
   // positions in the data string, so we adjust the data size
@@ -226,13 +222,11 @@ void Machine::CalcRelEntRate(ParseTree& parsetree, HashTable2* hashtable,
   CalcStringProbs(&g_array, maxLength - 1, hashtable, stringProbs);
 
   //for each string
-  for(int i = 0; i< size; i++)
-    {
-      relEntRateHist = CalcRelEntRateHist(stringProbs, list, hashtable, i,
-					  alpha, alphaSize, adjustedDataSize);
+  for(int i = 0; i< size; i++) {
+    relEntRateHist = CalcRelEntRateHist(stringProbs, list, hashtable, i, alpha, alphaSize, adjustedDataSize);
 
-      totalRelEntRate +=relEntRateHist;
-    }
+    totalRelEntRate +=relEntRateHist;
+  }
 
   //convert to binary
   m_relEntRate = totalRelEntRate/log(2);
@@ -253,10 +247,14 @@ void Machine::CalcRelEntRate(ParseTree& parsetree, HashTable2* hashtable,
 // Post-Cond: the relative entropy rate of the history has been calculated
 //            and returned to the calling function
 //////////////////////////////////////////////////////////////////////////
-double Machine::CalcRelEntRateHist(double* stringProbs, ArrayElem** list,
-				   HashTable2* hashtable, int index,
-				   char* alpha, int alphaSize, int adjustedDataSize)
-{
+double Machine::CalcRelEntRateHist(double* stringProbs,
+                                   ArrayElem** list,
+                                   HashTable2* hashtable,
+                                   int index,
+                                   char* alpha,
+                                   int alphaSize,
+                                   int adjustedDataSize
+                                   ) {
   int* counts= list[index]->getCounts();
   double histFrequency = 0;
   double relEntRateAlpha = 0;
@@ -265,29 +263,26 @@ double Machine::CalcRelEntRateHist(double* stringProbs, ArrayElem** list,
   double dataDist;
   double stringProb;
   char* history;
-  char alphaElem;  
+  char alphaElem;
 
-  for(int j = 0; j< alphaSize;j++)
+  for(int j = 0; j< alphaSize;j++ ) {
     histFrequency +=((double) counts[j]);
-
+  }
   //for each alpha value/symbol 
-  for(int k  = 0; k < alphaSize; k++)
-    {
-      //get distribution for data
-      dataDist = ((double)counts[k])/histFrequency;
-      stringProb = stringProbs[index];
-      history = list[index]->getString();
-      alphaElem = alpha[k];
-      relEntRateAlpha = CalcRelEntRateAlpha(stringProb, history, 
-					    accumulatedInferredRatio, dataDist,
-					    alphaElem, hashtable);
-
-      relEntRateHist +=  relEntRateAlpha;
-    }
+  for(int k  = 0; k < alphaSize; k++) {
+    //get distribution for data
+    dataDist = ((double)counts[k])/histFrequency;
+    stringProb = stringProbs[index];
+    history = list[index]->getString();
+    alphaElem = alpha[k];
+    relEntRateAlpha = CalcRelEntRateAlpha(stringProb, history, accumulatedInferredRatio, dataDist, alphaElem, hashtable);
+    relEntRateHist +=  relEntRateAlpha;
+  }
 
   //correct for underflow error
-  if (relEntRateHist < 0) 
+  if (relEntRateHist < 0) {
     relEntRateHist = 0;
+  }
 
   histFrequency = (double)(histFrequency/((double)adjustedDataSize));
   return histFrequency*relEntRateHist;
@@ -307,11 +302,12 @@ double Machine::CalcRelEntRateHist(double* stringProbs, ArrayElem** list,
 // Post-Cond: the relative entropy rate of the symbol given a history has been
 //            calculated and returned to the calling function
 //////////////////////////////////////////////////////////////////////////
-double Machine::CalcRelEntRateAlpha(double stringProb, char* history, 
-				    double& accumulatedInferredRatio,
-				    double dataDist, char alphaElem,
-				    HashTable2* hashtable)
-{
+double Machine::CalcRelEntRateAlpha(double stringProb,
+                                    char* history,
+                                    double& accumulatedInferredRatio,
+                                    double dataDist, char alphaElem,
+                                    HashTable2* hashtable
+                                    ) {
   double logRatio = 0;
   double relEntRateAlpha = 0;
   double childStringProb = 0;
@@ -321,45 +317,41 @@ double Machine::CalcRelEntRateAlpha(double stringProb, char* history,
   char* tempChildString;
 
   //if child string appears in data
-  if(dataDist > 0)
-    {
-      //get distribution for machine
-      symbol[0] = alphaElem;
-      tempChildString = new char[strlen(history) + 2];
-      strcpy(tempChildString, history);
-      strcat(tempChildString, symbol);
-				
-      //determine the inferred distribution for the value given the history
-      childStringProb = CalcStringProb(tempChildString, hashtable);
-      if(stringProb > 0)
-	{
-	  inferredRatio = childStringProb/(stringProb);
-	  accumulatedInferredRatio += inferredRatio;
-	}
-      else
-	{
-	  //neglect this ratio but continue with program
-	  cerr << "\nWarning: Inferred machine says actual history ("
-	       << history << ") is"
-	       << " impossible in Machine::CalcRelEntRateAlpha.\n\n"
-		   << "Note: It is likely that this sequence only occurs once, in the "
-		   << "beginning of the data, and has been treated as transitory by " 
-		   << "the code and mistakenly deleted from the machine. See 'ReadMe' for details.\n"
-		   << endl;
-	  
-	}
+  if(dataDist > 0) {
+    //get distribution for machine
+    symbol[0] = alphaElem;
+    tempChildString = new char[strlen(history) + 2];
+    strcpy(tempChildString, history);
+    strcat(tempChildString, symbol);
 
-      //take the log ratio between the 
-      //conditional distributions of the inferred and data
-      logRatio = log(dataDist/inferredRatio);
-				
-      //multiply by the conditional distribition from the data
-      relEntRateAlpha= dataDist*logRatio;
+    //determine the inferred distribution for the value given the history
+    childStringProb = CalcStringProb(tempChildString, hashtable);
+    if(stringProb > 0) {
+      inferredRatio = childStringProb/(stringProb);
+      accumulatedInferredRatio += inferredRatio;
 
-      delete[] tempChildString;
+    //neglect this ratio but continue with program
+    } else {
+      cerr << "\nWarning: Inferred machine says actual history ("
+           << history << ") is"
+           << " impossible in Machine::CalcRelEntRateAlpha.\n\n"
+           << "Note: It is likely that this sequence only occurs once, in the "
+           << "beginning of the data, and has been treated as transitory by "
+           << "the code and mistakenly deleted from the machine. See 'ReadMe' for details.\n"
+           << endl;
     }
-  else 
+
+    //take the log ratio between the 
+    //conditional distributions of the inferred and data
+    logRatio = log(dataDist/inferredRatio);
+
+    //multiply by the conditional distribition from the data
+    relEntRateAlpha = dataDist*logRatio;
+
+    delete[] tempChildString;
+  } else {
     relEntRateAlpha = 0;
+  }
 
   delete[] symbol;
   return relEntRateAlpha;
@@ -377,13 +369,11 @@ double Machine::CalcRelEntRateAlpha(double stringProb, char* history,
 // Post-Cond: the relative entropy rate has been calculated and stored in the 
 //            machine class as a member variable
 //////////////////////////////////////////////////////////////////////////
-void Machine::CalcVariation(ParseTree& parsetree, HashTable2* hashtable, 
-			    bool isMulti)
-{
+void Machine::CalcVariation(ParseTree& parsetree, HashTable2* hashtable, bool isMulti) {
   G_Array g_array;
   int dataSize = parsetree.getDataSize();
   int alphaSize = parsetree.getAlphaSize();
-  int maxLength = parsetree.getMaxLength();  
+  int maxLength = parsetree.getMaxLength();
   int adjustedDataSize = parsetree.getAdjustedDataSize();
   // We can't begin a substring of length maxLength at the last (maxLength-1)
   // positions in the data string
@@ -401,25 +391,23 @@ void Machine::CalcVariation(ParseTree& parsetree, HashTable2* hashtable,
   CalcStringProbs(&g_array, maxLength, hashtable, stringProbs);
 
   //for each string
-  for(int i = 0; i< size; i++)
-    {
-      counts = list[i]->getCounts();
-      histFrequency = 0;
-      diffHist = 0;
+  for(int i = 0; i< size; i++) {
+    counts = list[i]->getCounts();
+    histFrequency = 0;
+    diffHist = 0;
 
-      //for each alpha value/symbol 
-      for(int k  = 0; k < alphaSize; k++)
-	{
-	  //get distribution for data
-	  dataDist = ((double)counts[k])/((double)adjustedDataSize);
-	  histFrequency += dataDist;
-	}
-
-      //take the differnece between the 
-      //inferred frequency and data frequency
-      diffHist = fabs(histFrequency - stringProbs[i]);
-      total += diffHist;
+    //for each alpha value/symbol
+    for(int k  = 0; k < alphaSize; k++) {
+      //get distribution for data
+      dataDist = ((double)counts[k])/((double)adjustedDataSize);
+      histFrequency += dataDist;
     }
+
+    //take the differnece between the
+    //inferred frequency and data frequency
+    diffHist = fabs(histFrequency - stringProbs[i]);
+    total += diffHist;
+  }
   m_variation = total;
   delete[] stringProbs;
 }
@@ -435,20 +423,19 @@ void Machine::CalcVariation(ParseTree& parsetree, HashTable2* hashtable,
 // Post-Cond: the statistical complexity has been calculated and stored in the 
 //            machine class as a member variable
 //////////////////////////////////////////////////////////////////////////
-void Machine::CalcCmu()
-{
+void Machine::CalcCmu() {
   State* state = NULL;
   int size = m_allstates->getArraySize();
   double cMu = 0;
   double prob = 0;
 
-  for(int i = 0; i < size; i++)
-    {
-      state = m_allstates->getState(i);
-      prob = state->getFrequency();
-      if (prob)
-	cMu += prob*(log(prob)/log(2));
+  for(int i = 0; i < size; i++) {
+    state = m_allstates->getState(i);
+    prob = state->getFrequency();
+    if (prob) {
+      cMu += prob*(log(prob)/log(2));
     }
+  }
   m_cMu = -cMu;
 }
 
@@ -463,8 +450,7 @@ void Machine::CalcCmu()
 // Post-Cond: the entropy rate has been calculated and stored in the 
 //            machine class as a member variable
 //////////////////////////////////////////////////////////////////////////
-void Machine::CalcEntRate()
-{
+void Machine::CalcEntRate() {
   State* state = NULL;
   int size = m_allstates->getArraySize();
   double entRate = 0;
@@ -472,18 +458,16 @@ void Machine::CalcEntRate()
   int distSize = m_allstates->getDistSize();
   double freq = 0;
 
-  for(int i = 0; i < size; i++)
-    {
-      state = m_allstates->getState(i);
-      freq = state->getFrequency();
-      for(int k =0; k < distSize; k++)
-	{
-	  prob = ((state->getCurrentDist())[k]);
-	  if (prob) 
-	    entRate += freq*(prob*(log(prob)/log(2)));
-			   
-	}
+  for(int i = 0; i < size; i++) {
+    state = m_allstates->getState(i);
+    freq = state->getFrequency();
+    for(int k =0; k < distSize; k++) {
+      prob = ((state->getCurrentDist())[k]);
+      if (prob) {
+        entRate += freq*(prob*(log(prob)/log(2)));
+      }
     }
+  }
   m_entRate = -entRate;
 }
 
@@ -499,8 +483,15 @@ void Machine::CalcEntRate()
 //            been calculated
 // Post-Cond: output file exists with information listed inside
 //////////////////////////////////////////////////////////////////////////
-void Machine::PrintOut(char input[], const char* alpha_file, const char* data_file, const int& max_length, const double& sigLevel, const bool& isMulti, const bool& isChi, int alphaSize)
-{
+void Machine::PrintOut(char input[],
+                       const char* alpha_file,
+                       const char* data_file,
+                       const int& max_length,
+                       const double& sigLevel,
+                       const bool& isMulti,
+                       const bool& isChi,
+                       int alphaSize
+                       ) {
   char* output = new char[strlen(input) + 6];
 
   strcpy(output,input);
@@ -510,44 +501,39 @@ void Machine::PrintOut(char input[], const char* alpha_file, const char* data_fi
   ofstream outData(output, ios::out);
 
   //open output file, if unsuccessful set boolean return value
-  if(!outData)
-    {
-      cerr << " the information output file cannot be opened " << endl;
-      exit(1);
+  if(!outData) {
+    cerr << " the information output file cannot be opened " << endl;
+    exit(1);
+    //otherwise output data
+  } else {
+    outData << "Alphabet File: " << alpha_file << endl;
+    outData << "Data File: " << data_file << endl;
+    outData << "History Length: " << max_length << endl;
+    outData << "Significance Level: " << sigLevel << endl;
+    outData << "Multiline Mode: " << (isMulti ? "true" : "false") << endl;
+    outData << "Chi-squared test used: " << (isChi ? "true" : "false")  << endl;
+    outData << "Alphabet Size: " << alphaSize << endl;
+    outData << "Relative Entropy: " << m_relEnt << endl;
+    outData << "Relative Entropy Rate: " << m_relEntRate <<endl;
+    outData << "Statistical Complexity: " << m_cMu <<endl;
+    outData << "Entropy Rate: " << m_entRate << endl;
+    outData << "Variation: "<< m_variation << endl;
+    outData << "Number of Inferred States: " << m_allstates->getArraySize()
+            << endl;
+
+    if(m_allstates->getReSynch()) {
+      outData << "This data needed to be synchronized to a set"
+              << " of states more than once.  It is recommended that"
+              << " you try a longer history length, as this set of"
+              << " states cannot possibly be the causal states." <<endl;
+
+      //Print to screen also
+      cout << endl 
+           << "The data in " << input << endl
+           << "needed to be resynchronized; try to"
+           << " increase max length." << endl << endl;
     }
-  //otherwise output data
-  else
-    {
-      outData << "Alphabet File: " << alpha_file << endl;
-      outData << "Data File: " << data_file << endl;
-      outData << "History Length: " << max_length << endl;
-      outData << "Significance Level: " << sigLevel << endl;
-      outData << "Multiline Mode: " << (isMulti ? "true" : "false") << endl;
-      outData << "Chi-squared test used: " << (isChi ? "true" : "false")  << endl;
-      outData << "Alphabet Size: " << alphaSize << endl;
-      outData << "Relative Entropy: " << m_relEnt << endl;
-      outData << "Relative Entropy Rate: " << m_relEntRate <<endl;
-      outData << "Statistical Complexity: " << m_cMu <<endl;
-      outData << "Entropy Rate: " << m_entRate << endl;
-      outData << "Variation: "<< m_variation << endl;
-      outData << "Number of Inferred States: " << m_allstates->getArraySize()
-	      << endl;
-
-      if(m_allstates->getReSynch())
-	{
-	  outData << "This data needed to be synchronized to a set"
-		  << " of states more than once.  It is recommended that"
-		  << " you try a longer history length, as this set of"
-		  << " states cannot possibly be the causal states." <<endl;
-
-	  //Print to screen also
-	  cout << endl 
-	       << "The data in " << input << endl
-	       << "needed to be resynchronized; try to"
-	       << " increase max length." << endl << endl;
-	}
-
-    }
+  }
   outData.close();
   delete[] output;
 }
@@ -562,8 +548,7 @@ void Machine::PrintOut(char input[], const char* alpha_file, const char* data_fi
 // Pre- Cond: all values in array of states have been set
 // Post-Cond: output .dot file exists with machine
 //////////////////////////////////////////////////////////////////////////
-void Machine::PrintDot(char input[], char alpha[])
-{
+void Machine::PrintDot(char input[], char alpha[]) {
   char* output = new char[strlen(input) + 9];
 
   strcpy(output,input);
@@ -573,45 +558,40 @@ void Machine::PrintDot(char input[], char alpha[])
   ofstream outData(output, ios::out);
 
   //open output file, if unsuccessful exit
-  if(!outData)
-    {
-      cerr << " the .dot output file cannot be opened " << endl;
-      exit(1);
-    }
-  //otherwise output data
-  else
-    {
-      int size = m_allstates->getArraySize();
-      int distSize = m_allstates->getDistSize();
-      State* state;
-      int nextState;
-      double* dist;
+  if(!outData) {
+    cerr << " the .dot output file cannot be opened " << endl;
+    exit(1);
 
-      outData << "digraph " << input << " {" << endl;
-      outData << "size = \"6,8.5\";" << endl;
-      outData << "ratio = \"fill\";" << endl;
-      outData << "node [shape = circle];" << endl;
-      outData << "node [fontsize = 24];" << endl;
-      outData << "edge [fontsize = 24];" << endl;
+    //otherwise output data
+  } else {
+    int size = m_allstates->getArraySize();
+    int distSize = m_allstates->getDistSize();
+    State* state;
+    int nextState;
+    double* dist;
 
-      for(int i = 0; i < size; i++)
-	{
-	  state = m_allstates->getState(i);
-	  for(int k =0; k < distSize; k++)
-	    {
-	      dist = state->getCurrentDist();
-	      nextState = state->getTransitions(k);
-	      if(nextState != NULL_STATE)
-		{
-		  outData << i << " -> " 
-			  << nextState;
-		  outData <<  " [label = \"" << alpha[k]
-                          << ": " << setiosflags(ios::left) << setw(7) << setprecision(4) << dist[k] << "  \"];" << endl;
-		}
-	    }
-	}
-      outData << "}";
+    outData << "digraph " << input << " {" << endl;
+    outData << "size = \"6,8.5\";" << endl;
+    outData << "ratio = \"fill\";" << endl;
+    outData << "node [shape = circle];" << endl;
+    outData << "node [fontsize = 24];" << endl;
+    outData << "edge [fontsize = 24];" << endl;
+
+    for(int i = 0; i < size; i++) {
+      state = m_allstates->getState(i);
+      for(int k =0; k < distSize; k++) {
+        dist = state->getCurrentDist();
+        nextState = state->getTransitions(k);
+        if(nextState != NULL_STATE) {
+          outData << i << " -> " 
+                  << nextState;
+          outData <<  " [label = \"" << alpha[k]
+                  << ": " << setiosflags(ios::left) << setw(7) << setprecision(4) << dist[k] << "  \"];" << endl;
+        }
+      }
     }
+    outData << "}";
+  }
   outData.close();
   delete[] output;
 }
