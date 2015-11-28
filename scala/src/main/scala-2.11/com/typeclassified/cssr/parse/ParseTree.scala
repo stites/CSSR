@@ -15,11 +15,17 @@ object ParseTree {
         tree.updatePredictiveDistribution(observed.head, observed.tail.toList)
       }
     }
+    tree.maxLength = n
+    tree.dataSize = xs.length
+    tree.adjustedDataSize =  xs.length - n - 1 // TODO: multi-line
   }
 }
 
 class ParseTree {
   var root:CausalState = CausalState(0.toChar, this, EquivalenceClass())
+  var maxLength:Int = _
+  var dataSize:Double = _
+  var adjustedDataSize:Double = _
 
   /**
     * navigate from root to x_hist leaf and update the distribution with x0
