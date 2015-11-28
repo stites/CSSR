@@ -10,7 +10,6 @@ package object CSSR {
   var allStates: ListBuffer[EquivalenceClass] = _
   var lMax: Int = 5
   var sig: Double = 0.7
-  var emptyState: EquivalenceClass = EquivalenceClass()
 
   def main(args: Array[String]) = {
     initialization()
@@ -35,7 +34,7 @@ package object CSSR {
     */
   def initialization(): Unit = {
     AlphabetHolder.alphabet = ParseAlphabet(List('a', 'b'))
-    allStates = ListBuffer(emptyState)
+    allStates = ListBuffer(EquivalenceClass())
     parseTreeLoading()
     // technically, this all that is needed in the "initialization" phase:
     // allStates = ListBuffer(emptyState)
@@ -91,20 +90,16 @@ package object CSSR {
       recursive = true
       for (s <- S) {
         for ((a, alphabetIdx) <- AlphabetHolder.alphabet.map) {
-          val x0 = s.histories(0)
-          val x0a = x0.findChildWithAdditionalHistory(a).get
-          val TransitionStateA = equivalenceClass(x0a)
+          val x0 = s.histories.head
+          val transitionToAEstimate = x0.normalDistribution(alphabetIdx)
           for (x <- s.histories.tail) {
-            val TransitionStateB = equivalenceClass(x)
-            if (TransitionStateA.value != TransitionStateB.value) {
-              val sNew = emptyState
-              allStates += sNew
-              val TransitionStateBNew = TransitionStateB
-              for (y <- s.histories) {
-                val temp:Option[CausalState] = y.findChildWithAdditionalHistory(a)
-                if (temp.get == TransitionStateBNew) {
-                  Test.move(y, s, sNew)
-                }
+            val xTransitionToAEstimate = x.normalDistribution(alphabetIdx)
+            if (transitionToAEstimate != xTransitionToAEstimate) {
+              val sNew = EquivalenceClass()
+              S += sNew
+              val newStateTransitionToA = xTransitionToAEstimate
+              for (y <- s.histories if y.normalDistribution(alphabetIdx) == newStateTransitionToA) {
+                Test.move(y, s, sNew)
               }
               recursive = false
             }
@@ -112,10 +107,6 @@ package object CSSR {
         }
       }
     }
-  }
-
-  def equivalenceClass(hist:CausalState) = {
-    // TODO: equivalenceClass
   }
 }
 

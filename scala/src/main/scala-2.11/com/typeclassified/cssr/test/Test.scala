@@ -52,8 +52,8 @@ object Test {
     Option.empty
   }
 
-  def move(x: CausalState, s1: EquivalenceClass, s2: EquivalenceClass): Unit = {
-    s1.rmHistory(x)
-    s2.addHistory(x)
+  def move(x: CausalState, from: EquivalenceClass, to: EquivalenceClass): Unit = {
+    from.rmHistory(x)
+    to.addHistory(x)
   }
 }

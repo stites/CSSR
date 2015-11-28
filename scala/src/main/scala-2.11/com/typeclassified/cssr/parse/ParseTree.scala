@@ -28,7 +28,7 @@ class ParseTree {
 
   def navigateHistory(history: List[Char]): CausalState = {
     // TODO
-    CausalState("dummy", this, CSSR.emptyState)
+    CausalState("dummy", this, EquivalenceClass())
   }
 
   def getDepth(depth: Int): Array[CausalState] = {
