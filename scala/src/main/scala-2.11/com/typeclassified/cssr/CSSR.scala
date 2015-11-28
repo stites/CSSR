@@ -16,8 +16,8 @@ package object CSSR {
     parseTreeLoading()
     initialization()
     sufficiency(parseTree, allStates, lMax)
-//    recursion (parseTree, allStates, lMax)
-    println(parseTree)
+    recursion (parseTree, allStates, lMax)
+    println("woo!")
   }
 
   def parseTreeLoading() = {
@@ -53,15 +53,16 @@ package object CSSR {
     */
   def sufficiency(parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
     for (l <- 0 to lMax) {
-      val y =  parseTree.getDepth(l)
-      for (xt <- y) {
+      for (xt <- parseTree.getDepth(l)) {
         val s = xt.currentEquivalenceClass
         for ((a, alphaIdx) <- AlphabetHolder.alphabet.map) {
           // node in the parse tree with predictive dist
           val aXt = xt.findChildWithAdditionalHistory(a)
           s.normalizeAcrossHistories()
           val p = s.normalDistribution(alphaIdx)
-          Test.test(S, p, aXt.get, s, sig)
+          if (aXt.nonEmpty) {
+            Test.test(S, p, aXt.get, s, sig)
+          }
         }
       }
     }
@@ -90,18 +91,21 @@ package object CSSR {
       recursive = true
       for (s <- S) {
         for ((a, alphabetIdx) <- AlphabetHolder.alphabet.map) {
-          val x0 = s.histories.head
-          val transitionToAEstimate = x0.normalDistribution(alphabetIdx)
-          for (x <- s.histories.tail) {
-            val xTransitionToAEstimate = x.normalDistribution(alphabetIdx)
-            if (transitionToAEstimate != xTransitionToAEstimate) {
-              val sNew = EquivalenceClass()
-              S += sNew
-              val newStateTransitionToA = xTransitionToAEstimate
-              for (y <- s.histories if y.normalDistribution(alphabetIdx) == newStateTransitionToA) {
-                Test.move(y, s, sNew)
+          val maybeX0 = s.histories.headOption
+          if (maybeX0.nonEmpty) {
+            val x0 = maybeX0.get
+            val transitionToAEstimate = x0.normalDistribution(alphabetIdx)
+            for (x <- s.histories.tail) {
+              val xTransitionToAEstimate = x.normalDistribution(alphabetIdx)
+              if (transitionToAEstimate != xTransitionToAEstimate) {
+                val sNew = EquivalenceClass()
+                S += sNew
+                val newStateTransitionToA = xTransitionToAEstimate
+                for (y <- s.histories if y.normalDistribution(alphabetIdx) == newStateTransitionToA) {
+                  Test.move(y, s, sNew)
+                }
+                recursive = false
               }
-              recursive = false
             }
           }
         }

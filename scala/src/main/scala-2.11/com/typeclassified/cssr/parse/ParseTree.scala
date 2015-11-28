@@ -1,8 +1,8 @@
 package com.typeclassified.cssr.parse
 
-import com.typeclassified.cssr.{CausalState, CSSR, EquivalenceClass, Probablistic}
+import com.typeclassified.cssr.{CausalState, EquivalenceClass}
 
-import scala.collection.mutable.{ListBuffer, ArrayBuffer}
+import scala.collection.mutable.ListBuffer
 
 object ParseTree {
   def apply() = new ParseTree()
@@ -55,12 +55,10 @@ class ParseTree {
       if (depth <= 0) {
         nodes.toArray
       } else {
-        val ns = nodes.flatMap(_.children)
-        subroutine(ns, depth - 1)
+        subroutine(nodes.flatMap(_.children), depth - 1)
       }
     }
-    val a = subroutine(root.children, depth)
-    return a
+    return subroutine(root.children, depth)
   }
 }
 
