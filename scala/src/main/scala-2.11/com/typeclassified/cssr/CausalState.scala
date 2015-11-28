@@ -1,5 +1,6 @@
 package com.typeclassified.cssr
 
+import breeze.linalg.normalize
 import com.typeclassified.cssr.parse.{AlphabetHolder, ParseTree}
 
 import scala.collection.mutable.ListBuffer
@@ -21,7 +22,7 @@ class CausalState(observation: Char, parseTree: ParseTree, initialEquivClass: Eq
     val idx: Int = AlphabetHolder.alphabet.map(xNext)
     frequency(idx) += 1
     totalCounts += 1
-    normalDistribution = frequency :/ totalCounts.toDouble
+    distribution = normalize(frequency)
   }
 
   def changeEquivalenceClass(s: EquivalenceClass): Unit = {

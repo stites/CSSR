@@ -2,10 +2,14 @@ package com.typeclassified.cssr
 
 import com.typeclassified.cssr.test.Test
 import com.typeclassified.cssr.parse.{AlphabetHolder, ParseAlphabet, ParseTree}
+import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
-package object CSSR {
+object CSSR {
+  val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
+
   AlphabetHolder.alphabet = ParseAlphabet(List('a', 'b'))
   var parseTree: ParseTree = ParseTree()
   var allStates: ListBuffer[EquivalenceClass] = ListBuffer(EquivalenceClass())
@@ -16,8 +20,8 @@ package object CSSR {
     parseTreeLoading()
     initialization()
     sufficiency(parseTree, allStates, lMax)
-    recursion (parseTree, allStates, lMax)
-    println("woo!")
+    recursion(parseTree, allStates, lMax)
+    logger.info("CSSR completed successfully!")
   }
 
   def parseTreeLoading() = {
@@ -53,19 +57,21 @@ package object CSSR {
     */
   def sufficiency(parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
     for (l <- 0 to lMax) {
+      logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
         val s = xt.currentEquivalenceClass
         for ((a, alphaIdx) <- AlphabetHolder.alphabet.map) {
           // node in the parse tree with predictive dist
           val aXt = xt.findChildWithAdditionalHistory(a)
           s.normalizeAcrossHistories()
-          val p = s.normalDistribution(alphaIdx)
+          val p = s.distribution(alphaIdx)
           if (aXt.nonEmpty) {
             Test.test(S, p, aXt.get, s, sig)
           }
         }
       }
     }
+    logger.info("States found at the end of Sufficiency: " + S.size.toString)
   }
 
   /**
@@ -94,14 +100,14 @@ package object CSSR {
           val maybeX0 = s.histories.headOption
           if (maybeX0.nonEmpty) {
             val x0 = maybeX0.get
-            val transitionToAEstimate = x0.normalDistribution(alphabetIdx)
+            val transitionToAEstimate = x0.distribution(alphabetIdx)
             for (x <- s.histories.tail) {
-              val xTransitionToAEstimate = x.normalDistribution(alphabetIdx)
+              val xTransitionToAEstimate = x.distribution(alphabetIdx)
               if (transitionToAEstimate != xTransitionToAEstimate) {
                 val sNew = EquivalenceClass()
                 S += sNew
                 val newStateTransitionToA = xTransitionToAEstimate
-                for (y <- s.histories if y.normalDistribution(alphabetIdx) == newStateTransitionToA) {
+                for (y <- s.histories if y.distribution(alphabetIdx) == newStateTransitionToA) {
                   Test.move(y, s, sNew)
                 }
                 recursive = false
@@ -111,6 +117,7 @@ package object CSSR {
         }
       }
     }
+    logger.info("States found at the end of Recursion: " + S.size.toString)
   }
 }
 

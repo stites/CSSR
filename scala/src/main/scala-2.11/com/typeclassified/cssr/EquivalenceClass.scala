@@ -1,6 +1,9 @@
 package com.typeclassified.cssr
 
+import com.typeclassified.cssr.parse.AlphabetHolder
+
 import scala.collection.mutable.ArrayBuffer
+import breeze.linalg._
 
 object EquivalenceClass {
   def apply() = new EquivalenceClass()
@@ -10,7 +13,7 @@ class EquivalenceClass extends Probablistic {
   var histories: ArrayBuffer[CausalState] = ArrayBuffer()
 
   def addHistory(h: CausalState) = {
-    histories :+ h
+    histories += h
     normalizeAcrossHistories()
   }
 
@@ -22,9 +25,9 @@ class EquivalenceClass extends Probablistic {
   def normalizeAcrossHistories() = {
     frequency = histories.foldRight(frequency)((history, totalFreq) => totalFreq :+ history.frequency)
 
-    totalCounts = frequency.foldRight(0d)(_ + _).toInt
+    totalCounts = frequency.foldRight(0d)(_+_).toInt
 
-    normalDistribution = frequency :/ totalCounts.toDouble
+    distribution = if (totalCounts == 0) DenseVector.ones(frequency.length) else normalize(frequency)
   }
 }
 

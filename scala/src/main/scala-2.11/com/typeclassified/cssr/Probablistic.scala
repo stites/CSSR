@@ -4,7 +4,8 @@ import breeze.linalg.DenseVector
 import com.typeclassified.cssr.parse.AlphabetHolder
 
 trait Probablistic {
-  var frequency: DenseVector[Double] = DenseVector.zeros[Double](AlphabetHolder.alphabet.size)
-  var normalDistribution: DenseVector[Double] = DenseVector.zeros[Double](AlphabetHolder.alphabet.size)
-  var totalCounts: Int = 0
+  protected val size = AlphabetHolder.alphabet.size
+  var frequency: DenseVector[Double] = DenseVector.zeros(size)
+  var distribution: DenseVector[Double] = DenseVector.zeros(size)
+  var totalCounts: Double = 0
 }
