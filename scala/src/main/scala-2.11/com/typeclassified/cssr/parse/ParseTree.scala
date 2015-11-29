@@ -22,7 +22,7 @@ object ParseTree {
 }
 
 class ParseTree {
-  var root:CausalState = CausalState(0.toChar, this, EquivalenceClass())
+  var root:CausalState = CausalState("", this, EquivalenceClass())
   var maxLength:Int = _
   var dataSize:Double = _
   var adjustedDataSize:Double = _
@@ -47,7 +47,7 @@ class ParseTree {
       if (maybeNext.nonEmpty) {
         next = maybeNext.get
       } else {
-        next = CausalState(history.head, this, active.currentEquivalenceClass)
+        next = CausalState(history.mkString, this, active.currentEquivalenceClass)
         active.children += next
       }
 

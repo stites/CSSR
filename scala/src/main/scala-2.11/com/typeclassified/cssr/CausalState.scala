@@ -6,15 +6,19 @@ import com.typeclassified.cssr.parse.{AlphabetHolder, ParseTree}
 import scala.collection.mutable.ListBuffer
 
 object CausalState {
-  def apply(c: Char, tree: ParseTree, initState: EquivalenceClass) = new CausalState(c, tree, initState)
+  def apply(o:String, tree: ParseTree, initState: EquivalenceClass) = new CausalState(o, tree, initState)
 }
 
-class CausalState(observation: Char, parseTree: ParseTree, initialEquivClass: EquivalenceClass) extends Probablistic {
+class CausalState(val observed:String,
+                  parseTree: ParseTree,
+                  initialEquivClass: EquivalenceClass
+                 ) extends Probablistic {
   /* history = 00
    * next_x  = 1
    *       ==> 001
    */
-  val value: Char = observation
+  val observation: Char = if (observed == "") 0.toChar else observed.head
+  val history:String = if (observed == "") "" else observed.tail
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
   var children: ListBuffer[CausalState] = ListBuffer()
 
@@ -33,7 +37,7 @@ class CausalState(observation: Char, parseTree: ParseTree, initialEquivClass: Eq
   }
 
   def findChildWithAdditionalHistory(xNext: Char):Option[CausalState] = {
-    children.find(child => child.value == xNext)
+    children.find(child => child.observation == xNext)
   }
 }
 

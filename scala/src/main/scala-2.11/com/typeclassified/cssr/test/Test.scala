@@ -26,7 +26,7 @@ object Test {
       if (sStar.nonEmpty) {
         move(aXt, s, sStar.get)
       } else {
-        logger.info(s"Generating a new equivalence class with: ${aXt.value}")
+        logger.info(s"Generating a new equivalence class with: ${aXt.observation}")
         var sNew = EquivalenceClass()
         S += sNew
         move(aXt, s, sNew)
