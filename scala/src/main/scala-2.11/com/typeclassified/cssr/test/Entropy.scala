@@ -13,7 +13,7 @@ object Entropy {
     * @param parseTree
     * @param parseAlphabet
     */
-  def calculateRelativeEntropy (parseTree:ParseTree, S:Array[CausalState], alphabet: ParseAlphabet): Unit = {
+  def calculateRelativeEntropy (parseTree:ParseTree, S:Array[CausalState], alphabet: ParseAlphabet): Double = {
     // We can't begin a substring of length maxLength at the last (maxLength-1)
     // positions in the data string
     val gArray = parseTree.getDepth(parseTree.maxLength)
@@ -22,7 +22,7 @@ object Entropy {
     calcStringProbs(gArray, parseTree.maxLength, S, alphabet, stringProbs)
 
     var relEntropy:Double = 0
-    var logRatio:Double = _
+    var logRatio:Double = 0
 
     for ((history, i) <- gArray.view.zipWithIndex) {
       val occurrence:Double = sum(history.frequency)
@@ -67,11 +67,11 @@ object Entropy {
     * @return
     */
   def calcStringProb(string:String, S:Array[CausalState], alphabet:ParseAlphabet) = {
-    var totalPerString = 0
-    var currentState:CausalState = _
-    val index:Int = _
-    var frequency: Double = _
-    var transition:Double = _
+    var totalPerString:Double = 0
+//    var currentState:CausalState = _
+//    val index:Int = _
+    var frequency: Double = 0
+    var transition:Double = 0
 
     for (s <- S) {
       val startState = s
