@@ -11,7 +11,8 @@ object Entropy {
     * data based on the inferred machine
     *
     * @param parseTree
-    * @param parseAlphabet
+    * @param S
+    * @param alphabet
     */
   def calculateRelativeEntropy (parseTree:ParseTree, S:Array[CausalState], alphabet: ParseAlphabet): Double = {
     // We can't begin a substring of length maxLength at the last (maxLength-1)

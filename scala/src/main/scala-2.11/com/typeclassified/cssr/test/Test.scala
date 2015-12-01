@@ -15,7 +15,7 @@ object Test {
            aXt: CausalState,
            s: EquivalenceClass,
            sig: Double
-          ) = {
+          ): Unit= {
     if (nullHypothesis(s, aXt) > sig) {
       if (!s.histories.contains(aXt)) {
         aXt.changeEquivalenceClass(s)

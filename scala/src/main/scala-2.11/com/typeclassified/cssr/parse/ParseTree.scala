@@ -19,7 +19,7 @@ object ParseTree {
     tree.maxLength = n
     tree.dataSize = xs.length
     tree.adjustedDataSize =  xs.length - n - 1 // TODO: multi-line
-    tree
+    return tree
   }
 }
 

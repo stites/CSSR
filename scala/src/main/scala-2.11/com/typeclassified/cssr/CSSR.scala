@@ -6,7 +6,7 @@ import com.typeclassified.cssr.parse.{AlphabetHolder, ParseAlphabet, ParseTree}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
 object CSSR {
@@ -40,11 +40,11 @@ object CSSR {
     lMax = config.lMax
     sig = config.sig
 
-    val alphabetSrc = Source.fromFile(config.alphabetFile)
-    val alphabetSeq = try alphabetSrc.mkString.toCharArray finally alphabetSrc.close()
+    val alphabetSrc: BufferedSource = Source.fromFile(config.alphabetFile)
+    val alphabetSeq: Array[Char] = try alphabetSrc.mkString.toCharArray finally alphabetSrc.close()
 
-    val dataSrc = Source.fromFile(config.dataFile)
-    val dataSeq = try dataSrc.mkString.toCharArray finally dataSrc.close()
+    val dataSrc: BufferedSource = Source.fromFile(config.dataFile)
+    val dataSeq: Array[Char] = try dataSrc.mkString.toCharArray finally dataSrc.close()
 
     AlphabetHolder.alphabet = ParseAlphabet(alphabetSeq)
     parseTree = ParseTree.loadData(dataSeq, lMax)
@@ -63,7 +63,7 @@ object CSSR {
     * @param S
     * @param lMax
     */
-  def sufficiency(parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
+  def sufficiency(parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int):Unit = {
     for (l <- 0 to lMax) {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {

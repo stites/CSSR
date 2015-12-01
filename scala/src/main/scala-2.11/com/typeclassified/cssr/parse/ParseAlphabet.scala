@@ -5,8 +5,8 @@ object ParseAlphabet {
 }
 
 class ParseAlphabet(val alphabetRaw: Array[Char]) {
-  val map = alphabetRaw.zipWithIndex.map { case (c: Char, i: Int) => c -> i }.toMap
-  val size = alphabetRaw.length
+  val map: Map[Char, Int]= alphabetRaw.zipWithIndex.map { case (c: Char, i: Int) => c -> i }.toMap
+  val size: Int = alphabetRaw.length
 }
 
 object AlphabetHolder {
