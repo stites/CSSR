@@ -1,35 +1,33 @@
 package com.typeclassified.cssr
 
+import com.typeclassified.cssr.cli.{Config, Cli}
 import com.typeclassified.cssr.test.Test
 import com.typeclassified.cssr.parse.{AlphabetHolder, ParseAlphabet, ParseTree}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
+import scala.io.Source
 import scala.collection.mutable.ListBuffer
 
 object CSSR {
   val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
-
-  AlphabetHolder.alphabet = ParseAlphabet(List('a', 'b'))
-  var parseTree: ParseTree = ParseTree()
-  var allStates: ListBuffer[EquivalenceClass] = ListBuffer(EquivalenceClass())
-  var lMax: Int = 5
-  var sig: Double = 0.7
+  var parseTree: ParseTree = _
+  var lMax: Int = _
+  var sig: Double = _
+  var allStates: ListBuffer[EquivalenceClass] =_
 
   def main(args: Array[String]) = {
-    parseTreeLoading()
-    initialization()
-    sufficiency(parseTree, allStates, lMax)
-    recursion(parseTree, allStates, lMax)
-    logger.info("CSSR completed successfully!")
-  }
+    Cli.parser.parse(args, Config()) match {
+      case Some(config) => {
+        initialization(config)
+        sufficiency(parseTree, allStates, lMax)
+        recursion(parseTree, allStates, lMax)
+        logger.info("CSSR completed successfully!")
+      }
+      case None => {
 
-  def parseTreeLoading() = {
-    // initialize psuedo-observations:
-    val dataSize = 1000
-    var obs: ListBuffer[Char] = new ListBuffer[Char]()
-    1 to dataSize foreach { i => obs += AlphabetHolder.alphabet.alphabetRaw(i % 2) }
-    ParseTree.loadData(parseTree, obs.toList, lMax)
+      }
+    }
   }
 
   /**
@@ -38,9 +36,19 @@ object CSSR {
     * causal states which each contain a next-step probability
     * distribution.
     */
-  def initialization(): Unit = {
-    // technically, this all that is needed in the "initialization" phase:
-    // allStates = ListBuffer(emptyState)
+  def initialization(config: Config): Unit = {
+    lMax = config.lMax
+    sig = config.sig
+
+    val alphabetSrc = Source.fromFile(config.alphabetFile)
+    val alphabetSeq = try alphabetSrc.mkString.toCharArray finally alphabetSrc.close()
+
+    val dataSrc = Source.fromFile(config.dataFile)
+    val dataSeq = try dataSrc.mkString.toCharArray finally dataSrc.close()
+
+    AlphabetHolder.alphabet = ParseAlphabet(alphabetSeq)
+    parseTree = ParseTree.loadData(dataSeq, lMax)
+    allStates = ListBuffer(EquivalenceClass())
   }
 
   /**

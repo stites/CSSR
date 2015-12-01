@@ -7,7 +7,8 @@ import scala.collection.mutable.ListBuffer
 object ParseTree {
   def apply() = new ParseTree()
 
-  def loadData(tree: ParseTree, xs: List[Char], n: Int) = {
+  def loadData(xs: Array[Char], n: Int): ParseTree = {
+    val tree:ParseTree = new ParseTree()
     //  Yield successive n-sized windows from the x's. Does not work with a length of 0.
     for (size <- 1 until n) {
       for (observed <- xs.iterator.sliding(size).withPartial(false)) {
@@ -18,6 +19,7 @@ object ParseTree {
     tree.maxLength = n
     tree.dataSize = xs.length
     tree.adjustedDataSize =  xs.length - n - 1 // TODO: multi-line
+    tree
   }
 }
 

@@ -1,12 +1,12 @@
 package com.typeclassified.cssr.parse
 
 object ParseAlphabet {
-  def apply(alphabetRaw: List[Char]) = new ParseAlphabet(alphabetRaw)
+  def apply(alphabetRaw: Array[Char]) = new ParseAlphabet(alphabetRaw)
 }
 
-class ParseAlphabet(val alphabetRaw: List[Char]) {
+class ParseAlphabet(val alphabetRaw: Array[Char]) {
   val map = alphabetRaw.zipWithIndex.map { case (c: Char, i: Int) => c -> i }.toMap
-  val size = alphabetRaw.size
+  val size = alphabetRaw.length
 }
 
 object AlphabetHolder {
