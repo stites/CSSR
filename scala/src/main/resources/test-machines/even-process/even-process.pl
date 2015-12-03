@@ -3,7 +3,7 @@
 # Program which produces a long data-file simulating the strictly sofic
 # system known as the even process.
 
-# The process produces strings of ones and zeros, subject to the contrainst
+# The process produces strings of ones and zeros, subject to the constraint
 # that ones are produced in blocks of even length.  Thus, in state A, we
 # may produce a 0, which leads back to A, or we may produce a one, which
 # leads to B.  In B we must produce a 1 and return to A.

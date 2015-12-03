@@ -10,7 +10,7 @@ import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
 object CSSR {
-  val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
+  protected val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
   var parseTree: ParseTree = _
   var lMax: Int = _
   var sig: Double = _
