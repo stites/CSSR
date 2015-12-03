@@ -1,4 +1,4 @@
-package com.typeclassified.cssr.parse
+package com.typeclassified.hmm.cssr.parse
 
 object ParseAlphabet {
   def apply(alphabetRaw: Array[Char]) = new ParseAlphabet(alphabetRaw)

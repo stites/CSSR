@@ -1,8 +1,8 @@
-package com.typeclassified.cssr
+package com.typeclassified.hmm.cssr
 
-import com.typeclassified.cssr.cli.{Config, Cli}
-import com.typeclassified.cssr.test.Test
-import com.typeclassified.cssr.parse.{AlphabetHolder, ParseAlphabet, ParseTree}
+import com.typeclassified.hmm.cssr.cli.{Config, Cli}
+import com.typeclassified.hmm.cssr.test.Test
+import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, ParseAlphabet, ParseTree}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 

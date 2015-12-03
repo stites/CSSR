@@ -1,7 +1,7 @@
-package com.typeclassified.cssr
+package com.typeclassified.hmm.cssr
 
 import breeze.linalg.normalize
-import com.typeclassified.cssr.parse.{AlphabetHolder, ParseTree}
+import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, ParseTree}
 
 import scala.collection.mutable.ListBuffer
 

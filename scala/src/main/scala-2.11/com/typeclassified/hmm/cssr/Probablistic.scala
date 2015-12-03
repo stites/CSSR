@@ -1,7 +1,7 @@
-package com.typeclassified.cssr
+package com.typeclassified.hmm.cssr
 
 import breeze.linalg.DenseVector
-import com.typeclassified.cssr.parse.AlphabetHolder
+import com.typeclassified.hmm.cssr.parse.AlphabetHolder
 
 trait Probablistic {
   protected val size: Int = AlphabetHolder.alphabet.size

@@ -1,7 +1,7 @@
-package com.typeclassified.cssr.test
+package com.typeclassified.hmm.cssr.test
 
-import com.typeclassified.cssr.CausalState
-import com.typeclassified.cssr.EquivalenceClass
+import com.typeclassified.hmm.cssr.CausalState
+import com.typeclassified.hmm.cssr.EquivalenceClass
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 

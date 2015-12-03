@@ -1,6 +1,6 @@
-package com.typeclassified.cssr.parse
+package com.typeclassified.hmm.cssr.parse
 
-import com.typeclassified.cssr.{CausalState, EquivalenceClass}
+import com.typeclassified.hmm.cssr.{CausalState, EquivalenceClass}
 
 import scala.collection.mutable.ListBuffer
 
@@ -31,6 +31,7 @@ class ParseTree {
 
   /**
     * navigate from root to x_hist leaf and update the distribution with x0
+ *
     * @param x0
     * @param x_hist
     */

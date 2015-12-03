@@ -1,4 +1,4 @@
-package com.typeclassified.cssr.test
+package com.typeclassified.hmm.cssr.test
 
 import breeze.linalg.{DenseVector, max}
 
@@ -12,8 +12,8 @@ object KolmogorovSmirnov {
     assert(dist1.length == dist2.length)
 
     // obtain cumulative distributions
-    val cdf1 = dist1.scanRight[Double](0d)(_ + _)
-    val cdf2 = dist2.scanRight[Double](0d)(_ + _)
+    val cdf1 = dist1.scanRight[Double](0)(_ + _)
+    val cdf2 = dist2.scanRight[Double](0)(_ + _)
 
     // calculate KS statistic - take max difference between 2 values
     val largestDiff = max((cdf1 - cdf2).map(math.abs))

@@ -1,4 +1,4 @@
-package com.typeclassified.cssr
+package com.typeclassified.hmm.cssr
 
 import scala.collection.mutable.ArrayBuffer
 import breeze.linalg._

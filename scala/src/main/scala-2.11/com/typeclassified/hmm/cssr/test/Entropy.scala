@@ -1,8 +1,8 @@
-package com.typeclassified.cssr.test
+package com.typeclassified.hmm.cssr.test
 
 import breeze.linalg.{sum, DenseVector}
-import com.typeclassified.cssr.{EquivalenceClass, CausalState}
-import com.typeclassified.cssr.parse.{ParseAlphabet, ParseTree}
+import com.typeclassified.hmm.cssr.{EquivalenceClass, CausalState}
+import com.typeclassified.hmm.cssr.parse.{ParseAlphabet, ParseTree}
 
 object Entropy {
 

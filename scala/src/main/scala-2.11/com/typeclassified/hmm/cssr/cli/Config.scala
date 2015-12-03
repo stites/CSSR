@@ -1,4 +1,4 @@
-package com.typeclassified.cssr.cli
+package com.typeclassified.hmm.cssr.cli
 
 import java.io.File
 
