@@ -1,6 +1,5 @@
 package com.typeclassified.hmm.utils
 
-import java.io.File
 import java.nio.file.{Path, Files, Paths}
 
 import com.typesafe.scalalogging.Logger
@@ -28,9 +27,9 @@ object TestMachines {
   def runPerlScript(scriptName: String, params: String*):Path = {
     val scriptPath:String = getAbsPathFromScriptName(scriptName)
     val resultsPath:Path = Files.createTempDirectory(scriptName)
-    val cmd:String = ((scriptPath +: params) ++ Seq(resultsPath.toAbsolutePath.toString)).mkString(" ")
+    val cmd:String = ((scriptPath +: params) ++ Seq(resultsPath.toAbsolutePath.toString + "/")).mkString(" ")
 
-    logger.debug(s"Running $scriptName with command: ${cmd}")
+    logger.debug(s"Running $scriptName with command:\n${cmd}")
 
     (cmd #> System.out).!
 
@@ -38,7 +37,7 @@ object TestMachines {
   }
 
   def main(): Unit ={
-    runPerlScript("even-process", "100")
+    val resultDir: Path = runPerlScript("even-process", "100")
   }
 }
 

@@ -37,8 +37,8 @@ $One_Trans[0] = 1;
 $One_Trans[1] = 0;
 
 
-$repetitions = shift(@ARGV); # Make first argument number of steps to simulate
-$output_dir = shift(@ARGV); # change output directory (optional) - must end in /
+$repetitions = @ARGV[0]; # Make first argument number of steps to simulate
+$output_dir = (@ARGV == 2) ? @ARGV[1] : "";             # change output directory (optional) - must end in /
 
 # Always start in state 1
 $current_state = 0;
@@ -62,7 +62,7 @@ for ($i = 0; $i < $number_states; $i++) {
     }
 }
 
-$FileNamesBase = $output_dir != 0 ? $output_dir + "EP" : "EP";
+$FileNamesBase = $output_dir . "EP";
 $MachineFileName = $FileNamesBase . "_machine";
 open(MACHINE, ">$MachineFileName") || die "Can't make $MachineFileName: $!";
 print MACHINE "Reference number: $FileNamesBase\n";
