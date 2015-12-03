@@ -1,6 +1,7 @@
 package com.typeclassified.hmm.utils
 
-import java.nio.file.Paths
+import java.io.File
+import java.nio.file.{Path, Files, Paths}
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
@@ -24,15 +25,20 @@ object TestMachines {
     }
   }
 
-  def runPerlScript(scriptName: String, params: String*):Int = {
-    logger.debug(s"$scriptName called with", params.toString())
+  def runPerlScript(scriptName: String, params: String*):Path = {
+    val scriptPath:String = getAbsPathFromScriptName(scriptName)
+    val resultsPath:Path = Files.createTempDirectory(scriptName)
+    val cmd:String = ((scriptPath +: params) ++ Seq(resultsPath.toAbsolutePath.toString)).mkString(" ")
 
-    val cmd:String = (getAbsPathFromScriptName(scriptName) +: params).mkString(" ")
-    return (cmd #> System.out).!
+    logger.debug(s"Running $scriptName with command: ${cmd}")
+
+    (cmd #> System.out).!
+
+    return resultsPath
   }
 
   def main(): Unit ={
-    runPerlScript("even-process", "100", "AB")
+    runPerlScript("even-process", "100")
   }
 }
 

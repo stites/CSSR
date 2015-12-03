@@ -15,3 +15,7 @@ cpp/CMakeLists.txt
 scala/scala.iml
 alphabet.tmp
 data.tmp
+scala/EP_machine
+scala/EP_stateseq.gz
+scala/EP_timeseq
+scala/EP.dot
