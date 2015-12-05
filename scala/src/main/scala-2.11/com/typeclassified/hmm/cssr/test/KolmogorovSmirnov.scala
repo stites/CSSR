@@ -12,6 +12,7 @@ object KolmogorovSmirnov {
     assert(dist1.length == dist2.length)
 
     // obtain cumulative distributions
+    // [1,2,3] => [(1), (1+2), (1+2+3)]
     val cdf1 = dist1.scanRight[Double](0)(_ + _)
     val cdf2 = dist2.scanRight[Double](0)(_ + _)
 
@@ -22,7 +23,7 @@ object KolmogorovSmirnov {
     val en: Double = math.sqrt(x)
 
     // calculate significance level
-    prob((en + 0.12 + (0.11 / en)) * largestDiff)
+    return prob((en + 0.12 + (0.11 / en)) * largestDiff)
   }
 
   def prob(alam: Double): Double = {
@@ -45,6 +46,6 @@ object KolmogorovSmirnov {
       termBF = math.abs(term)
     }
 
-    1.0
+    return 1.0
   }
 }

@@ -1,6 +1,6 @@
 package com.typeclassified.hmm.cssr.parse
 
-import com.typeclassified.hmm.cssr.{CausalState, EquivalenceClass}
+import com.typeclassified.hmm.cssr.{Leaf, Leaf$, EquivalenceClass}
 
 import scala.collection.mutable.ListBuffer
 
@@ -13,7 +13,9 @@ object ParseTree {
     for (size <- 1 until n) {
       for (observed <- xs.iterator.sliding(size).withPartial(false)) {
         // updates the predictive distributions of the tree
-        tree.updatePredictiveDistribution(observed.head, observed.tail.toList)
+        // ABC
+        // C, AB
+        tree.updatePredictiveDistribution(observed.last, observed.init.toList) //TODO: flip these args
       }
     }
     tree.maxLength = n
@@ -24,47 +26,51 @@ object ParseTree {
 }
 
 class ParseTree {
-  var root:CausalState = CausalState("", this, EquivalenceClass())
+  var root:Leaf = Leaf("", this, EquivalenceClass())
   var maxLength:Int = _
   var dataSize:Double = _
   var adjustedDataSize:Double = _
 
   /**
     * navigate from root to x_hist leaf and update the distribution with x0
- *
+    * => ParseTree goes deeper into the past
+    *
     * @param x0
     * @param x_hist
     */
   def updatePredictiveDistribution(x0: Char, x_hist: List[Char]):Unit = {
-    val maybeState = navigateHistory(x_hist)
-    if (maybeState.nonEmpty) {
-      maybeState.get.updateDistribution(x0)
+    val maybeLeaf = navigateHistory(x_hist)
+    if (maybeLeaf.nonEmpty) {
+      maybeLeaf.get.updateDistribution(x0)
     }
   }
 
-  def navigateHistory(history: List[Char]): Option[CausalState] = {
-    def subroutine(active:CausalState, history:List[Char]): CausalState = {
-      val maybeNext:Option[CausalState] = active.findChildWithAdditionalHistory(history.head)
-      var next:CausalState = null
+  // ABC, ABB => [{C->B->A},{B->C->A}]
+  def navigateHistory(history: List[Char]): Option[Leaf] = {
+    def subroutine(active:Leaf, history:List[Char]): Leaf = {
+      val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
+      var next:Leaf = null
 
       if (maybeNext.nonEmpty) {
         next = maybeNext.get
       } else {
-        next = CausalState(history.mkString, this, active.currentEquivalenceClass)
+        next = Leaf(history.mkString, this, active.currentEquivalenceClass)
         active.children += next
       }
 
-      return if (history.tail.isEmpty) next else subroutine(next, history.tail)
+      return if (history.init.isEmpty) next else subroutine(next, history.init)
     }
+
     return if (history.isEmpty) Option.empty else Option.apply(subroutine(root, history))
   }
 
-  def getDepth(depth: Int): Array[CausalState] = {
-    def subroutine(nodes: ListBuffer[CausalState], depth: Int): Array[CausalState] = {
+  def getDepth(depth: Int): Array[Leaf] = {
+    def subroutine(nodes: ListBuffer[Leaf], depth: Int): Array[Leaf] = {
       if (depth <= 0) {
         nodes.toArray
       } else {
         subroutine(nodes.flatMap(_.children), depth - 1)
+        // [nodes] => [children] ++ [children]
       }
     }
     return subroutine(root.children, depth)

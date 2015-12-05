@@ -1,7 +1,6 @@
 package com.typeclassified.hmm.cssr.test
 
-import com.typeclassified.hmm.cssr.CausalState
-import com.typeclassified.hmm.cssr.EquivalenceClass
+import com.typeclassified.hmm.cssr.{Leaf, Leaf$, EquivalenceClass}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
@@ -11,8 +10,7 @@ object Test {
   val logger = Logger(LoggerFactory.getLogger(Test.getClass))
 
   def test(S: ListBuffer[EquivalenceClass],
-           p: Double,
-           aXt: CausalState,
+           aXt: Leaf,
            s: EquivalenceClass,
            sig: Double
           ): Unit= {
@@ -34,7 +32,7 @@ object Test {
     }
   }
 
-  def nullHypothesis(s: EquivalenceClass, aXt: CausalState): Double = {
+  def nullHypothesis(s: EquivalenceClass, aXt: Leaf): Double = {
     KolmogorovSmirnov
       .test(
         s.distribution,
@@ -45,7 +43,7 @@ object Test {
 
   def restrictedHypothesesTesting(S: List[EquivalenceClass],
                                   s: EquivalenceClass,
-                                  ax: CausalState,
+                                  ax: Leaf,
                                   sig: Double
                                  ): Option[EquivalenceClass] = {
     val SStar = S.filter(_ != s)
@@ -57,8 +55,14 @@ object Test {
     Option.empty
   }
 
-  def move(x: CausalState, from: EquivalenceClass, to: EquivalenceClass): Unit = {
+  def move(x: Leaf, from: EquivalenceClass, to: EquivalenceClass): Unit = {
+    // ABC -> A
+    // (A->) C->B->A
+    //
+
+    x.changeEquivalenceClass(to)
     from.rmHistory(x)
     to.addHistory(x)
+
   }
 }

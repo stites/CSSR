@@ -5,22 +5,22 @@ import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, ParseTree}
 
 import scala.collection.mutable.ListBuffer
 
-object CausalState {
-  def apply(o:String, tree: ParseTree, initState: EquivalenceClass) = new CausalState(o, tree, initState)
+object Leaf {
+  def apply(o:String, tree: ParseTree, initState: EquivalenceClass) = new Leaf(o, tree, initState)
 }
 
-class CausalState(val observed:String,
-                  parseTree: ParseTree,
-                  initialEquivClass: EquivalenceClass
+class Leaf(val observed:String,
+           parseTree: ParseTree,
+           initialEquivClass: EquivalenceClass
                  ) extends Probablistic {
   /* history = 00
    * next_x  = 1
    *       ==> 001
    */
-  val observation: Char = if (observed == "") 0.toChar else observed.head
-  val history:String = if (observed == "") "" else observed.tail
+  val observation: Char = if (observed == "") 0.toChar else observed.last // C
+  val history:String = if (observed == "") "" else observed.init // ABC -> AB
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
-  var children: ListBuffer[CausalState] = ListBuffer()
+  var children: ListBuffer[Leaf] = ListBuffer()
 
   def updateDistribution(xNext: Char):Unit = {
     val idx: Int = AlphabetHolder.alphabet.map(xNext)
@@ -36,8 +36,15 @@ class CausalState(val observed:String,
     children foreach (child => child.changeEquivalenceClass(s))
   }
 
-  def findChildWithAdditionalHistory(xNext: Char):Option[CausalState] = {
+  def findChildWithAdditionalHistory(xNext: Char):Option[Leaf] = {
+    // to find BA
+    // node A, search for child with B
     children.find(child => child.observation == xNext)
+  }
+
+  def getStateOnTransition(b:Char):Option[EquivalenceClass] = {
+    val optionalLeaf = parseTree.navigateHistory((this.observed + b).toList)
+    return if (optionalLeaf.nonEmpty) Option.apply(optionalLeaf.get.currentEquivalenceClass) else Option.empty
   }
 }
 

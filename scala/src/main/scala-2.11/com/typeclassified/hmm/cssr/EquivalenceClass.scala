@@ -8,14 +8,14 @@ object EquivalenceClass {
 }
 
 class EquivalenceClass extends Probablistic {
-  var histories: ArrayBuffer[CausalState] = ArrayBuffer()
+  var histories: ArrayBuffer[Leaf] = ArrayBuffer()
 
-  def addHistory(h: CausalState): Unit = {
+  def addHistory(h: Leaf): Unit = {
     histories += h
     normalizeAcrossHistories()
   }
 
-  def rmHistory(x: CausalState): Unit = {
+  def rmHistory(x: Leaf): Unit = {
     histories = histories.filter(y => y != x)
     normalizeAcrossHistories()
   }

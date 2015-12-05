@@ -72,9 +72,8 @@ object CSSR {
           // node in the parse tree with predictive dist
           val aXt = xt.findChildWithAdditionalHistory(a)
           s.normalizeAcrossHistories()
-          val p = s.distribution(alphaIdx)
           if (aXt.nonEmpty) {
-            Test.test(S, p, aXt.get, s, sig)
+            Test.test(S, aXt.get, s, sig)
           }
         }
       }
@@ -102,23 +101,60 @@ object CSSR {
   def recursion (parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
     var recursive = false
     while (!recursive) {
+      // clean out transient states
+
       recursive = true
       for (s <- S) {
-        for ((a, alphabetIdx) <- AlphabetHolder.alphabet.map) {
-          val maybeX0 = s.histories.headOption
+        for ((b, alphabetIdx) <- AlphabetHolder.alphabet.map) {
+          val maybeX0:Option[Leaf] = s.histories.headOption
+          /*
+           var x = s.histories.map(\ h->
+              h.getStateOnTransition(b)
+              var Exb:EquivalenceClass = null
+              if (optionalExb.nonEmpty) {
+                Exb = optionalTsb.get
+              }
+           )
+           // => [(leaf, Equivclass)]
+           parts = x.partition( /on equiv class/ )
+           parts.len > 1 ?
+
+           [ s*... ]
+
+           */
           if (maybeX0.nonEmpty) {
-            val x0 = maybeX0.get
-            val transitionToAEstimate = x0.distribution(alphabetIdx)
+            val x0:Leaf = maybeX0.get
+            val optionalTsb = x0.getStateOnTransition(b)
+            var Tsb:EquivalenceClass = null
+            if (optionalTsb.nonEmpty) {
+              Tsb = optionalTsb.get
+            }
+
+            if (x0.distribution(alphabetIdx) > 0) { logger.error("never get here") }
+/// =========================
             for (x <- s.histories.tail) {
-              val xTransitionToAEstimate = x.distribution(alphabetIdx)
-              if (transitionToAEstimate != xTransitionToAEstimate) {
+
+              val optionalExb = x.getStateOnTransition(b)
+              var Exb:EquivalenceClass = null
+              if (optionalExb.nonEmpty) {
+                Exb = optionalTsb.get
+              }
+
+/// =========================
+              if (Tsb != Exb) {
+                recursive = false
                 val sNew = EquivalenceClass()
                 S += sNew
-                val newStateTransitionToA = xTransitionToAEstimate
-                for (y <- s.histories if y.distribution(alphabetIdx) == newStateTransitionToA) {
-                  Test.move(y, s, sNew)
+                for (y <- s.histories) {
+                  val optionalEyb = y.getStateOnTransition(b)
+                  var Eyb:EquivalenceClass = null
+                  if (optionalEyb.nonEmpty) {
+                    Eyb = optionalTsb.get
+                  }
+                  if (Eyb == Exb) {
+                    Test.move(y, s, sNew)
+                  }
                 }
-                recursive = false
               }
             }
           }
