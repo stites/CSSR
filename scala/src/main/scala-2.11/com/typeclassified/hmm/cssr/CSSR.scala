@@ -2,7 +2,7 @@ package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.{Config, Cli}
 import com.typeclassified.hmm.cssr.test.Test
-import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, ParseAlphabet, ParseTree}
+import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
 
 object CSSR {
   protected val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
-  var parseTree: ParseTree = _
+  var parseTree: Tree = _
   var lMax: Int = _
   var sig: Double = _
   var allStates: ListBuffer[EquivalenceClass] =_
@@ -54,8 +54,8 @@ object CSSR {
     val dataSrc: BufferedSource = Source.fromFile(config.dataFile)
     val dataSeq: Array[Char] = try dataSrc.mkString.toCharArray finally dataSrc.close()
 
-    AlphabetHolder.alphabet = ParseAlphabet(alphabetSeq)
-    parseTree = ParseTree.loadData(dataSeq, lMax)
+    AlphabetHolder.alphabet = Alphabet(alphabetSeq)
+    parseTree = Tree.loadData(dataSeq, lMax)
     allStates = ListBuffer(EquivalenceClass())
   }
 
@@ -71,7 +71,7 @@ object CSSR {
     * @param S
     * @param lMax
     */
-  def sufficiency(parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int):Unit = {
+  def sufficiency(parseTree: Tree, S: ListBuffer[EquivalenceClass], lMax: Int):Unit = {
     for (l <- 0 to lMax) {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
@@ -106,7 +106,7 @@ object CSSR {
     * @param S
     * @param lMax
     */
-  def recursion (parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
+  def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
     var recursive = false
     while (!recursive) {
       // clean out transient states

@@ -1,16 +1,16 @@
 package com.typeclassified.hmm.cssr.parse
 
-object ParseAlphabet {
-  def apply(alphabetRaw: Array[Char]) = new ParseAlphabet(alphabetRaw)
+object Alphabet {
+  def apply(alphabetRaw: Array[Char]) = new Alphabet(alphabetRaw)
 }
 
-class ParseAlphabet(val alphabetRaw: Array[Char]) {
+class Alphabet(val alphabetRaw: Array[Char]) {
   val map: Map[Char, Int]= alphabetRaw.zipWithIndex.map { case (c: Char, i: Int) => c -> i }.toMap
   val size: Int = alphabetRaw.length
 }
 
 object AlphabetHolder {
-  var alphabet: ParseAlphabet = _
+  var alphabet: Alphabet = _
 }
 
 

@@ -1,17 +1,17 @@
 package com.typeclassified.hmm.cssr.parse
 
-import com.typeclassified.hmm.cssr.{Leaf, Leaf$, EquivalenceClass}
+import com.typeclassified.hmm.cssr.EquivalenceClass
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
-object ParseTree {
-  protected val logger = Logger(LoggerFactory.getLogger(ParseTree.getClass))
-  def apply() = new ParseTree()
+object Tree {
+  protected val logger = Logger(LoggerFactory.getLogger(Tree.getClass))
+  def apply() = new Tree()
 
-  def loadData(xs: Array[Char], n: Int): ParseTree = {
-    val tree:ParseTree = new ParseTree()
+  def loadData(xs: Array[Char], n: Int): Tree = {
+    val tree:Tree = new Tree()
     //  Yield successive n-sized windows from the x's. Does not work with a length of 0.
     logger.debug(s"loading data of size ${xs.length}")
     logger.debug("==> running over windows of (size, count): "+(1 to n).map(i => (i, xs.length/i)))
@@ -32,9 +32,9 @@ object ParseTree {
   }
 
 
-  def loadHistory(tree: ParseTree, observed: Seq[Char]): Unit = {
+  def loadHistory(tree: Tree, observed: Seq[Char]): Unit = {
 
-    def go(history: List[Char], active:Leaf, tree: ParseTree, fullHistory:String): Option[Leaf] = {
+    def go(history: List[Char], active:Leaf, tree: Tree, fullHistory:String): Option[Leaf] = {
       if (history.isEmpty) return Option.empty
 
       val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
@@ -59,7 +59,7 @@ object ParseTree {
   }
 }
 
-class ParseTree {
+class Tree {
   var root:Leaf = Leaf("", this, EquivalenceClass())
   var maxLength:Int = _
   var dataSize:Double = _

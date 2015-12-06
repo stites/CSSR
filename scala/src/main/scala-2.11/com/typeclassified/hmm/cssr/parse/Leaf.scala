@@ -1,16 +1,16 @@
-package com.typeclassified.hmm.cssr
+package com.typeclassified.hmm.cssr.parse
 
 import breeze.linalg.normalize
-import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, ParseTree}
+import com.typeclassified.hmm.cssr.{EquivalenceClass, Probablistic}
 
 import scala.collection.mutable.ListBuffer
 
 object Leaf {
-  def apply(o:String, tree: ParseTree, initState: EquivalenceClass) = new Leaf(o, tree, initState)
+  def apply(o:String, tree: Tree, initState: EquivalenceClass) = new Leaf(o, tree, initState)
 }
 
 class Leaf(val observed:String,
-           parseTree: ParseTree,
+           parseTree: Tree,
            initialEquivClass: EquivalenceClass
           ) extends Probablistic {
   // (history = 00) => (next_x = 1) ==> 001

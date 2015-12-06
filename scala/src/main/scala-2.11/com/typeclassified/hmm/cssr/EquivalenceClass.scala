@@ -1,5 +1,7 @@
 package com.typeclassified.hmm.cssr
 
+import com.typeclassified.hmm.cssr.parse.Leaf
+
 import scala.collection.mutable.ArrayBuffer
 import breeze.linalg._
 
