@@ -94,16 +94,13 @@ class ParseTree {
     }
   }
 
-  def getDepth(depth: Int): Array[Leaf] = {
-    def subroutine(nodes: ListBuffer[Leaf], depth: Int): Array[Leaf] = {
-      if (depth <= 0) {
-        nodes.toArray
-      } else {
-        subroutine(nodes.flatMap(_.children), depth - 1)
-        // [nodes] => [children] ++ [children]
-      }
+  def getDepth(depth: Int, nodes:ListBuffer[Leaf] = root.children): Array[Leaf] = {
+    if (depth <= 0) {
+      nodes.toArray
+    } else {
+      getDepth(depth-1, nodes.flatMap(_.children))
+      // [nodes] => [children] ++ [children]
     }
-    return subroutine(root.children, depth)
   }
 }
 
