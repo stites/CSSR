@@ -19,15 +19,22 @@ object CSSR {
   def main(args: Array[String]) = {
     Cli.parser.parse(args, Config()) match {
       case Some(config) => {
+        logger.info("CSSR starting.\n")
         initialization(config)
+        logger.info("Initialization complete...")
         sufficiency(parseTree, allStates, lMax)
+        logger.info("Sufficiency complete...")
         recursion(parseTree, allStates, lMax)
+        logger.info("Recursion complete...")
         val statistics = collect(allStates)
-        logger.info("CSSR completed successfully!")
+        logger.info("Statistics collected!\n")
+        for ((histories, idx) <- statistics.zip(Stream from 1)) {
+          println(s"State $idx:")
+          histories.foreach(h => println(s"  $h"))
+        }
+        logger.info("\nCSSR completed successfully!")
       }
-      case None => {
-
-      }
+      case None => { }
     }
   }
 

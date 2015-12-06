@@ -1,16 +1,23 @@
 package com.typeclassified.hmm.cssr.parse
 
 import com.typeclassified.hmm.cssr.{Leaf, Leaf$, EquivalenceClass}
+import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
 object ParseTree {
+  protected val logger = Logger(LoggerFactory.getLogger(ParseTree.getClass))
   def apply() = new ParseTree()
 
   def loadData(xs: Array[Char], n: Int): ParseTree = {
     val tree:ParseTree = new ParseTree()
     //  Yield successive n-sized windows from the x's. Does not work with a length of 0.
+    logger.debug(s"loading data of size ${xs.length}")
+    logger.debug("==> running over windows of (size, count): "+(1 to n).map(i => (i, xs.length/i)))
+
     for (size <- 1 until n) {
+      logger.debug(s"loading data windows of size $size.")
       for (observed <- xs.iterator.sliding(size).withPartial(false)) {
         // updates the predictive distributions of the tree
         // ABC
@@ -34,6 +41,7 @@ class ParseTree {
   /**
     * navigate from root to x_hist leaf and update the distribution with x0
     * => ParseTree goes deeper into the past
+    *
     *
     * @param x0
     * @param x_hist

@@ -12,14 +12,14 @@ object Leaf {
 class Leaf(val observed:String,
            parseTree: ParseTree,
            initialEquivClass: EquivalenceClass
-                 ) extends Probablistic {
-  /* history = 00
-   * next_x  = 1
-   *       ==> 001
-   */
-  val observation: Char = if (observed == "") 0.toChar else observed.last // C
-  val history:String = if (observed == "") "" else observed.init // ABC -> AB
+          ) extends Probablistic {
+  // (history = 00) => (next_x = 1) ==> 001
+  val observation: Char = if ("".equals(observed)) 0.toChar else observed.last // C
+
+  val history:String = if ("".equals(observed)) "" else observed.init // ABC -> AB
+
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
+
   var children: ListBuffer[Leaf] = ListBuffer()
 
   def updateDistribution(xNext: Char):Unit = {
@@ -33,17 +33,18 @@ class Leaf(val observed:String,
     // s.append(this) # see null hypothesis and uncomment one
     currentEquivalenceClass = s
     // we ought to update transitions here (but for phase II it's not terribly important)
-    children foreach (child => child.changeEquivalenceClass(s))
+    children foreach (_.changeEquivalenceClass(s))
   }
 
   def findChildWithAdditionalHistory(xNext: Char):Option[Leaf] = {
     // to find BA
     // node A, search for child with B
-    children.find(child => child.observation == xNext)
+    children.find(_.observation == xNext)
   }
 
   def getStateOnTransition(b:Char):Option[EquivalenceClass] = {
     val optionalLeaf = parseTree.navigateHistory((this.observed + b).toList)
+
     return if (optionalLeaf.nonEmpty) Option.apply(optionalLeaf.get.currentEquivalenceClass) else Option.empty
   }
 
@@ -52,7 +53,7 @@ class Leaf(val observed:String,
       return collected
     } else {
       val (lastLeaf, next) = traverse.partition(_.children.isEmpty)
-      return longestHistories(next.flatMap(_.children), lastLeaf.map(_.observed))
+      return longestHistories(next.flatMap(_.children), (collected ++ lastLeaf.map(_.observed)).distinct)
     }
   }
 }

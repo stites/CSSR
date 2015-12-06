@@ -16,7 +16,7 @@ class EquivalenceClass extends Probablistic {
   }
 
   def rmHistory(x: Leaf): Unit = {
-    histories = histories.filter(y => y != x)
+    histories = histories.filter(y => y.observation != x.observation)
     normalizeAcrossHistories()
   }
 
@@ -28,6 +28,6 @@ class EquivalenceClass extends Probablistic {
     distribution = if (totalCounts == 0) DenseVector.ones(frequency.length) else normalize(frequency)
   }
 
-  def collectHistories():Array[String] = histories.flatMap(_.longestHistories()).toArray
+  def collectHistories():Array[String] = histories.flatMap(_.longestHistories()).toArray.distinct
 }
 
