@@ -34,7 +34,7 @@ object Tree {
 
   def loadHistory(tree: Tree, observed: Seq[Char]): Unit = {
 
-    def go(history: List[Char], active:Leaf, tree: Tree, fullHistory:String): Option[Leaf] = {
+    def go(history: List[Char], active:Leaf, tree: Tree, fullHistory:String, depth:Int=0): Option[Leaf] = {
       if (history.isEmpty) return Option.empty
 
       val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
@@ -42,15 +42,16 @@ object Tree {
       if (history.isEmpty) {
         return maybeNext
       } else {
+        val histIdx:Int = depth+1
+        val histLen:Int = fullHistory.length
+
         if (maybeNext.isEmpty) {
-          val histYoungest = fullHistory.length
-          val histOldest = histYoungest - (fullHistory.length - history.length)
-          val obs = history.slice(histOldest, histYoungest).mkString
+          val obs = fullHistory.slice(histLen-histIdx, histLen)
           val next = Leaf(obs, tree, active.currentEquivalenceClass)
           active.children += next
-          return go(history.init, next, tree, fullHistory)
+          return go(history.init, next, tree, fullHistory, histIdx)
         } else {
-          return go(history.init, maybeNext.get, tree, fullHistory)
+          return go(history.init, maybeNext.get, tree, fullHistory, histIdx)
         }
       }
     }
@@ -68,10 +69,6 @@ class Tree {
   /**
     * navigate from root to x_hist leaf and update the distribution with x0
     * => ParseTree goes deeper into the past
-    *
-    *
-    * @param x0
-    * @param x_hist
     */
   def updatePredictiveDistribution(observed: List[Char]):Unit = {
     val (hist, x0) = (observed.init, observed.last)

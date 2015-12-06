@@ -14,9 +14,7 @@ class Leaf(val observed:String,
            initialEquivClass: EquivalenceClass
           ) extends Probablistic {
   // (history = 00) => (next_x = 1) ==> 001
-  val observation: Char = if ("".equals(observed)) 0.toChar else observed.last // C
-
-  val history:String = if ("".equals(observed)) "" else observed.init // ABC -> AB
+  val observation: Char = if ("".equals(observed)) 0.toChar else observed.head // C
 
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 
