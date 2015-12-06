@@ -27,5 +27,7 @@ class EquivalenceClass extends Probablistic {
 
     distribution = if (totalCounts == 0) DenseVector.ones(frequency.length) else normalize(frequency)
   }
+
+  def collectHistories():Array[String] = histories.flatMap(_.longestHistories()).toArray
 }
 

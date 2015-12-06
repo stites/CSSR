@@ -22,6 +22,7 @@ object CSSR {
         initialization(config)
         sufficiency(parseTree, allStates, lMax)
         recursion(parseTree, allStates, lMax)
+        val statistics = collect(allStates)
         logger.info("CSSR completed successfully!")
       }
       case None => {
@@ -130,7 +131,7 @@ object CSSR {
               Tsb = optionalTsb.get
             }
 
-            if (x0.distribution(alphabetIdx) > 0) { logger.error("never get here") }
+            if (x0.distribution(alphabetIdx) <= 0) { logger.error("never get here") }
 /// =========================
             for (x <- s.histories.tail) {
 
@@ -151,7 +152,7 @@ object CSSR {
                   if (optionalEyb.nonEmpty) {
                     Eyb = optionalTsb.get
                   }
-                  if (Eyb == Exb) {
+                  if (Eyb.equals(Exb)) {
                     Test.move(y, s, sNew)
                   }
                 }
@@ -162,6 +163,11 @@ object CSSR {
       }
     }
     logger.info("States found at the end of Recursion: " + S.size.toString)
+  }
+
+  def collect (S: ListBuffer[EquivalenceClass]):Array[Array[String]] = {
+    // more to come
+    return S.map(_.collectHistories()).toArray
   }
 }
 
