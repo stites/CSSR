@@ -22,13 +22,40 @@ object ParseTree {
         // updates the predictive distributions of the tree
         // ABC
         // C, AB
-        tree.updatePredictiveDistribution(observed.last, observed.init.toList) //TODO: flip these args
+        loadHistory(tree, observed)
       }
     }
     tree.maxLength = n
     tree.dataSize = xs.length
     tree.adjustedDataSize =  xs.length - n - 1 // TODO: multi-line
     return tree
+  }
+
+
+  def loadHistory(tree: ParseTree, observed: Seq[Char]): Unit = {
+
+    def go(history: List[Char], active:Leaf, tree: ParseTree, fullHistory:String): Option[Leaf] = {
+      if (history.isEmpty) return Option.empty
+
+      val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
+      var next:Leaf = null
+      if (history.isEmpty) {
+        return maybeNext
+      } else {
+        if (maybeNext.isEmpty) {
+          val histYoungest = fullHistory.length
+          val histOldest = histYoungest - (fullHistory.length - history.length)
+          val obs = history.slice(histOldest, histYoungest).mkString
+          val next = Leaf(obs, tree, active.currentEquivalenceClass)
+          active.children += next
+          return go(history.init, next, tree, fullHistory)
+        } else {
+          return go(history.init, maybeNext.get, tree, fullHistory)
+        }
+      }
+    }
+
+    go(observed.toList, tree.root, tree, observed.mkString)
   }
 }
 
@@ -46,30 +73,25 @@ class ParseTree {
     * @param x0
     * @param x_hist
     */
-  def updatePredictiveDistribution(x0: Char, x_hist: List[Char]):Unit = {
-    val maybeLeaf = navigateHistory(x_hist)
+  def updatePredictiveDistribution(observed: List[Char]):Unit = {
+    val (hist, x0) = (observed.init, observed.last)
+    val maybeLeaf = navigateHistory(hist)
     if (maybeLeaf.nonEmpty) {
       maybeLeaf.get.updateDistribution(x0)
     }
   }
 
   // ABC, ABB => [{C->B->A},{B->C->A}]
-  def navigateHistory(history: List[Char]): Option[Leaf] = {
-    def subroutine(active:Leaf, history:List[Char]): Leaf = {
-      val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
-      var next:Leaf = null
+  def navigateHistory(history: List[Char], active:Leaf = root): Option[Leaf] = {
+    val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
 
-      if (maybeNext.nonEmpty) {
-        next = maybeNext.get
-      } else {
-        next = Leaf(history.mkString, this, active.currentEquivalenceClass)
-        active.children += next
-      }
-
-      return if (history.init.isEmpty) next else subroutine(next, history.init)
+    if (maybeNext.isEmpty) {
+      return Option.empty
+    } else if (history.isEmpty) {
+      return maybeNext
+    } else {
+      return navigateHistory(history.init, maybeNext.get)
     }
-
-    return if (history.isEmpty) Option.empty else Option.apply(subroutine(root, history))
   }
 
   def getDepth(depth: Int): Array[Leaf] = {
