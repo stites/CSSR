@@ -18,10 +18,7 @@ object Tree {
 
     for (size <- 1 to n) {
       logger.debug(s"loading data windows of size $size.")
-      for (observed <- xs.iterator.sliding(size).withPartial(false)) {
-        // updates the predictive distributions of the tree
-        // ABC
-        // C, AB
+      for (observed <- xs.iterator.filterNot("\r\n".contains(_)).sliding(size).withPartial(false)) {
         loadHistory(tree, observed)
       }
     }
@@ -36,7 +33,6 @@ object Tree {
 
     def go(history: List[Char], active:Leaf, tree: Tree, fullHistory:String, depth:Int=0): Option[Leaf] = {
       if (history.isEmpty) return Option.empty
-
       val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
       var next:Leaf = null
       if (history.isEmpty) {

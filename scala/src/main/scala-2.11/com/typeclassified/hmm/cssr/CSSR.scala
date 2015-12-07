@@ -14,7 +14,7 @@ object CSSR {
   var parseTree: Tree = _
   var lMax: Int = _
   var sig: Double = _
-  var allStates: ListBuffer[EquivalenceClass] =_
+  var allStates: ListBuffer[EquivalenceClass] = _
 
   def main(args: Array[String]) = {
     Cli.parser.parse(args, Config()) match {

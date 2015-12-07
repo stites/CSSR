@@ -155,6 +155,12 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
     children should have size 0
   }
 
+  it should "not add newlines" in {
+    tree = Tree.loadData((abcabc+"\r\n").toArray, 3)
+    assertChildrenByExactBatch(tree.root.children, testMap(abcabc)(0))
+  }
+
+
   def assertChildrenByExactBatch(children:ListBuffer[Leaf], expected:Seq[String]) = {
     children should have size expected.length
     children.map(_.observed)    should contain theSameElementsAs expected
