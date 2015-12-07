@@ -6,7 +6,26 @@ import scala.collection.mutable.ListBuffer
 
 class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
   var tree:Tree = null
-  val alphabet = "abc"
+  val abc = "abc"
+  val abcabc = "abcabc"
+  val abcbabcbb = "abcbabcbb"
+  val testMap = Map(
+    abc -> Array(
+      Array("a", "b", "c"),
+      Array("ab", "bc"),
+      Array("abc")
+    ),
+    abcabc -> Array(
+      Array("a", "b", "c"),
+      Array("ab", "bc", "ca"),
+      Array("abc", "bca", "cab")
+    ),
+    abcbabcbb -> Array(
+      Array("a", "b", "c"),
+      Array("ab", "bc", "cb", "ba", "bb"),
+      Array("abc", "bcb", "cba", "bab", "cbb")
+    )
+  )
 
   def assertLeafProperties(leaf:Leaf, obs:String): Unit = {
     leaf.observed should equal (obs)
@@ -14,7 +33,7 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   before {
-    AlphabetHolder.alphabet = Alphabet(alphabet.toArray)
+    AlphabetHolder.alphabet = Alphabet(abc.toArray)
     tree = Tree()
   }
 
@@ -23,7 +42,7 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
   it should "generate a single branch for an empty tree" in {
     var children:ListBuffer[Leaf] = null
     var leaf:Leaf = null
-    Tree.loadHistory(tree, "abc")
+    Tree.loadHistory(tree, abc)
 
     children = tree.root.children
     children should have size 1
@@ -83,32 +102,32 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
   behavior of "loadData"
 
   it should "load all complete moving windows for 'abc' (lMax==3): abc, ab, bc, a, b, c" in {
-    tree = Tree.loadData(alphabet.toArray, 3)
+    tree = Tree.loadData(abc.toArray, 3)
 
     var children:ListBuffer[Leaf] = tree.root.children
-    assertChildrenByExactBatch(children, Seq("a", "b", "c"))
+    assertChildrenByExactBatch(children, testMap(abc)(0))
 
     children = children.flatMap(_.children)
-    assertChildrenByExactBatch(children, Seq("ab", "bc"))
+    assertChildrenByExactBatch(children, testMap(abc)(1))
 
     children = children.flatMap(_.children)
-    assertChildrenByExactBatch(children, Seq("abc"))
+    assertChildrenByExactBatch(children, testMap(abc)(2))
 
     children = children.flatMap(_.children)
     children should have size 0
   }
 
   it should "load all combinations of our alphabet when givin 'abcabc' (lMax==3): abc, bca, cab, ab, bc, ca, a, b, c" in {
-    tree = Tree.loadData("abcabc".toArray, 3)
+    tree = Tree.loadData(abcabc.toArray, 3)
 
     var children:ListBuffer[Leaf] = tree.root.children
-    assertChildrenByExactBatch(children, Seq("a", "b", "c"))
+    assertChildrenByExactBatch(children, testMap(abcabc)(0))
 
     children = children.flatMap(_.children)
-    assertChildrenByExactBatch(children, Seq("ab", "bc", "ca"))
+    assertChildrenByExactBatch(children, testMap(abcabc)(1))
 
     children = children.flatMap(_.children)
-    assertChildrenByExactBatch(children, Seq("abc", "bca", "cab"))
+    assertChildrenByExactBatch(children, testMap(abcabc)(2))
 
     children = children.flatMap(_.children)
     children should have size 0
@@ -117,20 +136,20 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
 
   it should """give root-b three children, given 'abcbabcbb' (@lMax==3):
       | abc, bcb, cba, bab, cbb, ab, bc, cb, ba, bb, a, b, c """.stripMargin in {
-    tree = Tree.loadData("abcbabcbb".toArray, 3)
+    tree = Tree.loadData(abcbabcbb.toArray, 3)
 
     var children:ListBuffer[Leaf] = tree.root.children
-    assertChildrenByExactBatch(children, Seq("a", "b", "c"))
+    assertChildrenByExactBatch(children, testMap(abcbabcbb)(0))
 
     assertChildrenByExactBatch(children.filter(_.observation == 'b').head.children, Seq("ab", "cb", "bb"))
 
     children = children.flatMap(_.children)
-    assertChildrenByExactBatch(children, Seq("ab", "bc", "cb", "ba", "bb"))
+    assertChildrenByExactBatch(children, testMap(abcbabcbb)(1))
 
     assertChildrenByExactBatch(children.filter(_.observation == 'b').flatMap(_.children), Seq("abc", "cba", "cbb"))
 
     children = children.flatMap(_.children)
-    assertChildrenByExactBatch(children, Seq("abc", "bcb", "cba", "bab", "cbb"))
+    assertChildrenByExactBatch(children, testMap(abcbabcbb)(2))
 
     children = children.flatMap(_.children)
     children should have size 0
@@ -145,7 +164,7 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
   behavior of "navigateHistory"
 
   it should "be able to return the correct leaf" in {
-    tree = Tree.loadData(alphabet.toArray, 3)
+    tree = Tree.loadData(abc.toArray, 3)
     val maybeABC = tree.navigateHistory("abc".toList)
     maybeABC should not be empty
     assertLeafProperties(maybeABC.get, "abc")
@@ -153,7 +172,7 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
     val notPresentA = tree.navigateHistory("abca".toList)
     notPresentA shouldBe empty
 
-    tree = Tree.loadData("abcbabcbb".toArray, 3)
+    tree = Tree.loadData(abcbabcbb.toArray, 3)
 
     val maybe_BB = tree.navigateHistory("bb".toList)
     maybe_BB should not be empty
@@ -180,5 +199,21 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
     maybeChildren foreach(_ should not be empty)
 
     maybe_AB.get.children.map(_.observed) should contain theSameElementsAs maybeChildren.map(_.get.observed)
+  }
+
+  behavior of "getDepth"
+
+  it should "be able to return the correct leaf" in {
+    tree = Tree.loadData(abcabc.toArray, 3)
+
+    tree.getDepth(0).map(_.observed) should contain only ("")
+
+    tree.getDepth(1).map(_.observed) should contain theSameElementsAs testMap(abcabc)(0)
+
+    tree.getDepth(2).map(_.observed) should contain theSameElementsAs testMap(abcabc)(1)
+
+    tree.getDepth(3).map(_.observed) should contain theSameElementsAs testMap(abcabc)(2)
+
+    tree.getDepth(4) should have size 0
   }
 }

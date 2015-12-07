@@ -91,7 +91,7 @@ class Tree {
     }
   }
 
-  def getDepth(depth: Int, nodes:ListBuffer[Leaf] = root.children): Array[Leaf] = {
+  def getDepth(depth: Int, nodes:ListBuffer[Leaf] = ListBuffer(root)): Array[Leaf] = {
     if (depth <= 0) {
       nodes.toArray
     } else {
