@@ -16,7 +16,7 @@ object Tree {
     logger.debug(s"loading data of size ${xs.length}")
     logger.debug("==> running over windows of (size, count): "+(1 to n).map(i => (i, xs.length/i)))
 
-    for (size <- 1 until n) {
+    for (size <- 1 to n) {
       logger.debug(s"loading data windows of size $size.")
       for (observed <- xs.iterator.sliding(size).withPartial(false)) {
         // updates the predictive distributions of the tree
