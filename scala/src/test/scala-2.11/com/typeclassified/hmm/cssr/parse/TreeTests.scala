@@ -145,6 +145,40 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
   behavior of "navigateHistory"
 
   it should "be able to return the correct leaf" in {
-    pending
+    tree = Tree.loadData(alphabet.toArray, 3)
+    val maybeABC = tree.navigateHistory("abc".toList)
+    maybeABC should not be empty
+    assertLeafProperties(maybeABC.get, "abc")
+
+    val notPresentA = tree.navigateHistory("abca".toList)
+    notPresentA shouldBe empty
+
+    tree = Tree.loadData("abcbabcbb".toArray, 3)
+
+    val maybe_BB = tree.navigateHistory("bb".toList)
+    maybe_BB should not be empty
+    assertLeafProperties(maybe_BB.get, "bb")
+
+    val maybeCBB = tree.navigateHistory("cbb".toList)
+    maybeCBB should not be empty
+    assertLeafProperties(maybeCBB.get, "cbb")
+
+    maybe_BB.get.children.map(_.observed) should contain (maybeCBB.get.observed)
+
+    tree = Tree.loadData("aabbabcab".toArray, 3)
+
+    val maybe_AB = tree.navigateHistory("ab".toList)
+    maybe_AB should not be empty
+    assertLeafProperties(maybe_AB.get, "ab")
+
+    val maybeAAB = tree.navigateHistory("aab".toList)
+    val maybeBAB = tree.navigateHistory("bab".toList)
+    val maybeCAB = tree.navigateHistory("cab".toList)
+
+    val maybeChildren = List(maybeAAB, maybeBAB, maybeCAB)
+
+    maybeChildren foreach(_ should not be empty)
+
+    maybe_AB.get.children.map(_.observed) should contain theSameElementsAs maybeChildren.map(_.get.observed)
   }
 }

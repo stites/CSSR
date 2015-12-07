@@ -80,14 +80,14 @@ class Tree {
 
   // ABC, ABB => [{C->B->A},{B->C->A}]
   def navigateHistory(history: List[Char], active:Leaf = root): Option[Leaf] = {
-    val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
+    if (history.isEmpty) Option.empty else {
+      val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
 
-    if (maybeNext.isEmpty) {
-      return Option.empty
-    } else if (history.isEmpty) {
-      return maybeNext
-    } else {
-      return navigateHistory(history.init, maybeNext.get)
+      if (history.init.isEmpty || maybeNext.isEmpty) {
+        return maybeNext
+      } else {
+        return navigateHistory(history.init, maybeNext.get)
+      }
     }
   }
 
