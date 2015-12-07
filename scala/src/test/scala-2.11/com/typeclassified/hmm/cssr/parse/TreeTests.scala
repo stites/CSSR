@@ -4,22 +4,14 @@ import org.scalatest.{BeforeAndAfter, Matchers, FlatSpec}
 
 import scala.collection.mutable.ListBuffer
 
-object TreeTests {
-  def verifySingleChildrenProperties(children:ListBuffer[Leaf], obs:String): ListBuffer[Leaf] = {
-    assert(1 == children.size)
-    verifyLeafProperties(children.head, obs)
-    return children.head.children
-  }
-
-  def verifyLeafProperties(leaf:Leaf, obs:String): Unit = {
-    assert(obs.equals(leaf.observed))
-    assert(obs.head.equals(leaf.observation))
-  }
-}
-
 class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
   var tree:Tree = null
   val alphabet = "abc"
+
+  def assertLeafProperties(leaf:Leaf, obs:String): Unit = {
+    leaf.observed should equal (obs)
+    leaf.observation should equal (obs.head)
+  }
 
   before {
     AlphabetHolder.alphabet = Alphabet(alphabet.toArray)
@@ -63,14 +55,18 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
     children should have size 2
 
     val leaf1 = children(0)
-    TreeTests.verifyLeafProperties(leaf1, "c")
-    TreeTests.verifySingleChildrenProperties(leaf1.children, "bc")
+    assertLeafProperties(leaf1, "c")
+    leaf1.children should have size 1
     val leaf1Child = leaf1.children.head
+    assertLeafProperties(leaf1Child, "bc")
+
 
     val leaf2 = children(1)
-    TreeTests.verifyLeafProperties(leaf2, "a")
-    TreeTests.verifySingleChildrenProperties(leaf2.children, "aa")
+    assertLeafProperties(leaf2, "a")
+    leaf2.children should have size 1
     val leaf2Child = leaf2.children.head
+    assertLeafProperties(leaf2Child, "aa")
+
 
     Tree.loadHistory(tree, "ba")
 
@@ -81,33 +77,69 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
     leaf1Child.children should have size 0
 
     val leaf2NewChild = leaf2.children.filter(_ != leaf2Child).head
-    TreeTests.verifyLeafProperties(leaf2NewChild, "ba")
+    assertLeafProperties(leaf2NewChild, "ba")
   }
 
-  behavior of "loadData of the alphabet with maxL of 3"
+  behavior of "loadData"
 
-  it should "load all complete moving windows: abc, ab, bc, a, b, c" in {
+  it should "load all complete moving windows for 'abc' (lMax==3): abc, ab, bc, a, b, c" in {
     tree = Tree.loadData(alphabet.toArray, 3)
-    var children:ListBuffer[Leaf] = null
-    var expected = Seq("a", "b", "c")
 
-    children = tree.root.children
-    children should have size 3
-    children.map(_.observed)    should contain theSameElementsAs expected
-    children.map(_.observation) should contain theSameElementsAs expected.map(_.head)
+    var children:ListBuffer[Leaf] = tree.root.children
+    assertChildrenByExactBatch(children, Seq("a", "b", "c"))
 
     children = children.flatMap(_.children)
-    expected = Seq("ab", "bc")
-    children.map(_.observed)    should contain theSameElementsAs expected
-    children.map(_.observation) should contain theSameElementsAs expected.map(_.head)
+    assertChildrenByExactBatch(children, Seq("ab", "bc"))
 
     children = children.flatMap(_.children)
-    expected = Seq("abc")
-    children.map(_.observed)    should contain theSameElementsAs expected
-    children.map(_.observation) should contain theSameElementsAs expected.map(_.head)
+    assertChildrenByExactBatch(children, Seq("abc"))
 
     children = children.flatMap(_.children)
     children should have size 0
+  }
+
+  it should "load all combinations of our alphabet when givin 'abcabc' (lMax==3): abc, bca, cab, ab, bc, ca, a, b, c" in {
+    tree = Tree.loadData("abcabc".toArray, 3)
+
+    var children:ListBuffer[Leaf] = tree.root.children
+    assertChildrenByExactBatch(children, Seq("a", "b", "c"))
+
+    children = children.flatMap(_.children)
+    assertChildrenByExactBatch(children, Seq("ab", "bc", "ca"))
+
+    children = children.flatMap(_.children)
+    assertChildrenByExactBatch(children, Seq("abc", "bca", "cab"))
+
+    children = children.flatMap(_.children)
+    children should have size 0
+  }
+
+
+  it should """give root-b three children, given 'abcbabcbb' (@lMax==3):
+      | abc, bcb, cba, bab, cbb, ab, bc, cb, ba, bb, a, b, c """.stripMargin in {
+    tree = Tree.loadData("abcbabcbb".toArray, 3)
+
+    var children:ListBuffer[Leaf] = tree.root.children
+    assertChildrenByExactBatch(children, Seq("a", "b", "c"))
+
+    assertChildrenByExactBatch(children.filter(_.observation == 'b').head.children, Seq("ab", "cb", "bb"))
+
+    children = children.flatMap(_.children)
+    assertChildrenByExactBatch(children, Seq("ab", "bc", "cb", "ba", "bb"))
+
+    assertChildrenByExactBatch(children.filter(_.observation == 'b').flatMap(_.children), Seq("abc", "cba", "cbb"))
+
+    children = children.flatMap(_.children)
+    assertChildrenByExactBatch(children, Seq("abc", "bcb", "cba", "bab", "cbb"))
+
+    children = children.flatMap(_.children)
+    children should have size 0
+  }
+
+  def assertChildrenByExactBatch(children:ListBuffer[Leaf], expected:Seq[String]) = {
+    children should have size expected.length
+    children.map(_.observed)    should contain theSameElementsAs expected
+    children.map(_.observation) should contain theSameElementsAs expected.map(_.head)
   }
 
   behavior of "navigateHistory"
