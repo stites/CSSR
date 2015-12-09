@@ -60,10 +60,8 @@ object Test {
     // ABC -> A
     // (A->) C->B->A
     //
-
     x.changeEquivalenceClass(to)
     from.rmHistory(x)
     to.addHistory(x)
-
   }
 }

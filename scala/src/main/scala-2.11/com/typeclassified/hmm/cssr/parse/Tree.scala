@@ -35,6 +35,10 @@ object Tree {
       if (history.isEmpty) return Option.empty
       val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
       var next:Leaf = null
+
+      // check nonEmpty here for the update, since delegation checks history first
+      if (maybeNext.nonEmpty) maybeNext.get.updateDistribution(history.head)
+
       if (history.isEmpty) {
         return maybeNext
       } else {

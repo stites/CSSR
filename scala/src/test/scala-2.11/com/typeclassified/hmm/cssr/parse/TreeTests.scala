@@ -1,5 +1,7 @@
 package com.typeclassified.hmm.cssr.parse
 
+import breeze.linalg
+import breeze.linalg.DenseVector
 import org.scalatest.{BeforeAndAfter, Matchers, FlatSpec}
 
 import scala.collection.mutable.ListBuffer
@@ -86,7 +88,6 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
     val leaf2Child = leaf2.children.head
     assertLeafProperties(leaf2Child, "aa")
 
-
     Tree.loadHistory(tree, "ba")
 
     children should have size 2
@@ -97,6 +98,56 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     val leaf2NewChild = leaf2.children.filter(_ != leaf2Child).head
     assertLeafProperties(leaf2NewChild, "ba")
+  }
+
+  it should "update the distribution of a leaf for it's next-step observations" in {
+    Tree.loadHistory(tree, "cb")
+    val root = tree.root
+    var leafInQuestion = root
+    leafInQuestion.totalCounts          should be (1)
+    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 1.0, 0.0)
+    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 1.0, 0.0)
+
+    val rootB = leafInQuestion.children.head
+    leafInQuestion = rootB
+    leafInQuestion.totalCounts          should be (1)
+    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 1.0)
+    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 1.0)
+
+    val rootBC = leafInQuestion.children.head
+    leafInQuestion = rootBC
+    leafInQuestion.totalCounts          should be (0)
+    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 0.0)
+    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 0.0)
+
+    Tree.loadHistory(tree, "ab")
+    leafInQuestion = root
+    leafInQuestion.totalCounts          should be (2)
+    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 2.0, 0.0)
+    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 1.0, 0.0)
+
+    leafInQuestion = rootB
+    leafInQuestion.totalCounts          should be (1)
+    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](1.0, 0.0, 0.0)
+    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](1.0, 0.0, 0.0)
+
+    val rootBA = leafInQuestion.children.head
+    leafInQuestion = rootBA
+    leafInQuestion.totalCounts          should be (0)
+    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 0.0)
+    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 0.0)
+
+    Tree.loadHistory(tree, "a")
+    leafInQuestion = root
+    leafInQuestion.totalCounts          should be (3)
+    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](1.0, 2.0, 0.0)
+    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](1/3, 2/3, 0.0)
+
+    val rootA = leafInQuestion.children.last
+    leafInQuestion = rootA
+    leafInQuestion.totalCounts          should be (0)
+    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0, 0, 0)
+    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0, 0, 0)
   }
 
   behavior of "loadData"
@@ -160,7 +211,6 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
     assertChildrenByExactBatch(tree.root.children, testMap(abcabc)(0))
   }
 
-
   def assertChildrenByExactBatch(children:ListBuffer[Leaf], expected:Seq[String]) = {
     children should have size expected.length
     children.map(_.observed)    should contain theSameElementsAs expected
@@ -212,7 +262,7 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
   it should "be able to return the correct leaf" in {
     tree = Tree.loadData(abcabc.toArray, 3)
 
-    tree.getDepth(0).map(_.observed) should contain only ("")
+    tree.getDepth(0).map(_.observed) should contain only ""
 
     tree.getDepth(1).map(_.observed) should contain theSameElementsAs testMap(abcabc)(0)
 

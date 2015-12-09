@@ -18,7 +18,7 @@ class EquivalenceClass extends Probablistic {
   }
 
   def rmHistory(x: Leaf): Unit = {
-    histories = histories.filter(y => y.observation != x.observation)
+    histories = histories.filter(y => y.observed != x.observed)
     normalizeAcrossHistories()
   }
 

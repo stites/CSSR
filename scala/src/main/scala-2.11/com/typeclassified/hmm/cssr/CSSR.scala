@@ -110,7 +110,6 @@ object CSSR {
     var recursive = false
     while (!recursive) {
       // clean out transient states
-
       recursive = true
       for (s <- S) {
         for ((b, alphabetIdx) <- AlphabetHolder.alphabet.map) {
@@ -145,7 +144,7 @@ object CSSR {
               val optionalExb = x.getStateOnTransition(b)
               var Exb:EquivalenceClass = null
               if (optionalExb.nonEmpty) {
-                Exb = optionalTsb.get
+                Exb = optionalExb.get
               }
 
 /// =========================
@@ -157,9 +156,9 @@ object CSSR {
                   val optionalEyb = y.getStateOnTransition(b)
                   var Eyb:EquivalenceClass = null
                   if (optionalEyb.nonEmpty) {
-                    Eyb = optionalTsb.get
+                    Eyb = optionalEyb.get
                   }
-                  if (Eyb.equals(Exb)) {
+                  if (Eyb == Exb) {
                     Test.move(y, s, sNew)
                   }
                 }
