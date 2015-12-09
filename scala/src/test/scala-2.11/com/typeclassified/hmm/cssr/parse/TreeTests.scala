@@ -116,40 +116,37 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Bef
       assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
     }
 
-    "updating the distribution of a leaf for it's next-step observations" in {
-      Tree.loadHistory(tree, "cb") // loads "cb", updates
-      val root = tree.root
-      var leafInQuestion = root
-      assertProbabalisticDetails(leafInQuestion, 1, Array(0,1,0))
+    "updating the distribution of a leaf for it's next-step" should {
+      "update the path to the terminal leaf" in {
+        Tree.loadHistory(tree, "cb")
+        val root = tree.root
+        val rootB = root.children.head
+        val rootBC = rootB.children.head
 
-      val rootB = leafInQuestion.children.head
-      leafInQuestion = rootB
-      assertProbabalisticDetails(leafInQuestion, 1, Array(0,0,1))
+        assertProbabalisticDetails(root, 1, Array(0, 1, 0))
 
-      val rootBC = leafInQuestion.children.head
-      leafInQuestion = rootBC
-      assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
+        assertProbabalisticDetails(rootB, 1, Array(0, 0, 1))
 
-      Tree.loadHistory(tree, "ab")
-      leafInQuestion = tree.root
-      assertProbabalisticDetails(leafInQuestion, 2, Array(0,2,0))
+        assertProbabalisticDetails(rootBC, 0, Array(0, 0, 0))
+      }
 
-      leafInQuestion = rootB
-      assertProbabalisticDetails(leafInQuestion, 2, Array(1,0,1))
+      "ignore path if already exists" in {
+        Tree.loadHistory(tree, "cb")
+        val root = tree.root
+        val rootB = root.children.head
+        val rootBC = rootB.children.head
 
-      val rootBA = leafInQuestion.children.head
-      leafInQuestion = rootBA
-      assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
+        Tree.loadHistory(tree, "ab")
+        assertProbabalisticDetails(root, 1, Array(0, 1, 0))
+        assertProbabalisticDetails(rootB, 2, Array(1, 0, 1))
+        assertProbabalisticDetails(rootB.children.head, 0, Array(0, 0, 0))
 
-      Tree.loadHistory(tree, "a")
-      leafInQuestion = root
-      assertProbabalisticDetails(leafInQuestion, 3, Array(1,2,0))
+        Tree.loadHistory(tree, "a")
+        assertProbabalisticDetails(root, 2, Array(1, 1, 0))
 
-      val rootA = leafInQuestion.children.last
-      leafInQuestion = rootA
-      assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
+        assertProbabalisticDetails(root.children.last, 0, Array(0, 0, 0))
+      }
     }
-
   }
 
   "loadData" when {
