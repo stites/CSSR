@@ -34,11 +34,10 @@ class Leaf(val observed:String,
     }
   }
 
-  def changeEquivalenceClass(s: EquivalenceClass): Unit = {
-    // s.append(this) # see null hypothesis and uncomment one
-    currentEquivalenceClass = s
+  def changeEquivalenceClass(s: EquivalenceClass, nextChildren:ListBuffer[Leaf]=children): Unit = {
+    this.currentEquivalenceClass = s
     // we ought to update transitions here (but for phase II it's not terribly important)
-    children foreach (_.changeEquivalenceClass(s))
+    changeEquivalenceClass(s, nextChildren.flatMap(_.children))
   }
 
   def findChildWithAdditionalHistory(xNext: Char):Option[Leaf] = {
