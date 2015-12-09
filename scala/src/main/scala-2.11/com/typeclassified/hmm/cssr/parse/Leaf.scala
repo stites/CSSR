@@ -42,19 +42,10 @@ class Leaf(val observed:String,
     children.find(_.observation == xNext)
   }
 
-  def getStateOnTransition(b:Char):Option[EquivalenceClass] = {
+  def getStateOnTransitionTo(b:Char):Option[EquivalenceClass] = {
     val optionalLeaf = parseTree.navigateHistory((this.observed + b).toList)
 
     return if (optionalLeaf.nonEmpty) Option.apply(optionalLeaf.get.currentEquivalenceClass) else Option.empty
-  }
-
-  def longestHistories(traverse: Array[Leaf] = Array(this), collected:Array[String]= Array()): Array[String] = {
-    if (traverse.isEmpty) {
-      return collected
-    } else {
-      val (lastLeaf, next) = traverse.partition(_.children.isEmpty)
-      return longestHistories(next.flatMap(_.children), (collected ++ lastLeaf.map(_.observed)).distinct)
-    }
   }
 }
 

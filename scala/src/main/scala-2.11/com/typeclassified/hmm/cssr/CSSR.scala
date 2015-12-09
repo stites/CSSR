@@ -131,7 +131,7 @@ object CSSR {
            */
           if (maybeX0.nonEmpty) {
             val x0:Leaf = maybeX0.get
-            val optionalTsb = x0.getStateOnTransition(b)
+            val optionalTsb = x0.getStateOnTransitionTo(b)
             var Tsb:EquivalenceClass = null
             if (optionalTsb.nonEmpty) {
               Tsb = optionalTsb.get
@@ -141,7 +141,7 @@ object CSSR {
 /// =========================
             for (x <- s.histories.tail) {
 
-              val optionalExb = x.getStateOnTransition(b)
+              val optionalExb = x.getStateOnTransitionTo(b)
               var Exb:EquivalenceClass = null
               if (optionalExb.nonEmpty) {
                 Exb = optionalExb.get
@@ -153,7 +153,7 @@ object CSSR {
                 val sNew = EquivalenceClass()
                 S += sNew
                 for (y <- s.histories) {
-                  val optionalEyb = y.getStateOnTransition(b)
+                  val optionalEyb = y.getStateOnTransitionTo(b)
                   var Eyb:EquivalenceClass = null
                   if (optionalEyb.nonEmpty) {
                     Eyb = optionalEyb.get
