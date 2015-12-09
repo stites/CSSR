@@ -7,7 +7,7 @@ import org.scalatest.{WordSpec, BeforeAndAfter, Matchers, FlatSpec}
 
 import scala.collection.mutable.ListBuffer
 
-class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with BeforeAndAfter {
+class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with LeafAsserts with BeforeAndAfter {
   var tree:Tree = null
   val abc = "abc"
   val abcabc = "abcabc"
@@ -29,11 +29,6 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Bef
       Array("abc", "bcb", "cba", "bab", "cbb")
     )
   )
-
-  def assertLeafProperties(leaf:Leaf, obs:String): Unit = {
-    leaf.observed should equal (obs)
-    leaf.observation should equal (obs.head)
-  }
 
   before {
     AlphabetHolder.alphabet = Alphabet(abc.toArray)
@@ -224,19 +219,6 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Bef
     "not add newlines" in {
       tree = Tree.loadData((abcabc+"\r\n").toArray, 3)
       assertChildrenByExactBatch(tree.root.children, testMap(abcabc)(0))
-    }
-
-    def assertChildrenByExactBatch(children:ListBuffer[Leaf], expected:Seq[String]) = {
-      children should have size expected.length
-      children.map(_.observed)    should contain theSameElementsAs expected
-      children.map(_.observation) should contain theSameElementsAs expected.map(_.head)
-    }
-
-    "be able to return the correct leaf" in {
-      AlphabetHolder.alphabet = Alphabet("01".toCharArray)
-      tree = Tree()
-      tree = Tree.loadData("110111011101110111011101110111011101".toArray, 5)
-      println(tree)
     }
   }
 
