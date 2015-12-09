@@ -38,7 +38,8 @@ object Tree {
       val histIdx:Int = depth+1
 
       if (maybeNext.nonEmpty) {
-        if (history.init.isEmpty) maybeNext.get.updateDistribution(history.last)
+        if (history.init.isEmpty) active.updateDistribution(history.last)
+
         return go(history.init, maybeNext.get, tree, fullHistory, histIdx)
       } else {
         val next = active.addChild(fullHistory(fullHistory.length - histIdx))
