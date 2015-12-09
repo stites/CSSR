@@ -3,11 +3,11 @@ package com.typeclassified.hmm.cssr.parse
 import breeze.linalg
 import breeze.linalg.DenseVector
 import com.typeclassified.hmm.cssr.ProbablisticAsserts
-import org.scalatest.{BeforeAndAfter, Matchers, FlatSpec}
+import org.scalatest.{WordSpec, BeforeAndAfter, Matchers, FlatSpec}
 
 import scala.collection.mutable.ListBuffer
 
-class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with BeforeAndAfter {
+class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with BeforeAndAfter {
   var tree:Tree = null
   val abc = "abc"
   val abcabc = "abcabc"
@@ -40,9 +40,9 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
     tree = Tree()
   }
 
-  behavior of "loadHistory"
+  "loadHistory" should {
 
-  it should "generate a single branch for an empty tree" in {
+  "generating a single branch for an empty tree" in {
     var children:ListBuffer[Leaf] = null
     var leaf:Leaf = null
     Tree.loadHistory(tree, abc)
@@ -69,7 +69,7 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
     leaf.observation should equal ("abc".head)
   }
 
-  it should "generate multiple root branches if they do not exist" in {
+  "generating multiple root branches if they do not exist" in {
     Tree.loadHistory(tree, "bc")
     Tree.loadHistory(tree, "aa")
 
@@ -101,8 +101,23 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
     assertLeafProperties(leaf2NewChild, "ba")
   }
 
-  it should "update the distribution of a leaf for it's next-step observations" in {
-    Tree.loadHistory(tree, "cb")
+  "updating the distribution of the path to the terminal leaf, if the path does not exist" in {
+    Tree.loadHistory(tree, "cb") // loads "cb", updates
+    val root = tree.root
+    var leafInQuestion = root
+    assertProbabalisticDetails(leafInQuestion, 1, Array(0,1,0))
+
+    val rootB = leafInQuestion.children.head
+    leafInQuestion = rootB
+    assertProbabalisticDetails(leafInQuestion, 1, Array(0,0,1))
+
+    val rootBC = leafInQuestion.children.head
+    leafInQuestion = rootBC
+    assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
+  }
+
+  "updating the distribution of a leaf for it's next-step observations" in {
+    Tree.loadHistory(tree, "cb") // loads "cb", updates
     val root = tree.root
     var leafInQuestion = root
     assertProbabalisticDetails(leafInQuestion, 1, Array(0,1,0))
@@ -135,9 +150,12 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
     assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
   }
 
-  behavior of "loadData"
+  }
 
-  it should "load all complete moving windows for 'abc' (lMax==3): abc, ab, bc, a, b, c" in {
+  "loadData" when {
+  "loading sequence 'abc' at lMax of 3 (windows of: abc, ab, bc, a, b, c)" should {
+
+  "load all complete moving windows" in {
     tree = Tree.loadData(abc.toArray, 3)
 
     var children:ListBuffer[Leaf] = tree.root.children
@@ -152,8 +170,9 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
     children = children.flatMap(_.children)
     children should have size 0
   }
-
-  it should "load all combinations of our alphabet when givin 'abcabc' (lMax==3): abc, bca, cab, ab, bc, ca, a, b, c" in {
+   }
+    "loading sequence 'abcabc' at lMax of 3 (windows of:  abc, bca, cab, ab, bc, ca, a, b, c" should {
+  "load all combinations" in {
     tree = Tree.loadData(abcabc.toArray, 3)
 
     var children:ListBuffer[Leaf] = tree.root.children
@@ -165,13 +184,19 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
     children = children.flatMap(_.children)
     assertChildrenByExactBatch(children, testMap(abcabc)(2))
 
-    children = children.flatMap(_.children)
-    children should have size 0
+  }
+      "finished, it should also include lMax+1 probabilities and, thus, also have lMax+1 children: abca, bcab, cabc" in {
+        tree = Tree.loadData(abcabc.toArray, 3)
+        var children:ListBuffer[Leaf] = tree.root.children // l1
+        children = children.flatMap(_.children) //l2
+        children = children.flatMap(_.children) //l3
+        children = children.flatMap(_.children) //l4
+        children should have size 3
+      }
   }
 
-
-  it should """give root-b three children, given 'abcbabcbb' (@lMax==3):
-      | abc, bcb, cba, bab, cbb, ab, bc, cb, ba, bb, a, b, c """.stripMargin in {
+    "loading sequence 'abcbabcbb' at lMax of 3 (windows of: abc, bcb, cba, bab, cbb, ab, bc, cb, ba, bb, a, b, c " should {
+      "load all combinations" in {
     tree = Tree.loadData(abcbabcbb.toArray, 3)
 
     var children:ListBuffer[Leaf] = tree.root.children
@@ -187,11 +212,18 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
     children = children.flatMap(_.children)
     assertChildrenByExactBatch(children, testMap(abcbabcbb)(2))
 
-    children = children.flatMap(_.children)
-    children should have size 0
+  }
+      "finished, it should also include lMax+1 probabilities and, thus, also have lMax+1 children: abcb, bcba, cbab, babc, bcbb" in {
+        tree = Tree.loadData(abcbabcbb.toArray, 3)
+        var children:ListBuffer[Leaf] = tree.root.children // l1
+        children = children.flatMap(_.children) //l2
+        children = children.flatMap(_.children) //l3
+        children = children.flatMap(_.children) //l4
+        children should have size 5
+      }
   }
 
-  it should "not add newlines" in {
+  "not add newlines" in {
     tree = Tree.loadData((abcabc+"\r\n").toArray, 3)
     assertChildrenByExactBatch(tree.root.children, testMap(abcabc)(0))
   }
@@ -202,9 +234,17 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
     children.map(_.observation) should contain theSameElementsAs expected.map(_.head)
   }
 
-  behavior of "navigateHistory"
+  "be able to return the correct leaf" in {
+    AlphabetHolder.alphabet = Alphabet("01".toCharArray)
+    tree = Tree()
+    tree = Tree.loadData("110111011101110111011101110111011101".toArray, 5)
+    println(tree)
+  }
+  }
 
-  it should "be able to return the correct leaf" in {
+  "navigateHistory" should {
+
+  "be able to return the correct leaf" in {
     tree = Tree.loadData(abc.toArray, 3)
     val maybeABC = tree.navigateHistory("abc".toList)
     maybeABC should not be empty
@@ -241,10 +281,10 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
 
     maybe_AB.get.children.map(_.observed) should contain theSameElementsAs maybeChildren.map(_.get.observed)
   }
+  }
+  "getDepth" should {
 
-  behavior of "getDepth"
-
-  it should "be able to return the correct leaf" in {
+  "be able to return the correct leaf" in {
     tree = Tree.loadData(abcabc.toArray, 3)
 
     tree.getDepth(0).map(_.observed) should contain only ""
@@ -255,6 +295,9 @@ class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
 
     tree.getDepth(3).map(_.observed) should contain theSameElementsAs testMap(abcabc)(2)
 
-    tree.getDepth(4) should have size 0
+    tree.getDepth(4) should have size 3
+
+    tree.getDepth(5) should have size 0
+  }
   }
 }

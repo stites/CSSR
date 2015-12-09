@@ -16,7 +16,7 @@ object Tree {
     logger.debug(s"loading data of size ${xs.length}")
     logger.debug("==> running over windows of (size, count): "+(1 to n).map(i => (i, xs.length/i)))
 
-    for (size <- 1 to n) {
+    for (size <- 1 to n+1) {
       logger.debug(s"loading data windows of size $size.")
       for (observed <- xs.iterator.filterNot("\r\n".contains(_)).sliding(size).withPartial(false)) {
         loadHistory(tree, observed)
@@ -38,7 +38,7 @@ object Tree {
       val histIdx:Int = depth+1
 
       if (maybeNext.nonEmpty) {
-        active.updateDistribution(maybeNext.get.observation)
+        if (history.init.isEmpty) maybeNext.get.updateDistribution(history.last)
         return go(history.init, maybeNext.get, tree, fullHistory, histIdx)
       } else {
         val next = active.addChild(fullHistory(fullHistory.length - histIdx))
