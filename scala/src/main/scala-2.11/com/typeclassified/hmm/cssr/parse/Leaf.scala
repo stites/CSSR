@@ -40,8 +40,6 @@ class Leaf(val observed:String,
     return next
   }
 
-  def addChild (leaf:Leaf): Unit = addChild(leaf.observation)
-
   def changeEquivalenceClass(s: EquivalenceClass, nextChildren:ListBuffer[Leaf]=children): Unit = {
     this.currentEquivalenceClass = s
     // we ought to update transitions here (but for phase II it's not terribly important)
