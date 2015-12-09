@@ -15,8 +15,6 @@ class Leaf(val observed:String,
           ) extends Probablistic {
   // (history = 00) => (next_x = 1) ==> 001
   val observation: Char = if ("".equals(observed)) 0.toChar else observed.head // C
-  // always initialize a class with an updated distribution on its observation
-  if (!"".equals(observed)) updateDistribution(observation)
 
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 
@@ -26,7 +24,12 @@ class Leaf(val observed:String,
     val idx: Int = AlphabetHolder.alphabet.map(xNext)
     frequency(idx) += 1
     totalCounts += 1
-    distribution = normalize(frequency)
+    distribution = frequency / totalCounts
+  }
+
+  def addChild (child:Leaf): Unit = {
+    updateDistribution(child.observation)
+    children += child
   }
 
   def changeEquivalenceClass(s: EquivalenceClass): Unit = {
