@@ -11,39 +11,60 @@ class LeafTests extends FlatSpec with Matchers with BeforeAndAfter {
     tree = Tree()
   }
 
-  behavior of "updateDistribution"
-
-  it should "update distributions for observing the _next_ values in history" in {
+  "updateDistribution" should "update distributions for observing the _next_ values in history" in {
     val leaf = Leaf("a", tree, EquivalenceClass())
     leaf.updateDistribution('b')
-
-    leaf.totalCounts          should be (1)
-    leaf.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0, 1, 0)
-    leaf.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0, 1, 0)
+    assertProbabalisticDetails(leaf, 1, Array(0,1,0))
 
     leaf.updateDistribution('b')
+    assertProbabalisticDetails(leaf, 2, Array(0,2,0))
+
     leaf.updateDistribution('c')
+    assertProbabalisticDetails(leaf, 3, Array(0,2,1))
+
     leaf.updateDistribution('a')
-    leaf.totalCounts          should be (4)
-    leaf.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](   1,  2,   1)
-    leaf.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.25,0.5,0.25)
+    assertProbabalisticDetails(leaf, 4, Array(1,2,1))
   }
 
-  behavior of "changeEquivalenceClass"
-
-  it should "change the equivalence class for all observations with a longer history than itself" in {
-    pending
+  def assertProbabalisticDetails(probablistic: Probablistic, total:Double, dist:Array[Double]):Unit = {
+    probablistic.totalCounts          should be (total)
+    probablistic.frequency.toArray    should contain theSameElementsInOrderAs dist
+    probablistic.distribution.toArray should contain theSameElementsInOrderAs dist.map(_/total)
   }
 
-  behavior of "findChildWithAdditionalHistory"
+  behavior of "addChild"
 
-  it should "find the next observation deeper into history with the given character" in {
-    pending
+  it should "run updateDistribution while adding a child" in {
+    val leaf = tree.root
+    leaf.addChild('b')
+    assertProbabalisticDetails(leaf, 1, Array(0,1,0))
+    leaf.children should have size 1
+
+    leaf.addChild('a')
+    assertProbabalisticDetails(leaf, 2, Array(1,1,0))
+    leaf.children should have size 2
+
+    leaf.children.head.addChild('a')
+    assertProbabalisticDetails(leaf.children.head, 1, Array(1,0,0))
+    leaf.children.head.children should have size 1
   }
 
-  behavior of "getStateOnTransitionTo"
+  it should "not introduce children with the same observed value" in {
+    val leaf = tree.root
+    leaf.addChild('b')
+    assertProbabalisticDetails(leaf, 1, Array(0,1,0))
+    leaf.children should have size 1
 
-  it should "return the state for a transition to the given observation" in {
-    pending
+    leaf.addChild('b')
+    assertProbabalisticDetails(leaf, 2, Array(0,2,0))
+    leaf.children should have size 1
+
+    leaf.addChild('a')
+    assertProbabalisticDetails(leaf, 3, Array(1,2,0))
+    leaf.children should have size 2
+
+    leaf.addChild('a')
+    assertProbabalisticDetails(leaf, 4, Array(2,2,0))
+    leaf.children should have size 2
   }
 }
