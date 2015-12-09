@@ -33,26 +33,16 @@ object Tree {
 
     def go(history: List[Char], active:Leaf, tree: Tree, fullHistory:String, depth:Int=0): Option[Leaf] = {
       if (history.isEmpty) return Option.empty
+
       val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
-      var next:Leaf = null
+      val histIdx:Int = depth+1
 
-      // check nonEmpty here for the update, since delegation checks history first
-      if (maybeNext.nonEmpty) maybeNext.get.updateDistribution(history.head)
-
-      if (history.isEmpty) {
-        return maybeNext
+      if (maybeNext.nonEmpty) {
+        active.updateDistribution(maybeNext.get.observation)
+        return go(history.init, maybeNext.get, tree, fullHistory, histIdx)
       } else {
-        val histIdx:Int = depth+1
-        val histLen:Int = fullHistory.length
-
-        if (maybeNext.isEmpty) {
-          val obs = fullHistory.slice(histLen-histIdx, histLen)
-          val next = Leaf(obs, tree, active.currentEquivalenceClass)
-          active.children += next
-          return go(history.init, next, tree, fullHistory, histIdx)
-        } else {
-          return go(history.init, maybeNext.get, tree, fullHistory, histIdx)
-        }
+        val next = active.addChild(fullHistory(fullHistory.length - histIdx))
+        return go(history.init, next, tree, fullHistory, histIdx)
       }
     }
 

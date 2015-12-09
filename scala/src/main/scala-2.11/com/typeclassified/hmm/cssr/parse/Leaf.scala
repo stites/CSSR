@@ -27,12 +27,20 @@ class Leaf(val observed:String,
     distribution = frequency / totalCounts
   }
 
-  def addChild (xNext:Char): Unit = {
+  def addChild (xNext:Char): Leaf = {
     updateDistribution(xNext)
-    if (findChildWithAdditionalHistory(xNext).isEmpty) {
-      children += Leaf(xNext+:observed, parseTree, currentEquivalenceClass)
+    val maybeNext = findChildWithAdditionalHistory(xNext)
+    var next:Leaf = null
+    if (maybeNext.isEmpty) {
+      next = Leaf(xNext+:observed, parseTree, currentEquivalenceClass)
+      children += next
+    } else {
+      next = maybeNext.get
     }
+    return next
   }
+
+  def addChild (leaf:Leaf): Unit = addChild(leaf.observation)
 
   def changeEquivalenceClass(s: EquivalenceClass, nextChildren:ListBuffer[Leaf]=children): Unit = {
     this.currentEquivalenceClass = s

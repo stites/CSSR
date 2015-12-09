@@ -1,9 +1,9 @@
 package com.typeclassified.hmm.cssr.parse
 
-import com.typeclassified.hmm.cssr.{Probablistic, EquivalenceClass}
+import com.typeclassified.hmm.cssr.{ProbablisticAsserts, Probablistic, EquivalenceClass}
 import org.scalatest.{FlatSpec, Matchers, BeforeAndAfter}
 
-class LeafTests extends FlatSpec with Matchers with BeforeAndAfter {
+class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with BeforeAndAfter {
   var tree:Tree = null
 
   before {
@@ -24,12 +24,6 @@ class LeafTests extends FlatSpec with Matchers with BeforeAndAfter {
 
     leaf.updateDistribution('a')
     assertProbabalisticDetails(leaf, 4, Array(1,2,1))
-  }
-
-  def assertProbabalisticDetails(probablistic: Probablistic, total:Double, dist:Array[Double]):Unit = {
-    probablistic.totalCounts          should be (total)
-    probablistic.frequency.toArray    should contain theSameElementsInOrderAs dist
-    probablistic.distribution.toArray should contain theSameElementsInOrderAs dist.map(_/total)
   }
 
   behavior of "addChild"

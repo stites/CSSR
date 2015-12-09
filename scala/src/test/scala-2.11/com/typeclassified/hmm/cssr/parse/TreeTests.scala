@@ -2,11 +2,12 @@ package com.typeclassified.hmm.cssr.parse
 
 import breeze.linalg
 import breeze.linalg.DenseVector
+import com.typeclassified.hmm.cssr.ProbablisticAsserts
 import org.scalatest.{BeforeAndAfter, Matchers, FlatSpec}
 
 import scala.collection.mutable.ListBuffer
 
-class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
+class TreeTests extends FlatSpec with Matchers with ProbablisticAsserts with BeforeAndAfter {
   var tree:Tree = null
   val abc = "abc"
   val abcabc = "abcabc"
@@ -104,50 +105,34 @@ class TreeTests extends FlatSpec with Matchers with BeforeAndAfter {
     Tree.loadHistory(tree, "cb")
     val root = tree.root
     var leafInQuestion = root
-    leafInQuestion.totalCounts          should be (1)
-    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 1.0, 0.0)
-    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 1.0, 0.0)
+    assertProbabalisticDetails(leafInQuestion, 1, Array(0,1,0))
 
     val rootB = leafInQuestion.children.head
     leafInQuestion = rootB
-    leafInQuestion.totalCounts          should be (1)
-    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 1.0)
-    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 1.0)
+    assertProbabalisticDetails(leafInQuestion, 1, Array(0,0,1))
 
     val rootBC = leafInQuestion.children.head
     leafInQuestion = rootBC
-    leafInQuestion.totalCounts          should be (0)
-    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 0.0)
-    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 0.0)
+    assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
 
     Tree.loadHistory(tree, "ab")
-    leafInQuestion = root
-    leafInQuestion.totalCounts          should be (2)
-    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 2.0, 0.0)
-    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 1.0, 0.0)
+    leafInQuestion = tree.root
+    assertProbabalisticDetails(leafInQuestion, 2, Array(0,2,0))
 
     leafInQuestion = rootB
-    leafInQuestion.totalCounts          should be (1)
-    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](1.0, 0.0, 0.0)
-    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](1.0, 0.0, 0.0)
+    assertProbabalisticDetails(leafInQuestion, 2, Array(1,0,1))
 
     val rootBA = leafInQuestion.children.head
     leafInQuestion = rootBA
-    leafInQuestion.totalCounts          should be (0)
-    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 0.0)
-    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0.0, 0.0, 0.0)
+    assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
 
     Tree.loadHistory(tree, "a")
     leafInQuestion = root
-    leafInQuestion.totalCounts          should be (3)
-    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](1.0, 2.0, 0.0)
-    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](1/3, 2/3, 0.0)
+    assertProbabalisticDetails(leafInQuestion, 3, Array(1,2,0))
 
     val rootA = leafInQuestion.children.last
     leafInQuestion = rootA
-    leafInQuestion.totalCounts          should be (0)
-    leafInQuestion.frequency.toArray    should contain theSameElementsInOrderAs Array[Double](0, 0, 0)
-    leafInQuestion.distribution.toArray should contain theSameElementsInOrderAs Array[Double](0, 0, 0)
+    assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
   }
 
   behavior of "loadData"
