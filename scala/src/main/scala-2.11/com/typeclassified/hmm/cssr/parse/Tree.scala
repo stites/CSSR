@@ -89,6 +89,15 @@ class Tree(val alphabet: Alphabet) {
       // [nodes] => [children] ++ [children]
     }
   }
+
+  def collectLeaves(layer:ListBuffer[Leaf] = ListBuffer(root), collected:ListBuffer[Leaf]=ListBuffer()):Array[Leaf] = {
+    if (layer.isEmpty) {
+      return collected.toArray
+    } else {
+      val (foundLeaves, nextLayer) = layer.partition(_.children.isEmpty)
+      collectLeaves(nextLayer.flatMap(_.children), collected ++ foundLeaves)
+    }
+  }
 }
 
 

@@ -29,9 +29,5 @@ class EquivalenceClass extends Probablistic {
 
     distribution = if (totalCounts == 0) DenseVector.zeros(frequency.length) else frequency / totalCounts
   }
-
-  def collectHistories():Array[String] = {
-    histories.map(_.observed).toArray
-  }
 }
 

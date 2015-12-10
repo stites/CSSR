@@ -6,8 +6,9 @@ import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object CSSR {
   protected val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
@@ -23,15 +24,19 @@ object CSSR {
         sufficiency(parseTree, allStates, config.lMax, config.sig)
         logger.info("Sufficiency complete...")
 
-        val statistics = collect(allStates)
         logger.info("Statistics collected!\n")
-        for ((histories, idx) <- statistics.zip(Stream from 1)) {
+        for ((histories, idx) <- collect(parseTree).zip(Stream from 1)) {
           println(s"State $idx:")
           histories.foreach(h => println(s"  $h"))
         }
 
         recursion(parseTree, allStates, config.sig)
         logger.info("Recursion complete...")
+
+        for ((histories, idx) <- collect(parseTree).zip(Stream from 1)) {
+          println(s"State $idx:")
+          histories.foreach(h => println(s"  $h"))
+        }
 
         logger.info("\nCSSR completed successfully!")
       }
@@ -105,7 +110,7 @@ object CSSR {
     *
     * @param parseTree
     * @param S
-    * @param lMax
+    * @param sig
     */
   def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double) = {
     var recursive = false
@@ -172,9 +177,21 @@ object CSSR {
     logger.info("States found at the end of Recursion: " + S.size.toString)
   }
 
-  def collect (S: ListBuffer[EquivalenceClass]):Array[Array[String]] = {
+  def collect (tree: Tree):Array[Array[String]] = {
     // more to come
-    return S.map(_.collectHistories()).toArray
+    val leaves: Array[Leaf] = tree.collectLeaves()
+    val statePartitions:mutable.HashMap[EquivalenceClass, ArrayBuffer[String]] = mutable.HashMap()
+    leaves.foreach(l=>{
+      if (statePartitions.contains(l.currentEquivalenceClass)) {
+        statePartitions(l.currentEquivalenceClass) += l.observed
+      } else {
+        statePartitions(l.currentEquivalenceClass) = ArrayBuffer(l.observed)
+      }
+    })
+    val x:ListBuffer[Array[String]] = ListBuffer()
+    statePartitions.foreach { kvPair => x += kvPair._2.toArray }
+
+    return x.toArray
   }
 }
 
