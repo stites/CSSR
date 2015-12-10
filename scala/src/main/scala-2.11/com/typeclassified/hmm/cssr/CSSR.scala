@@ -11,27 +11,28 @@ import scala.collection.mutable.ListBuffer
 
 object CSSR {
   protected val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
-  var parseTree: Tree = _
-  var lMax: Int = _
-  var sig: Double = _
-  var allStates: ListBuffer[EquivalenceClass] = _
 
   def main(args: Array[String]) = {
     Cli.parser.parse(args, Config()) match {
       case Some(config) => {
         logger.info("CSSR starting.\n")
-        initialization(config)
+
+        val (parseTree: Tree, allStates: ListBuffer[EquivalenceClass]) = initialization(config)
         logger.info("Initialization complete...")
-        sufficiency(parseTree, allStates, lMax)
+
+        sufficiency(parseTree, allStates, config.lMax, config.sig)
         logger.info("Sufficiency complete...")
-        recursion(parseTree, allStates, lMax)
-        logger.info("Recursion complete...")
+
         val statistics = collect(allStates)
         logger.info("Statistics collected!\n")
         for ((histories, idx) <- statistics.zip(Stream from 1)) {
           println(s"State $idx:")
           histories.foreach(h => println(s"  $h"))
         }
+
+        recursion(parseTree, allStates, config.sig)
+        logger.info("Recursion complete...")
+
         logger.info("\nCSSR completed successfully!")
       }
       case None => { }
@@ -44,19 +45,19 @@ object CSSR {
     * causal states which each contain a next-step probability
     * distribution.
     */
-  def initialization(config: Config): Unit = {
-    lMax = config.lMax
-    sig = config.sig
-
+  def initialization(config: Config): (Tree, ListBuffer[EquivalenceClass]) = {
     val alphabetSrc: BufferedSource = Source.fromFile(config.alphabetFile)
     val alphabetSeq: Array[Char] = try alphabetSrc.mkString.toCharArray finally alphabetSrc.close()
 
     val dataSrc: BufferedSource = Source.fromFile(config.dataFile)
     val dataSeq: Array[Char] = try dataSrc.mkString.toCharArray finally dataSrc.close()
 
-    AlphabetHolder.alphabet = Alphabet(alphabetSeq)
-    parseTree = Tree.loadData(dataSeq, lMax)
-    allStates = ListBuffer(EquivalenceClass())
+    val alphabet = Alphabet(alphabetSeq)
+    AlphabetHolder.alphabet = alphabet
+    val parseTree = Tree.loadData(Tree(alphabet), dataSeq, config.lMax)
+    val allStates = ListBuffer(EquivalenceClass())
+
+    return (parseTree, allStates)
   }
 
   /**
@@ -71,12 +72,12 @@ object CSSR {
     * @param S
     * @param lMax
     */
-  def sufficiency(parseTree: Tree, S: ListBuffer[EquivalenceClass], lMax: Int):Unit = {
+  def sufficiency(parseTree: Tree, S: ListBuffer[EquivalenceClass], lMax: Int, sig:Double):Unit = {
     for (l <- 0 to lMax) {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
         val s = xt.currentEquivalenceClass
-        for ((a, alphaIdx) <- AlphabetHolder.alphabet.map) {
+        for ((a, alphaIdx) <- parseTree.alphabet.map) {
           // node in the parse tree with predictive dist
           val aXt = xt.findChildWithAdditionalHistory(a)
           s.normalizeAcrossHistories()
@@ -106,13 +107,13 @@ object CSSR {
     * @param S
     * @param lMax
     */
-  def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
+  def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double) = {
     var recursive = false
     while (!recursive) {
       // clean out transient states
       recursive = true
       for (s <- S) {
-        for ((b, alphabetIdx) <- AlphabetHolder.alphabet.map) {
+        for ((b, alphabetIdx) <- parseTree.alphabet.map) {
           val maybeX0:Option[Leaf] = s.histories.headOption
           /*
            var x = s.histories.map(\ h->

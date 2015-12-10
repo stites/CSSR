@@ -4,12 +4,15 @@ import com.typeclassified.hmm.cssr.ProbablisticAsserts
 import org.scalatest.{WordSpec, BeforeAndAfter, Matchers}
 
 class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with LeafAsserts with BeforeAndAfter {
-  AlphabetHolder.alphabet = Alphabet("01".toCharArray)
-  var tree:Tree = Tree.loadData("110111011101110111011101110111011101".toArray, 5)
-  val (_0, _1, _10, _11, _01) = ("0", "1", "10", "11", "01")
+  val alphabet = Alphabet("01".toCharArray)
+  AlphabetHolder.alphabet = alphabet
+
+  var tree:Tree = Tree.loadData(Tree(alphabet), "110111011101110111011101110111011101".toArray, 5)
+  val (_0, _1) = ("0", "1")
+  val (_10, _11, _01) = ("10", "11", "01")
   val (_110, _011, _111, _101) = ("110", "011", "111", "101")
-  val (_1110, _1011, _0111, _1111, _1101) = ("1110", "1011", "0111", "1111", "1101")
-  val (_01110, _11110, _11011, _10111, _01111, _11111, _11101) = ("01110", "11110", "11011", "10111", "01111", "11111", "11101")
+  val (_1110, _1011, _0111, _1101) = ("1110", "1011", "0111", "1101")
+  val (_01110, _11011, _10111, _11101) = ("01110", "11011", "10111", "11101")
 
   "loading the data" when {
     val node_____r = tree.root

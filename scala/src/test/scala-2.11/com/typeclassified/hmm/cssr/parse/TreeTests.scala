@@ -31,8 +31,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
   )
 
   before {
-    AlphabetHolder.alphabet = Alphabet(abc.toArray)
-    tree = Tree()
+    tree = Tree(Alphabet(abc.toCharArray))
   }
 
   "loadHistory" should {
@@ -148,7 +147,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
     "loading sequence 'abc' at lMax of 3 (windows of: abc, ab, bc, a, b, c)" should {
 
       "load all complete moving windows" in {
-        tree = Tree.loadData(abc.toArray, 3)
+        tree = Tree.loadData(tree, abc.toArray, 3)
 
         var children:ListBuffer[Leaf] = tree.root.children
         assertChildrenByExactBatch(children, testMap(abc)(0))
@@ -165,7 +164,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
     }
     "loading sequence 'abcabc' at lMax of 3 (windows of:  abc, bca, cab, ab, bc, ca, a, b, c)" should {
       "load all combinations" in {
-        tree = Tree.loadData(abcabc.toArray, 3)
+        tree = Tree.loadData(tree, abcabc.toArray, 3)
 
         var children:ListBuffer[Leaf] = tree.root.children
         assertChildrenByExactBatch(children, testMap(abcabc)(0))
@@ -179,7 +178,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
       }
 
       "include lMax+1 probabilities and, thus, also have lMax+1 children: abca, bcab, cabc" in {
-        tree = Tree.loadData(abcabc.toArray, 3)
+        tree = Tree.loadData(tree, abcabc.toArray, 3)
         var children:ListBuffer[Leaf] = tree.root.children // l1
         children = children.flatMap(_.children) //l2
         children = children.flatMap(_.children) //l3
@@ -190,7 +189,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
 
     "loading sequence 'abcbabcbb' at lMax of 3 (windows of: abc, bcb, cba, bab, cbb, ab, bc, cb, ba, bb, a, b, c)" should {
       "load all combinations" in {
-        tree = Tree.loadData(abcbabcbb.toArray, 3)
+        tree = Tree.loadData(tree, abcbabcbb.toArray, 3)
 
         var children:ListBuffer[Leaf] = tree.root.children
         assertChildrenByExactBatch(children, testMap(abcbabcbb)(0))
@@ -207,7 +206,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
 
       }
       "finished, it should also include lMax+1 probabilities and, thus, also have lMax+1 children: abcb, bcba, cbab, babc, bcbb" in {
-        tree = Tree.loadData(abcbabcbb.toArray, 3)
+        tree = Tree.loadData(tree, abcbabcbb.toArray, 3)
         var children:ListBuffer[Leaf] = tree.root.children // l1
         children = children.flatMap(_.children) //l2
         children = children.flatMap(_.children) //l3
@@ -217,14 +216,14 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
     }
 
     "not add newlines" in {
-      tree = Tree.loadData((abcabc+"\r\n").toArray, 3)
+      tree = Tree.loadData(tree, (abcabc+"\r\n").toArray, 3)
       assertChildrenByExactBatch(tree.root.children, testMap(abcabc)(0))
     }
   }
 
   "navigateHistory" should {
     "be able to return the correct leaf" in {
-      tree = Tree.loadData(abc.toArray, 3)
+      tree = Tree.loadData(tree, abc.toArray, 3)
       val maybeABC = tree.navigateHistory("abc".toList)
       maybeABC should not be empty
       assertLeafProperties(maybeABC.get, "abc")
@@ -232,7 +231,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
       val notPresentA = tree.navigateHistory("abca".toList)
       notPresentA shouldBe empty
 
-      tree = Tree.loadData(abcbabcbb.toArray, 3)
+      tree = Tree.loadData(tree, abcbabcbb.toArray, 3)
 
       val maybe_BB = tree.navigateHistory("bb".toList)
       maybe_BB should not be empty
@@ -244,7 +243,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
 
       maybe_BB.get.children.map(_.observed) should contain (maybeCBB.get.observed)
 
-      tree = Tree.loadData("aabbabcab".toArray, 3)
+      tree = Tree.loadData(tree, "aabbabcab".toArray, 3)
 
       val maybe_AB = tree.navigateHistory("ab".toList)
       maybe_AB should not be empty
@@ -263,7 +262,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
   }
   "getDepth" should {
     "be able to return the correct leaf" in {
-      tree = Tree.loadData(abcabc.toArray, 3)
+      tree = Tree.loadData(tree, abcabc.toArray, 3)
 
       tree.getDepth(0).map(_.observed) should contain only ""
 

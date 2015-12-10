@@ -21,7 +21,7 @@ class Leaf(val observed:String,
   var children: ListBuffer[Leaf] = ListBuffer()
 
   def updateDistribution(xNext: Char):Unit = {
-    val idx: Int = AlphabetHolder.alphabet.map(xNext)
+    val idx: Int = parseTree.alphabet.map(xNext)
     frequency(idx) += 1
     totalCounts += 1
     distribution = frequency / totalCounts

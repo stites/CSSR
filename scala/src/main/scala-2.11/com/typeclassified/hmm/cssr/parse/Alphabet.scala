@@ -4,9 +4,9 @@ object Alphabet {
   def apply(alphabetRaw: Array[Char]) = new Alphabet(alphabetRaw)
 }
 
-class Alphabet(val alphabetRaw: Array[Char]) {
-  val map: Map[Char, Int]= alphabetRaw.zipWithIndex.map { case (c: Char, i: Int) => c -> i }.toMap
-  val size: Int = alphabetRaw.length
+class Alphabet(alphabetRaw: Array[Char]) {
+  val raw = alphabetRaw.filterNot("\r\n".contains(_))
+  val map: Map[Char, Int]= raw.zipWithIndex.map { case (c: Char, i: Int) => c -> i }.toMap
 }
 
 object AlphabetHolder {

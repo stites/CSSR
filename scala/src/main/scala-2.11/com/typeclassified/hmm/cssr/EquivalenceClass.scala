@@ -1,6 +1,6 @@
 package com.typeclassified.hmm.cssr
 
-import com.typeclassified.hmm.cssr.parse.Leaf
+import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Leaf}
 
 import scala.collection.mutable.ArrayBuffer
 import breeze.linalg._
@@ -27,11 +27,11 @@ class EquivalenceClass extends Probablistic {
 
     totalCounts = frequency.foldRight(0d)(_+_).toInt
 
-    distribution = if (totalCounts == 0) DenseVector.ones(frequency.length) else normalize(frequency)
+    distribution = if (totalCounts == 0) DenseVector.zeros(frequency.length) else frequency / totalCounts
   }
 
   def collectHistories():Array[String] = {
-    histories.map(_.observed).toArray.distinct
+    histories.map(_.observed).toArray
   }
 }
 

@@ -8,10 +8,9 @@ import scala.collection.mutable.ListBuffer
 
 object Tree {
   protected val logger = Logger(LoggerFactory.getLogger(Tree.getClass))
-  def apply() = new Tree()
+  def apply(alphabet: Alphabet) = new Tree(alphabet)
 
-  def loadData(xs: Array[Char], n: Int): Tree = {
-    val tree:Tree = new Tree()
+  def loadData(tree:Tree, xs: Array[Char], n: Int): Tree = {
     //  Yield successive n-sized windows from the x's. Does not work with a length of 0.
     logger.debug(s"loading data of size ${xs.length}")
     logger.debug("==> running over windows of (size, count): "+(1 to n).map(i => (i, xs.length/i)))
@@ -51,7 +50,7 @@ object Tree {
   }
 }
 
-class Tree {
+class Tree(val alphabet: Alphabet) {
   var root:Leaf = Leaf("", this, EquivalenceClass())
   var maxLength:Int = _
   var dataSize:Double = _

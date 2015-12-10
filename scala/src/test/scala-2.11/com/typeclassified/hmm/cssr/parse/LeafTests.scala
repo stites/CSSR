@@ -8,7 +8,7 @@ class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
 
   before {
     AlphabetHolder.alphabet = Alphabet("abc".toCharArray)
-    tree = Tree()
+    tree = Tree(Alphabet("abc".toCharArray))
   }
 
   "updateDistribution" should "update distributions for observing the _next_ values in history" in {
