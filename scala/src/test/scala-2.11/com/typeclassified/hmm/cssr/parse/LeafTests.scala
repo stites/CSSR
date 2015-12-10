@@ -14,16 +14,16 @@ class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
   "updateDistribution" should "update distributions for observing the _next_ values in history" in {
     val leaf = Leaf("a", tree, EquivalenceClass())
     leaf.updateDistribution('b')
-    assertProbabalisticDetails(leaf, 1, Array(0,1,0))
+    assertProbabalisticDetails(leaf, Array(0,1,0))
 
     leaf.updateDistribution('b')
-    assertProbabalisticDetails(leaf, 2, Array(0,2,0))
+    assertProbabalisticDetails(leaf, Array(0,2,0))
 
     leaf.updateDistribution('c')
-    assertProbabalisticDetails(leaf, 3, Array(0,2,1))
+    assertProbabalisticDetails(leaf, Array(0,2,1))
 
     leaf.updateDistribution('a')
-    assertProbabalisticDetails(leaf, 4, Array(1,2,1))
+    assertProbabalisticDetails(leaf, Array(1,2,1))
   }
 
   behavior of "addChild"
@@ -31,34 +31,34 @@ class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
   it should "run updateDistribution while adding a child" in {
     val leaf = tree.root
     leaf.addChild('b')
-    assertProbabalisticDetails(leaf, 1, Array(0,1,0))
+    assertProbabalisticDetails(leaf, Array(0,1,0))
     leaf.children should have size 1
 
     leaf.addChild('a')
-    assertProbabalisticDetails(leaf, 2, Array(1,1,0))
+    assertProbabalisticDetails(leaf, Array(1,1,0))
     leaf.children should have size 2
 
     leaf.children.head.addChild('a')
-    assertProbabalisticDetails(leaf.children.head, 1, Array(1,0,0))
+    assertProbabalisticDetails(leaf.children.head, Array(1,0,0))
     leaf.children.head.children should have size 1
   }
 
   it should "not introduce children with the same observed value" in {
     val leaf = tree.root
     leaf.addChild('b')
-    assertProbabalisticDetails(leaf, 1, Array(0,1,0))
+    assertProbabalisticDetails(leaf, Array(0,1,0))
     leaf.children should have size 1
 
     leaf.addChild('b')
-    assertProbabalisticDetails(leaf, 2, Array(0,2,0))
+    assertProbabalisticDetails(leaf, Array(0,2,0))
     leaf.children should have size 1
 
     leaf.addChild('a')
-    assertProbabalisticDetails(leaf, 3, Array(1,2,0))
+    assertProbabalisticDetails(leaf, Array(1,2,0))
     leaf.children should have size 2
 
     leaf.addChild('a')
-    assertProbabalisticDetails(leaf, 4, Array(2,2,0))
+    assertProbabalisticDetails(leaf, Array(2,2,0))
     leaf.children should have size 2
   }
 }

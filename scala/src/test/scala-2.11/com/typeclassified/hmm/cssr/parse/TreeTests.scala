@@ -100,15 +100,15 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
       Tree.loadHistory(tree, "cb") // loads "cb", updates
       val root = tree.root
       var leafInQuestion = root
-      assertProbabalisticDetails(leafInQuestion, 1, Array(0,1,0))
+      assertProbabalisticDetails(leafInQuestion, Array(0,1,0))
 
       val rootB = leafInQuestion.children.head
       leafInQuestion = rootB
-      assertProbabalisticDetails(leafInQuestion, 1, Array(0,0,1))
+      assertProbabalisticDetails(leafInQuestion, Array(0,0,1))
 
       val rootBC = leafInQuestion.children.head
       leafInQuestion = rootBC
-      assertProbabalisticDetails(leafInQuestion, 0, Array(0,0,0))
+      assertProbabalisticDetails(leafInQuestion, Array(0,0,0))
     }
 
     "updating the distribution of a leaf for it's next-step" should {
@@ -118,11 +118,11 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
         val rootB = root.children.head
         val rootBC = rootB.children.head
 
-        assertProbabalisticDetails(root, 1, Array(0, 1, 0))
+        assertProbabalisticDetails(root, Array(0, 1, 0))
 
-        assertProbabalisticDetails(rootB, 1, Array(0, 0, 1))
+        assertProbabalisticDetails(rootB, Array(0, 0, 1))
 
-        assertProbabalisticDetails(rootBC, 0, Array(0, 0, 0))
+        assertProbabalisticDetails(rootBC, Array(0, 0, 0))
       }
 
       "ignore path if already exists" in {
@@ -132,14 +132,14 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
         val rootBC = rootB.children.head
 
         Tree.loadHistory(tree, "ab")
-        assertProbabalisticDetails(root, 1, Array(0, 1, 0))
-        assertProbabalisticDetails(rootB, 2, Array(1, 0, 1))
-        assertProbabalisticDetails(rootB.children.head, 0, Array(0, 0, 0))
+        assertProbabalisticDetails(root, Array(0, 1, 0))
+        assertProbabalisticDetails(rootB, Array(1, 0, 1))
+        assertProbabalisticDetails(rootB.children.head, Array(0, 0, 0))
 
         Tree.loadHistory(tree, "a")
-        assertProbabalisticDetails(root, 2, Array(1, 1, 0))
+        assertProbabalisticDetails(root, Array(1, 1, 0))
 
-        assertProbabalisticDetails(root.children.last, 0, Array(0, 0, 0))
+        assertProbabalisticDetails(root.children.last, Array(0, 0, 0))
       }
     }
   }

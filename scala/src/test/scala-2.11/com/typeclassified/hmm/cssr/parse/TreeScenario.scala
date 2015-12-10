@@ -1,7 +1,7 @@
 package com.typeclassified.hmm.cssr.parse
 
 import com.typeclassified.hmm.cssr.ProbablisticAsserts
-import org.scalatest.{WordSpec, BeforeAndAfter, Matchers, FlatSpec}
+import org.scalatest.{WordSpec, BeforeAndAfter, Matchers}
 
 class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with LeafAsserts with BeforeAndAfter {
   AlphabetHolder.alphabet = Alphabet("01".toCharArray)
@@ -15,7 +15,7 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
     val node____1r = layer1.find(_.observed == "1")
 
     "examining the root layer" should {
-      "have correct frequency and distributions" in assertProbabalisticDetails(node_____r, 36, Array(9, 27))
+      "have correct frequency and distributions" in assertProbabalisticDetails(node_____r, Array(9, 27))
       "have expected leaf properties" in assertChildrenByExactBatch(layer1, Array("0", "1"))
     }
 
@@ -29,8 +29,8 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
         layer1 should contain theSameElementsAs expected
       }
       "have each have the correct frequency and distributions" in {
-        assertProbabalisticDetails(node____0r.get, 36, Array(9, 27))
-        assertProbabalisticDetails(node____1r.get, 36, Array(9, 27))
+        assertProbabalisticDetails(node____0r.get, Array(0, 9))
+        assertProbabalisticDetails(node____1r.get, Array(9, 17))
       }
       "have expected leaf properties" in {
         assertChildrenByExactBatch(node____0r.get.children, Array("10"))
@@ -53,9 +53,9 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
         layer2 should contain theSameElementsAs expected
       }
       "have each have the correct frequency and distributions" in {
-        assertProbabalisticDetails(node___10r.get, 36, Array(9, 27))
-        assertProbabalisticDetails(node___11r.get, 36, Array(9, 27))
-        assertProbabalisticDetails(node___01r.get, 36, Array(9, 27))
+        assertProbabalisticDetails(node___10r.get, Array(0, 9))
+        assertProbabalisticDetails(node___11r.get, Array(8, 8))
+        assertProbabalisticDetails(node___01r.get, Array(0, 9))
       }
       "have expected leaf properties" in {
         assertChildrenByExactBatch(node___10r.get.children, Array("110"))
