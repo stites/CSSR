@@ -59,8 +59,9 @@ object CSSR {
 
     val alphabet = Alphabet(alphabetSeq)
     AlphabetHolder.alphabet = alphabet
-    val parseTree = Tree.loadData(Tree(alphabet), dataSeq, config.lMax)
-    val allStates = ListBuffer(EquivalenceClass())
+    val rootClass = EquivalenceClass()
+    val parseTree = Tree.loadData(Tree(alphabet, rootClass), dataSeq, config.lMax)
+    val allStates = ListBuffer(rootClass)
 
     return (parseTree, allStates)
   }

@@ -8,6 +8,7 @@ import scala.collection.mutable.ListBuffer
 
 object Tree {
   protected val logger = Logger(LoggerFactory.getLogger(Tree.getClass))
+  def apply(alphabet: Alphabet, equivalenceClass: EquivalenceClass) = new Tree(alphabet, equivalenceClass)
   def apply(alphabet: Alphabet) = new Tree(alphabet)
 
   def loadData(tree:Tree, xs: Array[Char], n: Int): Tree = {
@@ -50,8 +51,8 @@ object Tree {
   }
 }
 
-class Tree(val alphabet: Alphabet) {
-  var root:Leaf = Leaf("", this, EquivalenceClass())
+class Tree(val alphabet: Alphabet, val rootEC: EquivalenceClass=EquivalenceClass()) {
+  var root:Leaf = Leaf("", this, rootEC)
   var maxLength:Int = _
   var dataSize:Double = _
   var adjustedDataSize:Double = _

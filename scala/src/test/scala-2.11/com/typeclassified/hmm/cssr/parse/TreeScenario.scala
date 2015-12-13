@@ -1,12 +1,11 @@
 package com.typeclassified.hmm.cssr.parse
 
-import com.typeclassified.hmm.cssr.ProbablisticAsserts
+import com.typeclassified.hmm.cssr.{EquivalenceClass, ProbablisticAsserts}
 import org.scalatest.{WordSpec, BeforeAndAfter, Matchers}
 
 class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with LeafAsserts with BeforeAndAfter {
   val alphabet = Alphabet("01".toCharArray)
   AlphabetHolder.alphabet = alphabet
-
   var tree:Tree = Tree.loadData(Tree(alphabet), "110111011101110111011101110111011101".toArray, 5)
   val (_0, _1) = ("0", "1")
   val (_10, _11, _01) = ("10", "11", "01")

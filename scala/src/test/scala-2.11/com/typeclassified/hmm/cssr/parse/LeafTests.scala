@@ -3,6 +3,8 @@ package com.typeclassified.hmm.cssr.parse
 import com.typeclassified.hmm.cssr.{ProbablisticAsserts, Probablistic, EquivalenceClass}
 import org.scalatest.{FlatSpec, Matchers, BeforeAndAfter}
 
+import scala.collection.mutable.ListBuffer
+
 class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with BeforeAndAfter {
   var tree:Tree = null
 
@@ -60,5 +62,34 @@ class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
     leaf.addChild('a')
     assertProbabalisticDetails(leaf, Array(2,2,0))
     leaf.children should have size 2
+  }
+
+
+  behavior of "changeEquivalenceClass"
+
+  it should "change the equivalence class of a given leaf's branch" in {
+    Tree.loadHistory(tree, "abc".toCharArray)
+    Tree.loadHistory(tree, "bca".toCharArray)
+    val originalClass = tree.root.currentEquivalenceClass
+    val originalClassLeaves = tree.collectLeaves()
+    for (leaf <- originalClassLeaves) {
+      leaf.currentEquivalenceClass should equal(originalClass)
+    }
+    val newEC_A = EquivalenceClass()
+    val newEC_C = EquivalenceClass()
+    val rootLeafA = tree.root.children.find(_.observation == 'a').get
+    val rootLeafC = tree.root.children.find(_.observation == 'c').get
+    rootLeafA.changeEquivalenceClass(newEC_A)
+    rootLeafC.changeEquivalenceClass(newEC_C)
+    val branchA = tree.collectLeaves(ListBuffer(rootLeafA))
+    val branchC = tree.collectLeaves(ListBuffer(rootLeafC))
+
+    tree.root.currentEquivalenceClass should equal(originalClass)
+    for (leaf <- branchA) {
+      leaf.currentEquivalenceClass should equal(newEC_A)
+    }
+    for (leaf <- branchC) {
+      leaf.currentEquivalenceClass should equal(newEC_C)
+    }
   }
 }
