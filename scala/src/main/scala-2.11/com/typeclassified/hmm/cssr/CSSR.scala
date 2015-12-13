@@ -120,9 +120,9 @@ object CSSR {
     var recursive = false
 
     // prune histories of less than max length - 1 and histories of lMax+1 which are use for the last distribution
-    S.foreach { state => state.histories = state.histories.filter(hist => {
-      hist.observed.length >= lMax-1 && hist.observed.length < lMax + 1
-    }) }
+    S.foreach { state => state.histories --= state.histories.filter(_.observed.length < lMax-1) }
+    // remove equivalence classes with empty histories
+    S --= S.filter(_.histories.isEmpty)
 
     while (!recursive) {
       // clean out transient states as well?

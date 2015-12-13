@@ -9,12 +9,13 @@ object Leaf {
   def apply(o:String, tree: Tree, initState: EquivalenceClass) = new Leaf(o, tree, initState)
 }
 
-class Leaf(val observed:String,
+class Leaf(observedSequence:String,
            parseTree: Tree,
            initialEquivClass: EquivalenceClass
           ) extends Probablistic {
-  // (history = 00) => (next_x = 1) ==> 001
-  val observation: Char = if ("".equals(observed)) 0.toChar else observed.head // C
+  val observed:String = observedSequence.reverse
+
+  val observation: Char = if ("".equals(observed)) 0.toChar else observed.last
 
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 

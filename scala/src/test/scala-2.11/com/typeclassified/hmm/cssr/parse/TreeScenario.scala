@@ -17,8 +17,8 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
     val node_____r = tree.root
 
     val layer1     = node_____r.children
-    val node____0r = layer1.find(_.observed == _0)
-    val node____1r = layer1.find(_.observed == _1)
+    val node____0r = layer1.find(_.observed == _0.reverse)
+    val node____1r = layer1.find(_.observed == _1.reverse)
 
     "examining the root layer" should {
       "have correct frequency and distributions" in assertProbabalisticDetails(node_____r, Array(9, 27))
@@ -44,9 +44,9 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
       }
     }
     val layer2     = layer1.flatMap(_.children)
-    val node___10r = layer2.find(_.observed == _10)
-    val node___11r = layer2.find(_.observed == _11)
-    val node___01r = layer2.find(_.observed == _01)
+    val node___10r = layer2.find(_.observed == _10.reverse)
+    val node___11r = layer2.find(_.observed == _11.reverse)
+    val node___01r = layer2.find(_.observed == _01.reverse)
 
     "examining the 2nd layer" should {
       "have the correct children" in {
@@ -71,10 +71,10 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
     }
 
     val layer3     = layer2.flatMap(_.children)
-    val node__110r = layer3.find(_.observed == _110)
-    val node__011r = layer3.find(_.observed == _011)
-    val node__111r = layer3.find(_.observed == _111)
-    val node__101r = layer3.find(_.observed == _101)
+    val node__110r = layer3.find(_.observed == _110.reverse)
+    val node__011r = layer3.find(_.observed == _011.reverse)
+    val node__111r = layer3.find(_.observed == _111.reverse)
+    val node__101r = layer3.find(_.observed == _101.reverse)
 
     "examining the 3rd layer" should {
       "have the correct children" in {
@@ -103,10 +103,10 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
     }
 
     val layer4     = layer3.flatMap(_.children)
-    val node_1110r = layer4.find(_.observed == _1110)
-    val node_1011r = layer4.find(_.observed == _1011)
-    val node_0111r = layer4.find(_.observed == _0111)
-    val node_1101r = layer4.find(_.observed == _1101)
+    val node_1110r = layer4.find(_.observed == _1110.reverse)
+    val node_1011r = layer4.find(_.observed == _1011.reverse)
+    val node_0111r = layer4.find(_.observed == _0111.reverse)
+    val node_1101r = layer4.find(_.observed == _1101.reverse)
 
     "examining the 4th layer" should {
       "have the correct children" in {
@@ -137,10 +137,10 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
     }
 
     val layer5     = layer4.flatMap(_.children)
-    val node11101r = layer5.find(_.observed == _11101)
-    val node11011r = layer5.find(_.observed == _11011)
-    val node10111r = layer5.find(_.observed == _10111)
-    val node01110r = layer5.find(_.observed == _01110)
+    val node11101r = layer5.find(_.observed == _11101.reverse)
+    val node11011r = layer5.find(_.observed == _11011.reverse)
+    val node10111r = layer5.find(_.observed == _10111.reverse)
+    val node01110r = layer5.find(_.observed == _01110.reverse)
 
     "examining the 5th layer" should {
       "have the correct children" in {

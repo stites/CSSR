@@ -22,12 +22,12 @@ object Tree {
         loadHistory(tree, observed)
       }
     }
+    tree.getDepth(n).foreach{leaf => leaf.children = ListBuffer()}
     tree.maxLength = n
     tree.dataSize = xs.length
     tree.adjustedDataSize =  xs.length - n - 1 // TODO: multi-line
     return tree
   }
-
 
   def loadHistory(tree: Tree, observed: Seq[Char]): Unit = {
 
@@ -53,8 +53,11 @@ object Tree {
 
 class Tree(val alphabet: Alphabet, val rootEC: EquivalenceClass=EquivalenceClass()) {
   var root:Leaf = Leaf("", this, rootEC)
+
   var maxLength:Int = _
+
   var dataSize:Double = _
+
   var adjustedDataSize:Double = _
 
   /**
