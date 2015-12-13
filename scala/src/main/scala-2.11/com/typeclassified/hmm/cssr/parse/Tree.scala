@@ -51,7 +51,7 @@ object Tree {
   }
 }
 
-class Tree(val alphabet: Alphabet, val rootEC: EquivalenceClass=EquivalenceClass()) {
+class Tree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) {
   var root:Leaf = Leaf("", this, rootEC)
 
   var maxLength:Int = _

@@ -118,8 +118,7 @@ object CSSR {
     */
   def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double, lMax:Double) = {
     var recursive = false
-
-    // prune histories of less than max length - 1 and histories of lMax+1 which are use for the last distribution
+    // prune histories with too little information
     S.foreach { state => state.histories --= state.histories.filter(_.observed.length < lMax-1) }
     // remove equivalence classes with empty histories
     S --= S.filter(_.histories.isEmpty)
@@ -127,47 +126,34 @@ object CSSR {
     while (!recursive) {
       // clean out transient states as well?
       recursive = true
-      for (s <- S) {
-        for ((b, alphabetIdx) <- parseTree.alphabet.map) {
-          /*
-           var x = s.histories.map(\ h->
-              h.getStateOnTransition(b)
-              var Exb:EquivalenceClass = null
-              if (optionalExb.nonEmpty) {
-                Exb = optionalTsb.get
-              }
-           )
-           // => [(leaf, Equivclass)]
-           parts = x.partition( /on equiv class/ )
-           parts.len > 1 ?
-
-           [ s*... ]
-
-           */
-          if (s.histories.nonEmpty) {
-            val x0: Leaf = s.histories.head
-            val optionalTsb = x0.getStateOnTransitionTo(b)
-            if (optionalTsb.nonEmpty) {
-              if (x0.distribution(alphabetIdx) <= 0) {
-              } else {
-                /// =========================
-                for (x <- s.histories.tail) {
-                  val optionalExb = x.getStateOnTransitionTo(b)
-                  if (optionalExb.nonEmpty) {
-                    /// =========================
-                    if (optionalTsb.get != optionalExb.get) {
-                      recursive = false
-                      val sNew = EquivalenceClass()
-                      S += sNew
-                      for (y <- s.histories) {
-                        val optionalEyb = y.getStateOnTransitionTo(b)
-                        if (optionalEyb.nonEmpty) {
-                          if (optionalEyb.get == optionalExb.get) {
-                            Test.move(y, s, sNew)
-                          }
-                        }
-                      }
-                    }
+      for (s <- S; (b, alphabetIdx) <- parseTree.alphabet.map) {
+        // TODO: investigate partitioning the equivalence class like so
+        // var x = s.histories.map(\ h->
+        //    h.getStateOnTransition(b)
+        //    var Exb:EquivalenceClass = null
+        //    if (optionalExb.nonEmpty) {
+        //      Exb = optionalTsb.get
+        //    }
+        // )
+        // // => [(leaf, Equivclass)]
+        // parts = x.partition( /on equiv class/ )
+        // parts.len > 1 ?
+        //
+        // [ s*... ]
+        if (s.histories.nonEmpty) {
+          val x0: Leaf = s.histories.head
+          val optionalTsb = x0.getStateOnTransitionTo(b)
+          if (optionalTsb.nonEmpty && x0.distribution(alphabetIdx) <= 0) {
+            for (x <- s.histories.tail) {
+              val optionalExb = x.getStateOnTransitionTo(b)
+              if (optionalExb.nonEmpty && optionalTsb.get != optionalExb.get) {
+                recursive = false
+                for (y <- s.histories) {
+                  val optionalEyb = y.getStateOnTransitionTo(b)
+                  if (optionalEyb.nonEmpty && optionalEyb.get == optionalExb.get) {
+                    val sNew = EquivalenceClass()
+                    S += sNew
+                    Test.move(y, s, sNew)
                   }
                 }
               }
