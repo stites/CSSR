@@ -96,7 +96,7 @@ class Tree(val alphabet: Alphabet, val rootEC: EquivalenceClass=EquivalenceClass
       return collected.toArray
     } else {
       val (foundLeaves, nextLayer) = layer.partition(_.children.isEmpty)
-      collectLeaves(nextLayer.flatMap(_.children), collected ++ foundLeaves)
+      collectLeaves(nextLayer.flatMap(_.children), collected ++ layer)
     }
   }
 }

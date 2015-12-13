@@ -23,25 +23,28 @@ object CSSR {
 
         sufficiency(parseTree, allStates, config.lMax, config.sig)
         logger.info("Sufficiency complete...")
+        logEquivalenceClasses(allStates)
 
-        logger.info("Statistics collected!\n")
-        for ((histories, idx) <- collect(parseTree).zip(Stream from 1)) {
-          println(s"State $idx:")
-          histories.foreach(h => println(s"  $h"))
-        }
-
-        recursion(parseTree, allStates, config.sig)
+        recursion(parseTree, allStates, config.sig, config.lMax)
         logger.info("Recursion complete...")
-
-        for ((histories, idx) <- collect(parseTree).zip(Stream from 1)) {
-          println(s"State $idx:")
-          histories.foreach(h => println(s"  $h"))
-        }
+        logEquivalenceClasses(allStates)
 
         logger.info("\nCSSR completed successfully!")
       }
       case None => { }
     }
+  }
+
+  def logEquivalenceClasses(allStates:ListBuffer[EquivalenceClass]): Unit = {
+    logger.info("===FOUND EQUIVALENCE CLASSES ====")
+    logger.info("")
+    for ((eqClass, idx) <- allStates.zip(Stream from 1)) {
+      logger.info(s"equiv class $idx:")
+      eqClass.histories.foreach(h => println(s"  ${h.observed}"))
+    }
+    logger.info("")
+    logger.info("=================================")
+    logger.info("")
   }
 
   /**
@@ -113,14 +116,19 @@ object CSSR {
     * @param S
     * @param sig
     */
-  def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double) = {
+  def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double, lMax:Double) = {
     var recursive = false
+
+    // prune histories of less than max length - 1 and histories of lMax+1 which are use for the last distribution
+    S.foreach { state => state.histories = state.histories.filter(hist => {
+      hist.observed.length >= lMax-1 && hist.observed.length < lMax + 1
+    }) }
+
     while (!recursive) {
-      // clean out transient states
+      // clean out transient states as well?
       recursive = true
       for (s <- S) {
         for ((b, alphabetIdx) <- parseTree.alphabet.map) {
-          val maybeX0:Option[Leaf] = s.histories.headOption
           /*
            var x = s.histories.map(\ h->
               h.getStateOnTransition(b)
@@ -136,37 +144,30 @@ object CSSR {
            [ s*... ]
 
            */
-          if (maybeX0.nonEmpty) {
-            val x0:Leaf = maybeX0.get
+          if (s.histories.nonEmpty) {
+            val x0: Leaf = s.histories.head
             val optionalTsb = x0.getStateOnTransitionTo(b)
-            var Tsb:EquivalenceClass = null
             if (optionalTsb.nonEmpty) {
-              Tsb = optionalTsb.get
-            }
-
-            if (x0.distribution(alphabetIdx) <= 0) { logger.error("never get here") }
-/// =========================
-            for (x <- s.histories.tail) {
-
-              val optionalExb = x.getStateOnTransitionTo(b)
-              var Exb:EquivalenceClass = null
-              if (optionalExb.nonEmpty) {
-                Exb = optionalExb.get
-              }
-
-/// =========================
-              if (Tsb != Exb) {
-                recursive = false
-                val sNew = EquivalenceClass()
-                S += sNew
-                for (y <- s.histories) {
-                  val optionalEyb = y.getStateOnTransitionTo(b)
-                  var Eyb:EquivalenceClass = null
-                  if (optionalEyb.nonEmpty) {
-                    Eyb = optionalEyb.get
-                  }
-                  if (Eyb == Exb) {
-                    Test.move(y, s, sNew)
+              if (x0.distribution(alphabetIdx) <= 0) {
+              } else {
+                /// =========================
+                for (x <- s.histories.tail) {
+                  val optionalExb = x.getStateOnTransitionTo(b)
+                  if (optionalExb.nonEmpty) {
+                    /// =========================
+                    if (optionalTsb.get != optionalExb.get) {
+                      recursive = false
+                      val sNew = EquivalenceClass()
+                      S += sNew
+                      for (y <- s.histories) {
+                        val optionalEyb = y.getStateOnTransitionTo(b)
+                        if (optionalEyb.nonEmpty) {
+                          if (optionalEyb.get == optionalExb.get) {
+                            Test.move(y, s, sNew)
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }

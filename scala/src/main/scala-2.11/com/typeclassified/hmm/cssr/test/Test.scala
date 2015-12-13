@@ -47,7 +47,7 @@ object Test {
                                   ax: Leaf,
                                   sig: Double
                                  ): Option[EquivalenceClass] = {
-    val SStar = S.filter(_ != s)
+    val SStar = S.filter(_ ne s)
     for (sStar <- SStar) {
       if (nullHypothesis(sStar, ax) > sig) {
         return Option.apply(sStar)
