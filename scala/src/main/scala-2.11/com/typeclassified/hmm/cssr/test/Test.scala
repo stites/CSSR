@@ -1,6 +1,7 @@
 package com.typeclassified.hmm.cssr.test
 
-import com.typeclassified.hmm.cssr.{Leaf, Leaf$, EquivalenceClass}
+import com.typeclassified.hmm.cssr.parse.Leaf
+import com.typeclassified.hmm.cssr.EquivalenceClass
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
@@ -46,7 +47,7 @@ object Test {
                                   ax: Leaf,
                                   sig: Double
                                  ): Option[EquivalenceClass] = {
-    val SStar = S.filter(_ != s)
+    val SStar = S.filter(_ ne s)
     for (sStar <- SStar) {
       if (nullHypothesis(sStar, ax) > sig) {
         return Option.apply(sStar)
@@ -59,10 +60,8 @@ object Test {
     // ABC -> A
     // (A->) C->B->A
     //
-
     x.changeEquivalenceClass(to)
     from.rmHistory(x)
     to.addHistory(x)
-
   }
 }

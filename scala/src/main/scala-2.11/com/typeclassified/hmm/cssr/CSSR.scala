@@ -2,33 +2,49 @@ package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.{Config, Cli}
 import com.typeclassified.hmm.cssr.test.Test
-import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, ParseAlphabet, ParseTree}
+import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object CSSR {
   protected val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
-  var parseTree: ParseTree = _
-  var lMax: Int = _
-  var sig: Double = _
-  var allStates: ListBuffer[EquivalenceClass] =_
 
   def main(args: Array[String]) = {
     Cli.parser.parse(args, Config()) match {
       case Some(config) => {
-        initialization(config)
-        sufficiency(parseTree, allStates, lMax)
-        recursion(parseTree, allStates, lMax)
-        val statistics = collect(allStates)
-        logger.info("CSSR completed successfully!")
-      }
-      case None => {
+        logger.info("CSSR starting.\n")
 
+        val (parseTree: Tree, allStates: ListBuffer[EquivalenceClass]) = initialization(config)
+        logger.info("Initialization complete...")
+
+        sufficiency(parseTree, allStates, config.lMax, config.sig)
+        logger.info("Sufficiency complete...")
+        logEquivalenceClasses(allStates)
+
+        recursion(parseTree, allStates, config.sig, config.lMax)
+        logger.info("Recursion complete...")
+        logEquivalenceClasses(allStates)
+
+        logger.info("\nCSSR completed successfully!")
       }
+      case None => { }
     }
+  }
+
+  def logEquivalenceClasses(allStates:ListBuffer[EquivalenceClass]): Unit = {
+    logger.info("===FOUND EQUIVALENCE CLASSES ====")
+    logger.info("")
+    for ((eqClass, idx) <- allStates.zip(Stream from 1)) {
+      logger.info(s"equiv class $idx:")
+      eqClass.histories.foreach(h => println(s"  ${h.observed}"))
+    }
+    logger.info("")
+    logger.info("=================================")
+    logger.info("")
   }
 
   /**
@@ -37,19 +53,20 @@ object CSSR {
     * causal states which each contain a next-step probability
     * distribution.
     */
-  def initialization(config: Config): Unit = {
-    lMax = config.lMax
-    sig = config.sig
-
+  def initialization(config: Config): (Tree, ListBuffer[EquivalenceClass]) = {
     val alphabetSrc: BufferedSource = Source.fromFile(config.alphabetFile)
     val alphabetSeq: Array[Char] = try alphabetSrc.mkString.toCharArray finally alphabetSrc.close()
 
     val dataSrc: BufferedSource = Source.fromFile(config.dataFile)
     val dataSeq: Array[Char] = try dataSrc.mkString.toCharArray finally dataSrc.close()
 
-    AlphabetHolder.alphabet = ParseAlphabet(alphabetSeq)
-    parseTree = ParseTree.loadData(dataSeq, lMax)
-    allStates = ListBuffer(EquivalenceClass())
+    val alphabet = Alphabet(alphabetSeq)
+    AlphabetHolder.alphabet = alphabet
+    val rootClass = EquivalenceClass()
+    val parseTree = Tree.loadData(Tree(alphabet, rootClass), dataSeq, config.lMax)
+    val allStates = ListBuffer(rootClass)
+
+    return (parseTree, allStates)
   }
 
   /**
@@ -64,12 +81,12 @@ object CSSR {
     * @param S
     * @param lMax
     */
-  def sufficiency(parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int):Unit = {
+  def sufficiency(parseTree: Tree, S: ListBuffer[EquivalenceClass], lMax: Int, sig:Double):Unit = {
     for (l <- 0 to lMax) {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
         val s = xt.currentEquivalenceClass
-        for ((a, alphaIdx) <- AlphabetHolder.alphabet.map) {
+        for ((a, alphaIdx) <- parseTree.alphabet.map) {
           // node in the parse tree with predictive dist
           val aXt = xt.findChildWithAdditionalHistory(a)
           s.normalizeAcrossHistories()
@@ -97,62 +114,45 @@ object CSSR {
     *
     * @param parseTree
     * @param S
-    * @param lMax
+    * @param sig
     */
-  def recursion (parseTree: ParseTree, S: ListBuffer[EquivalenceClass], lMax: Int) = {
+  def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double, lMax:Double) = {
     var recursive = false
+    // prune histories with too little information
+    S.foreach { state => state.histories --= state.histories.filter(_.observed.length < lMax-1) }
+    // remove equivalence classes with empty histories
+    S --= S.filter(_.histories.isEmpty)
+
     while (!recursive) {
-      // clean out transient states
-
+      // clean out transient states as well?
       recursive = true
-      for (s <- S) {
-        for ((b, alphabetIdx) <- AlphabetHolder.alphabet.map) {
-          val maybeX0:Option[Leaf] = s.histories.headOption
-          /*
-           var x = s.histories.map(\ h->
-              h.getStateOnTransition(b)
-              var Exb:EquivalenceClass = null
-              if (optionalExb.nonEmpty) {
-                Exb = optionalTsb.get
-              }
-           )
-           // => [(leaf, Equivclass)]
-           parts = x.partition( /on equiv class/ )
-           parts.len > 1 ?
-
-           [ s*... ]
-
-           */
-          if (maybeX0.nonEmpty) {
-            val x0:Leaf = maybeX0.get
-            val optionalTsb = x0.getStateOnTransition(b)
-            var Tsb:EquivalenceClass = null
-            if (optionalTsb.nonEmpty) {
-              Tsb = optionalTsb.get
-            }
-
-            if (x0.distribution(alphabetIdx) <= 0) { logger.error("never get here") }
-/// =========================
+      for (s <- S; (b, alphabetIdx) <- parseTree.alphabet.map) {
+        // TODO: investigate partitioning the equivalence class like so
+        // var x = s.histories.map(\ h->
+        //    h.getStateOnTransition(b)
+        //    var Exb:EquivalenceClass = null
+        //    if (optionalExb.nonEmpty) {
+        //      Exb = optionalTsb.get
+        //    }
+        // )
+        // // => [(leaf, Equivclass)]
+        // parts = x.partition( /on equiv class/ )
+        // parts.len > 1 ?
+        //
+        // [ s*... ]
+        if (s.histories.nonEmpty) {
+          val x0: Leaf = s.histories.head
+          val optionalTsb = x0.getStateOnTransitionTo(b)
+          if (optionalTsb.nonEmpty && x0.distribution(alphabetIdx) <= 0) {
             for (x <- s.histories.tail) {
-
-              val optionalExb = x.getStateOnTransition(b)
-              var Exb:EquivalenceClass = null
-              if (optionalExb.nonEmpty) {
-                Exb = optionalTsb.get
-              }
-
-/// =========================
-              if (Tsb != Exb) {
+              val optionalExb = x.getStateOnTransitionTo(b)
+              if (optionalExb.nonEmpty && optionalTsb.get != optionalExb.get) {
                 recursive = false
-                val sNew = EquivalenceClass()
-                S += sNew
                 for (y <- s.histories) {
-                  val optionalEyb = y.getStateOnTransition(b)
-                  var Eyb:EquivalenceClass = null
-                  if (optionalEyb.nonEmpty) {
-                    Eyb = optionalTsb.get
-                  }
-                  if (Eyb.equals(Exb)) {
+                  val optionalEyb = y.getStateOnTransitionTo(b)
+                  if (optionalEyb.nonEmpty && optionalEyb.get == optionalExb.get) {
+                    val sNew = EquivalenceClass()
+                    S += sNew
                     Test.move(y, s, sNew)
                   }
                 }
@@ -165,9 +165,21 @@ object CSSR {
     logger.info("States found at the end of Recursion: " + S.size.toString)
   }
 
-  def collect (S: ListBuffer[EquivalenceClass]):Array[Array[String]] = {
+  def collect (tree: Tree):Array[Array[String]] = {
     // more to come
-    return S.map(_.collectHistories()).toArray
+    val leaves: Array[Leaf] = tree.collectLeaves()
+    val statePartitions:mutable.HashMap[EquivalenceClass, ArrayBuffer[String]] = mutable.HashMap()
+    leaves.foreach(l=>{
+      if (statePartitions.contains(l.currentEquivalenceClass)) {
+        statePartitions(l.currentEquivalenceClass) += l.observed
+      } else {
+        statePartitions(l.currentEquivalenceClass) = ArrayBuffer(l.observed)
+      }
+    })
+    val x:ListBuffer[Array[String]] = ListBuffer()
+    statePartitions.foreach { kvPair => x += kvPair._2.toArray }
+
+    return x.toArray
   }
 }
 

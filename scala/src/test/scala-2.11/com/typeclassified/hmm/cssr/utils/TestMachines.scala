@@ -1,4 +1,4 @@
-package com.typeclassified.hmm.utils
+package com.typeclassified.hmm.cssr.utils
 
 import java.nio.file.{Path, Files, Paths}
 

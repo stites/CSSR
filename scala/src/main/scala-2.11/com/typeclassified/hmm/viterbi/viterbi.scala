@@ -6,7 +6,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.{mutable => m}
 
 object viterbi {
-  def main (args:Array[String]): Unit = {
+  def main2 (args:Array[String]): Unit = {
     val (healthy, fever) = ("Healthy", "Fever")
     val (normal, cold, dizzy) = ("normal", "cold", "dizzy")
 

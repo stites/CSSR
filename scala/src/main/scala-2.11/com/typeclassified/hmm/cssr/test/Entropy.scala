@@ -1,8 +1,8 @@
 package com.typeclassified.hmm.cssr.test
 
 import breeze.linalg.{sum, DenseVector}
-import com.typeclassified.hmm.cssr.{Leaf, EquivalenceClass, Leaf$}
-import com.typeclassified.hmm.cssr.parse.{ParseAlphabet, ParseTree}
+import com.typeclassified.hmm.cssr.EquivalenceClass
+import com.typeclassified.hmm.cssr.parse.{Leaf, Alphabet, Tree}
 
 object Entropy {
 
@@ -14,7 +14,7 @@ object Entropy {
     * @param S
     * @param alphabet
     */
-  def calculateRelativeEntropy (parseTree:ParseTree, S:Array[Leaf], alphabet: ParseAlphabet): Double = {
+  def calculateRelativeEntropy (parseTree:Tree, S:Array[Leaf], alphabet: Alphabet): Double = {
     // We can't begin a substring of length maxLength at the last (maxLength-1)
     // positions in the data string
     val gArray = parseTree.getDepth(parseTree.maxLength)
@@ -51,7 +51,7 @@ object Entropy {
   def calcStringProbs(nodeArray:Array[Leaf],
                       maxLength:Int,
                       S:Array[Leaf],
-                      alphabet:ParseAlphabet,
+                      alphabet:Alphabet,
                       stringProbs:DenseVector[Double]
                       ) {
     for ((history, i) <- nodeArray.view.zipWithIndex) {
@@ -67,7 +67,7 @@ object Entropy {
     * @param alphabet
     * @return
     */
-  def calcStringProb(string:String, S:Array[Leaf], alphabet:ParseAlphabet) = {
+  def calcStringProb(string:String, S:Array[Leaf], alphabet:Alphabet) = {
     var totalPerString:Double = 0
 //    var currentState:CausalState = _
 //    val index:Int = _
