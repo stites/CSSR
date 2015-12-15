@@ -1,5 +1,7 @@
 package com.typeclassified.hmm.cssr.state
 
-class Machine {
+import scala.collection.mutable.ListBuffer
 
+class Machine (equivalenceClasses: ListBuffer[EquivalenceClass]) {
+  val states = equivalenceClasses.toArray
 }

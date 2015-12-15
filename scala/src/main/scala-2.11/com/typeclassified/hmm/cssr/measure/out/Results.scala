@@ -16,6 +16,10 @@ object Results {
       logger.info(s"equiv class $idx:")
       eqClass.histories.foreach(h => println(s"  ${h.observed}"))
     }
+    for ((eqClass, idx) <- allStates.zip(Stream from 1)) {
+      logger.info(s"\nlocations of class $idx:")
+      eqClass.histories.foreach(h => print(s"${h.locations.toString()};"))
+    }
     logger.info("")
     logger.info("=================================")
     logger.info("")

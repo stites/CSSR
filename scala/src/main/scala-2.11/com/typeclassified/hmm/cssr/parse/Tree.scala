@@ -18,8 +18,9 @@ object Tree {
 
     for (size <- 1 to n+1) {
       logger.debug(s"loading data windows of size $size.")
-      for (observed <- xs.iterator.filterNot("\r\n".contains(_)).sliding(size).withPartial(false)) {
-        loadHistory(tree, observed)
+      for (zippedSequence <- xs.view.zipWithIndex.iterator.filterNot(p => "\r\n".contains(p._1)).sliding(size).withPartial(false)) {
+        // if n lies in the interesting region between n-1 and n then we also pass the index to the leaf
+        loadHistory(tree, zippedSequence.map(_._1), if(n == n-1 || n == n) Some(zippedSequence.last._2) else None)
       }
     }
     tree.getDepth(n).foreach{leaf => leaf.children = ListBuffer()}
@@ -29,7 +30,7 @@ object Tree {
     return tree
   }
 
-  def loadHistory(tree: Tree, observed: Seq[Char]): Unit = {
+  def loadHistory(tree: Tree, observed: Seq[Char], idx:Option[Int] = None): Unit = {
 
     def go(history: List[Char], active:Leaf, tree: Tree, fullHistory:String, depth:Int=0): Option[Leaf] = {
       if (history.isEmpty) return Option.empty
@@ -38,11 +39,11 @@ object Tree {
       val histIdx:Int = depth+1
 
       if (maybeNext.nonEmpty) {
-        if (history.init.isEmpty) active.updateDistribution(history.last)
+        if (history.init.isEmpty) active.updateDistribution(history.last, idx)
 
         return go(history.init, maybeNext.get, tree, fullHistory, histIdx)
       } else {
-        val next = active.addChild(fullHistory(fullHistory.length - histIdx))
+        val next = active.addChild(fullHistory(fullHistory.length - histIdx), idx)
         return go(history.init, next, tree, fullHistory, histIdx)
       }
     }
@@ -52,7 +53,7 @@ object Tree {
 }
 
 class Tree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) {
-  var root:Leaf = Leaf("", this, rootEC)
+  var root:Leaf = new Leaf("", this, rootEC)
 
   var maxLength:Int = _
 

@@ -1,14 +1,12 @@
 package com.typeclassified.hmm.cssr.parse
 
-import breeze.linalg.normalize
+import breeze.linalg.{VectorBuilder, SparseVector}
 import com.typeclassified.hmm.cssr.shared.Probablistic
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 
+import scala.collection.immutable.HashMap
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-
-object Leaf {
-  def apply(o:String, tree: Tree, initState: EquivalenceClass) = new Leaf(o, tree, initState)
-}
 
 class Leaf(observedSequence:String,
            parseTree: Tree,
@@ -20,21 +18,29 @@ class Leaf(observedSequence:String,
 
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 
+  val locations:mutable.HashMap[Int, Int] = mutable.HashMap[Int, Int]()
+
   var children: ListBuffer[Leaf] = ListBuffer()
 
-  def updateDistribution(xNext: Char):Unit = {
+  def updateDistribution(xNext: Char, dataIdx:Option[Int] = None):Unit = {
     val idx: Int = parseTree.alphabet.map(xNext)
+
     frequency(idx) += 1
     totalCounts += 1
     distribution = frequency / totalCounts
+
+    if (dataIdx.nonEmpty) {
+      val indexCount = if (locations.keySet.contains(dataIdx.get)) locations(dataIdx.get) else 0
+      locations += (dataIdx.get -> (indexCount + 1))
+    }
   }
 
-  def addChild (xNext:Char): Leaf = {
-    updateDistribution(xNext)
+  def addChild (xNext:Char, dataIdx:Option[Int] = None): Leaf = {
+    updateDistribution(xNext, dataIdx)
     val maybeNext = findChildWithAdditionalHistory(xNext)
     var next:Leaf = null
     if (maybeNext.isEmpty) {
-      next = Leaf(xNext+:observed, parseTree, currentEquivalenceClass)
+      next = new Leaf(xNext+:observed, parseTree, currentEquivalenceClass)
       children += next
     } else {
       next = maybeNext.get
