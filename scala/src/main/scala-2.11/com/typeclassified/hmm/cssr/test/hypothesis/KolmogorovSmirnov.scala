@@ -1,4 +1,4 @@
-package com.typeclassified.hmm.cssr.test
+package com.typeclassified.hmm.cssr.test.hypothesis
 
 import breeze.linalg.{DenseVector, max}
 
