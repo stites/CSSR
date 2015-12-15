@@ -15,7 +15,7 @@
 #include "Hash2.h"
 #include "Machine.h"
 
-char *program = "CSSR";  //program name
+const char *program = "CSSR";  //program name
 
 void PrintError()
 {
