@@ -1,6 +1,7 @@
 package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.{Config, Cli}
+import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.test.Test
 import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.Logger
@@ -19,32 +20,20 @@ object CSSR {
         logger.info("CSSR starting.\n")
 
         val (parseTree: Tree, allStates: ListBuffer[EquivalenceClass]) = initialization(config)
-        logger.info("Initialization complete...")
+        logger.debug("Initialization complete...")
 
         sufficiency(parseTree, allStates, config.lMax, config.sig)
-        logger.info("Sufficiency complete...")
-        logEquivalenceClasses(allStates)
+        logger.debug("Sufficiency complete...")
+        Results.logEquivalenceClasses(allStates)
 
         recursion(parseTree, allStates, config.sig, config.lMax)
-        logger.info("Recursion complete...")
-        logEquivalenceClasses(allStates)
+        logger.debug("Recursion complete...")
+        Results.logEquivalenceClasses(allStates)
 
         logger.info("\nCSSR completed successfully!")
       }
       case None => { }
     }
-  }
-
-  def logEquivalenceClasses(allStates:ListBuffer[EquivalenceClass]): Unit = {
-    logger.info("===FOUND EQUIVALENCE CLASSES ====")
-    logger.info("")
-    for ((eqClass, idx) <- allStates.zip(Stream from 1)) {
-      logger.info(s"equiv class $idx:")
-      eqClass.histories.foreach(h => println(s"  ${h.observed}"))
-    }
-    logger.info("")
-    logger.info("=================================")
-    logger.info("")
   }
 
   /**
@@ -96,7 +85,7 @@ object CSSR {
         }
       }
     }
-    logger.info("States found at the end of Sufficiency: " + S.size.toString)
+    logger.debug("States found at the end of Sufficiency: " + S.size.toString)
   }
 
   /**
@@ -162,24 +151,7 @@ object CSSR {
         }
       }
     }
-    logger.info("States found at the end of Recursion: " + S.size.toString)
-  }
-
-  def collect (tree: Tree):Array[Array[String]] = {
-    // more to come
-    val leaves: Array[Leaf] = tree.collectLeaves()
-    val statePartitions:mutable.HashMap[EquivalenceClass, ArrayBuffer[String]] = mutable.HashMap()
-    leaves.foreach(l=>{
-      if (statePartitions.contains(l.currentEquivalenceClass)) {
-        statePartitions(l.currentEquivalenceClass) += l.observed
-      } else {
-        statePartitions(l.currentEquivalenceClass) = ArrayBuffer(l.observed)
-      }
-    })
-    val x:ListBuffer[Array[String]] = ListBuffer()
-    statePartitions.foreach { kvPair => x += kvPair._2.toArray }
-
-    return x.toArray
+    logger.debug("States found at the end of Recursion: " + S.size.toString)
   }
 }
 
