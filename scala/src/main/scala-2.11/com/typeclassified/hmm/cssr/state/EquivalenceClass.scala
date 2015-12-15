@@ -1,9 +1,10 @@
-package com.typeclassified.hmm.cssr
+package com.typeclassified.hmm.cssr.state
 
-import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Leaf}
+import breeze.linalg._
+import com.typeclassified.hmm.cssr.parse.Leaf
+import com.typeclassified.hmm.cssr.shared.Probablistic
 
 import scala.collection.mutable.ArrayBuffer
-import breeze.linalg._
 
 object EquivalenceClass {
   def apply() = new EquivalenceClass()

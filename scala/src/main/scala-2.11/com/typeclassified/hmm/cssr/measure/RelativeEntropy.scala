@@ -1,8 +1,8 @@
 package com.typeclassified.hmm.cssr.measure
 
 import breeze.linalg.{DenseVector, sum}
-import com.typeclassified.hmm.cssr.EquivalenceClass
 import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
+import com.typeclassified.hmm.cssr.state.EquivalenceClass
 
 object RelativeEntropy {
 

@@ -1,7 +1,7 @@
 package com.typeclassified.hmm.cssr.test
 
 import com.typeclassified.hmm.cssr.parse.Leaf
-import com.typeclassified.hmm.cssr.EquivalenceClass
+import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typeclassified.hmm.cssr.test.hypothesis.KolmogorovSmirnov
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory

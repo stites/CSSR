@@ -1,4 +1,4 @@
-package com.typeclassified.hmm.cssr
+package com.typeclassified.hmm.cssr.shared
 
 import breeze.linalg.DenseVector
 import com.typeclassified.hmm.cssr.parse.AlphabetHolder

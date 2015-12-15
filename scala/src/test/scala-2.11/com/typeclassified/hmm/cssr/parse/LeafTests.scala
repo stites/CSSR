@@ -1,6 +1,7 @@
 package com.typeclassified.hmm.cssr.parse
 
-import com.typeclassified.hmm.cssr.{ProbablisticAsserts, Probablistic, EquivalenceClass}
+import com.typeclassified.hmm.cssr.state.EquivalenceClass
+import com.typeclassified.hmm.cssr.ProbablisticAsserts
 import org.scalatest.{FlatSpec, Matchers, BeforeAndAfter}
 
 import scala.collection.mutable.ListBuffer

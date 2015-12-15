@@ -1,6 +1,6 @@
 package com.typeclassified.hmm.cssr.measure
 
-import com.typeclassified.hmm.cssr.EquivalenceClass
+import com.typeclassified.hmm.cssr.state.EquivalenceClass
 
 object EntropyRate {
   def calculateEntropyRate(S:Array[EquivalenceClass]):Double = {

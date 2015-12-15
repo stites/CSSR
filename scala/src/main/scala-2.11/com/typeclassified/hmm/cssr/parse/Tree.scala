@@ -1,6 +1,6 @@
 package com.typeclassified.hmm.cssr.parse
 
-import com.typeclassified.hmm.cssr.EquivalenceClass
+import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 

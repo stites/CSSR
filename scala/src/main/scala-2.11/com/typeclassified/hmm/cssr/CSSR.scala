@@ -2,6 +2,7 @@ package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.{Config, Cli}
 import com.typeclassified.hmm.cssr.measure.out.Results
+import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typeclassified.hmm.cssr.test.Test
 import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.Logger

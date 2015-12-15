@@ -1,6 +1,6 @@
 package com.typeclassified.hmm.cssr.parse
 
-import com.typeclassified.hmm.cssr.{EquivalenceClass, ProbablisticAsserts}
+import com.typeclassified.hmm.cssr.ProbablisticAsserts
 import org.scalatest.{WordSpec, BeforeAndAfter, Matchers}
 
 class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with LeafAsserts with BeforeAndAfter {

@@ -1,7 +1,8 @@
 package com.typeclassified.hmm.cssr.parse
 
 import breeze.linalg.normalize
-import com.typeclassified.hmm.cssr.{EquivalenceClass, Probablistic}
+import com.typeclassified.hmm.cssr.shared.Probablistic
+import com.typeclassified.hmm.cssr.state.EquivalenceClass
 
 import scala.collection.mutable.ListBuffer
 
