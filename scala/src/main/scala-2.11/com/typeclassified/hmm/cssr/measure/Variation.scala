@@ -1,6 +1,11 @@
 package com.typeclassified.hmm.cssr.measure
 
+import com.typeclassified.hmm.cssr.parse.{Alphabet, Tree}
+
 object Variation {
+  def calculateVariation(parseTree:Tree, hashtable:Alphabet, isMulti:Boolean) = {
+
+  }
   /*
   void Machine::CalcVariation(ParseTree& parsetree, HashTable2* hashtable, bool isMulti) {
   G_Array g_array;

@@ -39,6 +39,4 @@ object RelativeEntropy {
 
     return if (relEntropy > 0) relEntropy else 0
   }
-
-
 }

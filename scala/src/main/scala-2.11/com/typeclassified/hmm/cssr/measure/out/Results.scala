@@ -15,10 +15,10 @@ object Results {
     logger.info("===FOUND EQUIVALENCE CLASSES ====")
     logger.info("")
 
-    for ((eqClass, idx) <- newMachine.states.view.zipWithIndex) {
-      logger.info(s"equiv class $idx:")
-      logger.info(s"     Probability: ${newMachine.distribution(idx)}")
-      logger.info(s"       Frequency: ${newMachine.frequency(idx)}")
+    for ((eqClass, i) <- newMachine.states.view.zipWithIndex) {
+      logger.info(s"equiv class $i:")
+      logger.info(s"  Probability: ${newMachine.distribution(i)}")
+      logger.info(s"    Frequency: ${newMachine.frequency(i)}")
       eqClass.histories.foreach(h => println(s"  ${h.observed}"))
     }
     logger.info("")

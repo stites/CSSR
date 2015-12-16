@@ -8,19 +8,11 @@ object HistoryProbablities {
     * calculates the probability of all the max length strings in the
     * data based on the inferred machine
     *
-    * @param nodeArray
+    * @param states
     * @param maxLength
-    * @param stringProbs
     */
-  def calcStringProbs(nodeArray:Array[Leaf],
-                      maxLength:Int,
-                      S:Array[Leaf],
-                      alphabet:Alphabet,
-                      stringProbs:DenseVector[Double]
-                     ) {
-    for ((history, i) <- nodeArray.view.zipWithIndex) {
-      stringProbs(i) = calcStringProb(history.observed, S, alphabet)
-    }
+  def calcStringProbs(states:Array[Leaf], maxLength:Int, S:Array[Leaf], alphabet:Alphabet) : DenseVector[Double] = {
+    return DenseVector[Double](states.map(h => calcStringProb(h.observed, S, alphabet)))
   }
 
   /**

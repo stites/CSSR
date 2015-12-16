@@ -1,19 +1,17 @@
 package com.typeclassified.hmm.cssr.measure
 
-import com.typeclassified.hmm.cssr.state.EquivalenceClass
+import breeze.linalg.{DenseVector, sum}
+import breeze.numerics.log
+import com.typeclassified.hmm.cssr.state.Machine
 
 object EntropyRate {
-  def calculateEntropyRate(S:Array[EquivalenceClass]):Double = {
-    val size = S.length
+  def calculateEntropyRate(machine:Machine):Double = {
+    // replacing with a map would seem logical -- but I seem to be hitting an "implicit" roadblock...
+    // ...if you know what I mean ; D
     var entRate:Double = 0
-    var prob:Double = 0
-    var freq:Double = 0
-
-    for (s <- S; (i, prob) <- s.distribution.activeIterator ) {
-      s.frequency
-      if (prob <= 0) {
-        entRate += freq * (prob * (math.log(prob) / math.log(2)))
-      }
+    for ((s, i) <- machine.states.view.zipWithIndex ) {
+      val probComponent:DenseVector[Double] = s.distribution :* log(s.distribution) :/ math.log(2)
+      entRate += sum(machine.frequency(i) * probComponent)
     }
     return -entRate
   }
