@@ -7,6 +7,7 @@ object Alphabet {
 class Alphabet(alphabetRaw: Array[Char]) {
   val raw = alphabetRaw.filterNot("\r\n".contains(_))
   val map: Map[Char, Int]= raw.zipWithIndex.map { case (c: Char, i: Int) => c -> i }.toMap
+  val length = raw.length
 }
 
 object AlphabetHolder {

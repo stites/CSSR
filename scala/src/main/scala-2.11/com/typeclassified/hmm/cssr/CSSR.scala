@@ -30,6 +30,7 @@ object CSSR {
         recursion(parseTree, allStates, config.sig, config.lMax)
         logger.debug("Recursion complete...")
         Results.logEquivalenceClasses(allStates)
+        Results.logTreeStats(parseTree, allStates)
 
         logger.info("\nCSSR completed successfully!")
       }
