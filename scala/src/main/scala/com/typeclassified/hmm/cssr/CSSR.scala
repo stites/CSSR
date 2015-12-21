@@ -1,6 +1,6 @@
 package com.typeclassified.hmm.cssr
 
-import com.typeclassified.hmm.cssr.cli.{Config, Cli}
+import com.typeclassified.hmm.cssr.cli.{Config, Parser}
 import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typeclassified.hmm.cssr.test.Test
@@ -8,34 +8,28 @@ import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 
 object CSSR {
   protected val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
 
-  def main(args: Array[String]) = {
-    Cli.parser.parse(args, Config()) match {
-      case Some(config) => {
-        logger.info("CSSR starting.\n")
+  def run(config: Config) = {
+    logger.info("CSSR starting.\n")
 
-        val (parseTree: Tree, allStates: ListBuffer[EquivalenceClass]) = initialization(config)
-        logger.debug("Initialization complete...")
+    val (parseTree: Tree, allStates: ListBuffer[EquivalenceClass]) = initialization(config)
+    logger.debug("Initialization complete...")
 
-        sufficiency(parseTree, allStates, config.lMax, config.sig)
-        logger.debug("Sufficiency complete...")
-        Results.logEquivalenceClasses(allStates)
+    sufficiency(parseTree, allStates, config.lMax, config.sig)
+    logger.debug("Sufficiency complete...")
+    Results.logEquivalenceClasses(allStates)
 
-        recursion(parseTree, allStates, config.sig, config.lMax)
-        logger.debug("Recursion complete...")
-        Results.logEquivalenceClasses(allStates)
-        Results.logTreeStats(parseTree, allStates)
+    recursion(parseTree, allStates, config.sig, config.lMax)
+    logger.debug("Recursion complete...")
+    Results.logEquivalenceClasses(allStates)
+    //        Results.logTreeStats(parseTree, allStates)
 
-        logger.info("\nCSSR completed successfully!")
-      }
-      case None => { }
-    }
+    logger.info("\nCSSR completed successfully!")
   }
 
   /**
