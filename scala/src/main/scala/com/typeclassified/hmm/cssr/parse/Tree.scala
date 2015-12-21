@@ -23,7 +23,7 @@ object Tree {
         loadHistory(tree, zippedSequence.map(_._1), if(n == n-1 || n == n) Some(zippedSequence.last._2) else None)
       }
     }
-    tree.getDepth(n).foreach{leaf => leaf.children = ListBuffer()}
+    tree.getDepth(n).foreach{ _.children = ListBuffer() }
     tree.maxLength = n
     tree.dataSize = xs.length
     tree.adjustedDataSize =  xs.length - n - 1 // TODO: multi-line
@@ -77,7 +77,6 @@ class Tree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) 
   def navigateHistory(history: List[Char], active:Leaf = root): Option[Leaf] = {
     if (history.isEmpty) Option.empty else {
       val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
-
       if (history.init.isEmpty || maybeNext.isEmpty) {
         return maybeNext
       } else {

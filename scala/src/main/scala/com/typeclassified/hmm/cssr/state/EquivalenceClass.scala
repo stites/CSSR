@@ -1,7 +1,7 @@
 package com.typeclassified.hmm.cssr.state
 
 import breeze.linalg._
-import com.typeclassified.hmm.cssr.parse.Leaf
+import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf}
 import com.typeclassified.hmm.cssr.shared.Probablistic
 
 import scala.collection.mutable.ArrayBuffer

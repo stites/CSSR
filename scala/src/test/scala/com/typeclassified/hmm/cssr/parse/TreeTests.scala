@@ -31,7 +31,8 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
   )
 
   before {
-    tree = Tree(Alphabet(abc.toCharArray))
+    AlphabetHolder.alphabet = Alphabet(abc.toCharArray)
+    tree = Tree(AlphabetHolder.alphabet)
   }
 
   "loadHistory" should {
@@ -45,22 +46,33 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
       children should have size 1
 
       leaf = children.head
-      leaf.observed should equal ("c")
-      leaf.observation should equal ("c".head)
+      assertLeafProperties(leaf, "c")
 
       children = children.head.children
       children should have size 1
 
       leaf = children.head
-      leaf.observed should equal ("bc")
-      leaf.observation should equal ("bc".head)
+      assertLeafProperties(leaf, "bc")
 
       children = children.head.children
       children should have size 1
 
       leaf = children.head
-      leaf.observed should equal ("abc")
-      leaf.observation should equal ("abc".head)
+      assertLeafProperties(leaf, abc)
+
+      leaf.observed    should equal (abc)
+      leaf.observation should equal (abc.head)
+    }
+
+    "generating a long single branch for an empty tree" in {
+      Tree.loadHistory(tree, "abcabc")
+      var leaf:Leaf = tree.root
+
+      while (leaf.children.nonEmpty) {
+        leaf = leaf.children.head
+      }
+
+      assertLeafProperties(leaf, "abcabc")
     }
 
     "generating multiple root branches if they do not exist" in {
@@ -177,13 +189,13 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
 
       }
 
-      "include lMax+1 probabilities and, thus, also have lMax+1 children: abca, bcab, cabc" in {
+      "include lMax+1 probabilities but not lMax+1 children" in {
         tree = Tree.loadData(tree, abcabc.toArray, 3)
         var children:ListBuffer[Leaf] = tree.root.children // l1
         children = children.flatMap(_.children) //l2
         children = children.flatMap(_.children) //l3
         children = children.flatMap(_.children) //l4
-        children should have size 3
+        children should have size 0
       }
     }
 
@@ -205,13 +217,13 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
         assertChildrenByExactBatch(children, testMap(abcbabcbb)(2))
 
       }
-      "finished, it should also include lMax+1 probabilities and, thus, also have lMax+1 children: abcb, bcba, cbab, babc, bcbb" in {
+      "finished, it should also include lMax+1 probabilities but not lMax+1 children" in {
         tree = Tree.loadData(tree, abcbabcbb.toArray, 3)
         var children:ListBuffer[Leaf] = tree.root.children // l1
         children = children.flatMap(_.children) //l2
         children = children.flatMap(_.children) //l3
         children = children.flatMap(_.children) //l4
-        children should have size 5
+        children should have size 0
       }
     }
 
@@ -272,9 +284,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
 
       tree.getDepth(3).map(_.observed) should contain theSameElementsAs testMap(abcabc)(2)
 
-      tree.getDepth(4) should have size 3
-
-      tree.getDepth(5) should have size 0
+      tree.getDepth(4) should have size 0
     }
   }
 }

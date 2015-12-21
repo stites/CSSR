@@ -4,14 +4,14 @@ import com.typeclassified.hmm.cssr.ProbablisticAsserts
 import org.scalatest.{WordSpec, BeforeAndAfter, Matchers}
 
 class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with LeafAsserts with BeforeAndAfter {
-  val alphabet = Alphabet("01".toCharArray)
-  AlphabetHolder.alphabet = alphabet
-  var tree:Tree = Tree.loadData(Tree(alphabet), "110111011101110111011101110111011101".toArray, 5)
-  val (_0, _1) = ("0", "1")
-  val (_10, _11, _01) = ("10", "11", "01")
-  val (_110, _011, _111, _101) = ("110", "011", "111", "101")
-  val (_1110, _1011, _0111, _1101) = ("1110", "1011", "0111", "1101")
-  val (_01110, _11011, _10111, _11101) = ("01110", "11011", "10111", "11101")
+  val (     _0,     _1                 ) = (     "0",     "1"                   )
+  val (    _10,    _01,    _11         ) = (    "10",    "01",    "11"          )
+  val (   _110,   _101,   _011,   _111 ) = (   "110",   "101",   "011",   "111" )
+  val (  _1110,  _1101,  _1011,  _0111 ) = (  "1110",  "1101",  "1011",  "0111" )
+  val ( _01110, _11101, _11011, _10111 ) = ( "01110", "11101", "11011", "10111" )
+
+  AlphabetHolder.alphabet = Alphabet(_01.toCharArray)
+  var tree:Tree = Tree.loadData(Tree(AlphabetHolder.alphabet), (_1101 * 9).toCharArray, 5)
 
   "loading the data" when {
     val node_____r = tree.root
@@ -35,7 +35,7 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
         layer1 should contain theSameElementsAs expected
       }
       "have each have the correct frequency and distributions" in {
-        assertProbabalisticDetails(node____0r.get, Array(0, 9))
+        assertProbabalisticDetails(node____0r.get, Array(0,  9))
         assertProbabalisticDetails(node____1r.get, Array(9, 17))
       }
       "have expected leaf properties" in {
@@ -44,15 +44,19 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
       }
     }
     val layer2     = layer1.flatMap(_.children)
-    val node___10r = layer2.find(_.observed == _10.reverse)
-    val node___11r = layer2.find(_.observed == _11.reverse)
-    val node___01r = layer2.find(_.observed == _01.reverse)
+    val node___10r = layer2.find(_.observed == _10)
+    val node___11r = layer2.find(_.observed == _11)
+    val node___01r = layer2.find(_.observed == _01)
 
     "examining the 2nd layer" should {
       "have the correct children" in {
         node___10r should not be empty
         node___11r should not be empty
         node___01r should not be empty
+        assertLeafProperties(node___10r.get, _10)
+        assertLeafProperties(node___11r.get, _11)
+        assertLeafProperties(node___01r.get, _01)
+
         val expected = Array(node___10r.get, node___11r.get, node___01r.get)
 
         layer2 should have size expected.length
@@ -71,10 +75,10 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
     }
 
     val layer3     = layer2.flatMap(_.children)
-    val node__110r = layer3.find(_.observed == _110.reverse)
-    val node__011r = layer3.find(_.observed == _011.reverse)
-    val node__111r = layer3.find(_.observed == _111.reverse)
-    val node__101r = layer3.find(_.observed == _101.reverse)
+    val node__110r = layer3.find(_.observed == _110)
+    val node__011r = layer3.find(_.observed == _011)
+    val node__111r = layer3.find(_.observed == _111)
+    val node__101r = layer3.find(_.observed == _101)
 
     "examining the 3rd layer" should {
       "have the correct children" in {
@@ -103,10 +107,10 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
     }
 
     val layer4     = layer3.flatMap(_.children)
-    val node_1110r = layer4.find(_.observed == _1110.reverse)
-    val node_1011r = layer4.find(_.observed == _1011.reverse)
-    val node_0111r = layer4.find(_.observed == _0111.reverse)
-    val node_1101r = layer4.find(_.observed == _1101.reverse)
+    val node_1110r = layer4.find(_.observed == _1110)
+    val node_1011r = layer4.find(_.observed == _1011)
+    val node_0111r = layer4.find(_.observed == _0111)
+    val node_1101r = layer4.find(_.observed == _1101)
 
     "examining the 4th layer" should {
       "have the correct children" in {
@@ -137,12 +141,14 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
     }
 
     val layer5     = layer4.flatMap(_.children)
-    val node11101r = layer5.find(_.observed == _11101.reverse)
-    val node11011r = layer5.find(_.observed == _11011.reverse)
-    val node10111r = layer5.find(_.observed == _10111.reverse)
-    val node01110r = layer5.find(_.observed == _01110.reverse)
+    val node11101r = layer5.find(_.observed == _11101)
+    val node11011r = layer5.find(_.observed == _11011)
+    val node10111r = layer5.find(_.observed == _10111)
+    val node01110r = layer5.find(_.observed == _01110)
 
     "examining the 5th layer" should {
+      var expected:Array[Leaf] = null
+
       "have the correct children" in {
         Array("01011", "00111", "01101", "11110").foreach(o => {
           layer5.find(_.observed==o) shouldBe empty
@@ -151,7 +157,12 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
         node11011r should not be empty
         node10111r should not be empty
         node01110r should not be empty
-        val expected = Array(node11101r.get, node11011r.get, node10111r.get, node01110r.get)
+
+        expected = Array(
+          node11101r.get,
+          node11011r.get,
+          node10111r.get,
+          node01110r.get)
 
         layer5 should have size expected.length
         layer5 should contain theSameElementsAs expected
@@ -163,10 +174,7 @@ class TreeScenario extends WordSpec with Matchers with ProbablisticAsserts with 
         assertProbabalisticDetails(node01110r.get, Array(0,8))
       }
       "have expected leaf properties" in {
-        assertChildrenByExactBatch(node11101r.get.children, Array("011101"))
-        assertChildrenByExactBatch(node11011r.get.children, Array("111011"))
-        assertChildrenByExactBatch(node10111r.get.children, Array("110111"))
-        assertChildrenByExactBatch(node01110r.get.children, Array("101110"))
+        expected.foreach { n => assertChildrenByExactBatch(n.children, Array[String]()) }
       }
     }
 

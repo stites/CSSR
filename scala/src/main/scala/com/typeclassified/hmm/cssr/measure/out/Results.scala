@@ -20,7 +20,7 @@ object Results {
       logger.info(s"equiv class $i:")
       logger.info(s"  Probability: ${newMachine.distribution(i)}")
       logger.info(s"    Frequency: ${newMachine.frequency(i)}")
-      eqClass.histories.foreach(h => println(s"  ${h.observed}"))
+      eqClass.histories.foreach(h => println(s"  $h"))
     }
   }
 
@@ -58,7 +58,7 @@ object Results {
     logger.info(s"equiv classes found: ${groupedLeafCounts.size}")
 
     for ((e, charCountMap) <- groupedLeafCounts) {
-      logger.info(s"equiv class char counts for: $e")
+      logger.info(s"equiv class char counts for: ${e.getClass.getSimpleName}@${e.hashCode()}")
       for ((c, i) <- charCountMap) {
         logger.info(s"$c: $i")
       }

@@ -6,13 +6,13 @@ import scala.collection.mutable.ListBuffer
 
 trait LeafAsserts extends Matchers {
   def assertLeafProperties(leaf:Leaf, obs:String): Unit = {
-    leaf.observed should equal (obs.reverse)
+    leaf.observed    should equal (obs)
     leaf.observation should equal (obs.head)
   }
 
   def assertChildrenByExactBatch(children:ListBuffer[Leaf], expected:Seq[String]) = {
-    children should have size expected.length
-    children.map(_.observed)    should contain theSameElementsAs expected.map(_.reverse)
+    children                    should have    size              expected.length
+    children.map(_.observed)    should contain theSameElementsAs expected
     children.map(_.observation) should contain theSameElementsAs expected.map(_.head)
   }
 }

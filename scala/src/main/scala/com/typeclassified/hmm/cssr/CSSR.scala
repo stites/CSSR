@@ -118,20 +118,10 @@ object CSSR {
       // clean out transient states as well?
       recursive = true
       for (s <- S; (b, alphabetIdx) <- parseTree.alphabet.map) {
-        // TODO: investigate partitioning the equivalence class like so
-        // var x = s.histories.map(\ h->
-        //    h.getStateOnTransition(b)
-        //    var Exb:EquivalenceClass = null
-        //    if (optionalExb.nonEmpty) {
-        //      Exb = optionalTsb.get
-        //    }
-        // )
-        // // => [(leaf, Equivclass)]
-        // parts = x.partition( /on equiv class/ )
-        // parts.len > 1 ?
-        //
-        // [ s*... ]
         if (s.histories.nonEmpty) {
+          // TODO: investigate partitioning the equivalence class like so
+          // val stateGroupedByTransition:Map[Option[EquivalenceClass], ArrayBuffer[Leaf]] = s.histories
+          //     .groupBy(_.getStateOnTransitionTo(b))
           val x0: Leaf = s.histories.head
           val optionalTsb = x0.getStateOnTransitionTo(b)
           if (optionalTsb.nonEmpty && x0.distribution(alphabetIdx) <= 0) {

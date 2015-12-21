@@ -6,12 +6,12 @@ import org.scalatest.{FlatSpec, Matchers, BeforeAndAfter}
 
 import scala.collection.mutable.ListBuffer
 
-class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with BeforeAndAfter {
+class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with LeafAsserts with BeforeAndAfter {
   var tree:Tree = null
 
   before {
     AlphabetHolder.alphabet = Alphabet("abc".toCharArray)
-    tree = Tree(Alphabet("abc".toCharArray))
+    tree = Tree(AlphabetHolder.alphabet)
   }
 
   "updateDistribution" should "update distributions for observing the _next_ values in history" in {
@@ -30,6 +30,21 @@ class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with Bef
   }
 
   behavior of "addChild"
+
+  it should "give the correct observations" in {
+    var leaf = tree.root
+    leaf.addChild('b')
+    leaf = leaf.children.head
+    assertLeafProperties(leaf, "b")
+
+    leaf.addChild('a')
+    leaf = leaf.children.head
+    assertLeafProperties(leaf, "ab")
+
+    leaf.addChild('c')
+    leaf = leaf.children.head
+    assertLeafProperties(leaf, "cab")
+  }
 
   it should "run updateDistribution while adding a child" in {
     val leaf = tree.root
