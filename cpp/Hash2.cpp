@@ -131,8 +131,7 @@ void HashTable2::Insert(char* string, int index)
 int HashTable2::WhichIndex(char* string)
 {
   int index;
-  if (string == '\0')
-    {
+  if ((string != NULL) && (string[0] == '\0')) {
       cerr << "Cannot check matching state for empty string\n";
       exit(1);
     }
