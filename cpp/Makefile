@@ -1,32 +1,57 @@
-all: main.o hash.o states.o allStates.o parsetree.o g_array.o hash2.o machine.o transtable.o test.o
-	c++ -O -o CSSR main.o hash.o states.o allStates.o parsetree.o g_array.o hash2.o machine.o transtable.o test.o
+.PHONY: all clean cleanobj
 
-main.o:	Main.cpp Main.h Common.h AllStates.h Machine.h
-	c++ -O -c -o main.o Main.cpp
+CC          = c++               # to be OS-agnostic
+CFLAGS      = -Wextra -Wall -O1
+CFLAGS_MAIN = -g $(CFLAGS)
+MAIN        = CSSR
+SOURCES     = main.o hash.o states.o allStates.o parsetree.o g_array.o hash2.o machine.o transtable.o test.o
 
-hash.o: Hash.cpp Hash.h States.h Common.h States.cpp
-	c++ -O -c -o hash.o Hash.cpp
+# Header files
+STATE_H     = States.h Hash.h Common.h
+GARRAY_H    = G_Array.h Common.h
+HASH2_H     = Hash2.h Common.h
+PARSETREE_H = ParseTree.h $(GARRAY_H)
 
-states.o: States.cpp States.h Common.h ParseTree.h G_Array.h Hash.h
-	c++ -O -c -o states.o States.cpp
+all: $(MAIN)
 
-allStates.o: AllStates.cpp AllStates.h States.h Common.h ParseTree.h G_Array.h
-	c++ -O -c -o allStates.o AllStates.cpp
+$(MAIN): $(SOURCES)
+	$(CC) $(CFLAGS_MAIN) -o $@ $(SOURCES)
 
-parsetree.o: ParseTree.cpp ParseTree.h Common.h G_Array.h
-	c++ -O -c -o parsetree.o ParseTree.cpp
+clean: cleanobj
+	rm $(MAIN)
 
-g_array.o: G_Array.cpp G_Array.h Common.h
-	c++ -O -c -o g_array.o G_Array.cpp
+cleanobj:
+	rm *.o
 
-hash2.o: Hash2.cpp Hash2.h Common.h
-	c++ -O -c -o hash2.o Hash2.cpp
+main.o: Main.cpp Main.h Common.h AllStates.h Machine.h
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-machine.o: Machine.cpp Machine.h States.h Common.h Hash2.h Hash.h
-	c++ -O -c -o machine.o Machine.cpp
+hash.o: Hash.cpp States.cpp $(STATE_H)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-transtable.o: TransTable.cpp TransTable.h Common.h States.h
-	c++ -O -c -o transtable.o TransTable.cpp
+states.o: States.cpp $(PARSETREE_H) $(STATE_H)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-test.o: Common.h Test.h
-	c++ -O -c -o test.o Test.cpp
+# no Hash.h required
+allStates.o: AllStates.cpp AllStates.h $(PARSETREE_H) $(STATE_H)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+parsetree.o: ParseTree.cpp $(PARSETREE_H)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+g_array.o: G_Array.cpp $(GARRAY_H)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+hash2.o: Hash2.cpp $(HASH2_H)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+machine.o: Machine.cpp Machine.h $(HASH2_H) $(STATE_H)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# no Hash.h required
+transtable.o: TransTable.cpp TransTable.h $(STATE_H)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+test.o: Test.cpp Test.h Common.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
