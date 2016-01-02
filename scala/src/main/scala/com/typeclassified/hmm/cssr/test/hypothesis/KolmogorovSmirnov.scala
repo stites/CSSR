@@ -64,12 +64,13 @@ object KolmogorovSmirnov {
              data2: DenseVector[Double],
              n2: Double
           ): Double = {
-    // get the square root of the effective number of data points:
-    val en: Double = math.sqrt((n1 * n2) / (n1 + n2))
+    val en:Double = math.sqrt(twoSampleEffectiveSize(n1, n2))
 
     // calculate P(D > observed)
     probks((en + 0.12 + (0.11 / en)) * ksstatistic(data1, data2))
   }
+
+  def twoSampleEffectiveSize(n1:Double, n2:Double) = (n1 * n2) / (n1 + n2)
 
   /**
     * calculate the Kolmogorov-Smirnov statistic
