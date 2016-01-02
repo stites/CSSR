@@ -10,3 +10,8 @@ data*.tmp*
 *.log
 *.tar
 *.tar.gz
+resources
+*EP_*
+cpp/CSSR-*
+parse-tree-example
+EP.dot
