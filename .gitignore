@@ -3,7 +3,6 @@ cpp/CSSR
 dist
 .stites
 .idea
-cpp/CMakeLists.txt
 scala/scala.iml
 alphabet*.tmp*
 data*.tmp*
