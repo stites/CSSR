@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////////
-//Title:	Test.h
-//Author:	Kristina Klinkner
-//Date:		March 20, 2002
-//Description:	Header file for Test.cpp
+//Title:        Test.h
+//Author:        Kristina Klinkner
+//Date:                March 20, 2002
+//Description:        Header file for Test.cpp
 //
 ////////////////////////////////////////////////////////////////////////
 
@@ -29,27 +29,27 @@ class Test{
   testType m_type;
   //Chi-Square Functions
   double RunKSTest(double dist1[], int count1, double dist2[], int count2,
-		   int distSize);
+                   int distSize);
   double RunChiTest(double dist1[], int count1, double dist2[],int count2,
-		    int distSize);
+                    int distSize);
   float gammq(float a, float x);
   void gcf(float *gammcf, float a, float x, float *gln);
   void gser(float *gammser, float a, float x, float *gln);
-  void nerror(char error_text[]);
+  void nerror(const char error_text[]);
   float gammln(float xx);
   void chstwo(double bins1[], int n1, double bins2[], int n2, int nbins,
-	      int knstrn, float *df, float *chsq, double *prob);
+              int knstrn, float *df, float *chsq, double *prob);
 
   //KS Functions
   void KStwo(double data1[], unsigned long n1, double data2[],
-	     unsigned long n2, double *d, double *prob, int dist_size);
+             unsigned long n2, double *d, double *prob, int dist_size);
   double ProbKS(double alam);
 
 public:
   Test(bool isChi){if(isChi) m_type = CHIS; else m_type = KS;}
   ~Test();
   double RunTest(double dist1[], int count1, double dist2[], int count2,
-		 int distSize);
+                 int distSize);
 };
 
 #endif
