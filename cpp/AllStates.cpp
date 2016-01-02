@@ -73,7 +73,7 @@ void AllStates::PrintOut(char input[], char alpha[]) {
 
 ///////////////////////////////////////////////////////////////////////////
 // Function: AllStates::Grow
-// Purpose: enlarges array of states by 'INCREMENT' 
+// Purpose: enlarges array of states by 'INCREMENT'
 // In Params: size of new array
 // Out Params: new array
 // In/Out Params: old array
@@ -196,8 +196,8 @@ void AllStates::Insert(StringElem *elem, int index) {
 // Out Params: any new states created
 // In/Out Params: old states which have strings added to them
 // Pre- Cond: Parse tree is set, initial states  have been created
-// Post-Cond: State has array of probabilities of occurence for each 
-//            element in the alphabet given new string            
+// Post-Cond: State has array of probabilities of occurence for each
+//            element in the alphabet given new string
 //////////////////////////////////////////////////////////////////////////
 void AllStates::CalcNewDist(int length, ParseTree &parsetree) {
   G_Array g_array;
@@ -209,7 +209,7 @@ void AllStates::CalcNewDist(int length, ParseTree &parsetree) {
   ArrayElem **list;
   int listSize;
 
-  //get list containing all strings of proper length 
+  //get list containing all strings of proper length
   parsetree.FindStrings(length, &g_array);
   list = g_array.getList();
   listSize = g_array.getSize();
@@ -246,7 +246,7 @@ void AllStates::CalcNewDist(int length, ParseTree &parsetree) {
       //calculate probability distribution
       m_StateArray[m_arraySize - 1]->CalcCurrentDist();
 
-      //remove ancestor-strings when progeny 
+      //remove ancestor-strings when progeny
       //creates new state
       RemoveAncestors(removalString, removalState);
     }
@@ -257,16 +257,16 @@ void AllStates::CalcNewDist(int length, ParseTree &parsetree) {
 
 ///////////////////////////////////////////////////////////////////////////
 // Function: AllStates::RemoveAncestors
-// Purpose: removes the histories which have spawned new histories with 
+// Purpose: removes the histories which have spawned new histories with
 //          distinct distributions
 // In Params: none
 // Out Params: none
-// In/Out Params: the history which has spawned a new distribution and 
+// In/Out Params: the history which has spawned a new distribution and
 //                the parent state of that history
 // Pre- Cond: Parse tree is set, initial states  have been created,
 //            distribution for new history and for parent state are known
 // Post-Cond: ancestors of string are removed from state; if state is left
-//            empty it is then deleted.           
+//            empty it is then deleted.
 //////////////////////////////////////////////////////////////////////////
 void AllStates::RemoveAncestors(char *&removalString, State *&removalState) {
   int removalLength;
@@ -300,7 +300,7 @@ void AllStates::RemoveAncestors(char *&removalString, State *&removalState) {
 
 ///////////////////////////////////////////////////////////////////////////
 // Function: AllStates::CompareToParent
-// Purpose: checks the distribution of the new history against that of its 
+// Purpose: checks the distribution of the new history against that of its
 //          parent state
 // In Params: array element containing the appropriate history, distribution of
 //            that history, count of that history, length of that history
@@ -346,13 +346,13 @@ bool AllStates::CompareToParent(char *&removalString, State *&removalState,
 
 ///////////////////////////////////////////////////////////////////////////
 // Function: AllStates::RePartition
-// Purpose: checks the distribution of the new history against that of all 
+// Purpose: checks the distribution of the new history against that of all
 //          non-parent states
 // In Params: array element containing the appropriate history, distribution of
 //            that history, count of that history
 // Out Params: boolean signifying whether the history matched its parent
 //             state's
-// In/Out Params: the history which has spawned a new distribution and 
+// In/Out Params: the history which has spawned a new distribution and
 //                the parent state of that history
 // Pre- Cond: Parse tree is set, initial states  have been created,
 //            distribution for new history and for non-parent states are known
@@ -385,11 +385,11 @@ bool AllStates::RePartition(bool match, char *removalString,
 // Function: AllStates::Determinize
 // Purpose: splits states which have strings with differing futures
 //          for the same symbol
-// In Params:parse tree which contains alphabet of symbols and max length 
+// In Params:parse tree which contains alphabet of symbols and max length
 // Out Params: any new states created
 // In/Out Params: old states which have been changed
 // Pre- Cond: states have been created based on pasts of maximum length
-// Post-Cond: States all have consistent transitions for a given symbol   
+// Post-Cond: States all have consistent transitions for a given symbol
 ///////////////////////////////////////////////////////////////////////////
 void AllStates::Determinize(ParseTree &parsetree) {
   StringElem **stringArray = NULL;
@@ -413,7 +413,7 @@ void AllStates::Determinize(ParseTree &parsetree) {
 
     //for each state
     for (int i = 0; i < m_arraySize; i++) {
-      //make 2-D array of state values and 1-D array of 
+      //make 2-D array of state values and 1-D array of
       //string values
       arraySize = m_StateArray[i]->getListSize();
       if (arraySize > 0) {
@@ -469,7 +469,7 @@ bool AllStates::MakeNewDetStates(int stateIndex, StringElem **stringArray,
   StringElem *temp = NULL;
   int childState = 0;
   int tempSize = 0;
-  bool isIncreased = false;   //variable to check whether 
+  bool isIncreased = false;   //variable to check whether
   //more states have been created
   bool isNewTransitions = false;
 
@@ -512,7 +512,7 @@ bool AllStates::MakeNewDetStates(int stateIndex, StringElem **stringArray,
           //if another state has been created,
           // recalculate distributions
           if (isIncreased == true) {
-            //fill arrays 
+            //fill arrays
             isNewTransitions = true;
             stringMax = m_StateArray[stateIndex]->getListSize();
             CreateChildStateArray(parsetree, stringMax, stateArray, stringArray, stateIndex);
@@ -548,7 +548,7 @@ bool AllStates::MakeNewDetStates(int stateIndex, StringElem **stringArray,
 // Pre- Cond: States have been set based on distribution and connected
 //            components
 // Post-Cond: Given hisoty's transition has been matched to all similar
-//            transitions      
+//            transitions
 //////////////////////////////////////////////////////////////////////////
 void AllStates::FindSimilarTransitions(StringElem **stringArray,
                                        int **stateArray, int childState,
@@ -578,7 +578,7 @@ void AllStates::FindSimilarTransitions(StringElem **stringArray,
 // Out Params: boolean signifying whether a state has been removed
 // In/Out Params: none
 // Pre- Cond: States are set
-// Post-Cond: no histories of max length remain        
+// Post-Cond: no histories of max length remain
 ///////////////////////////////////////////////////////////////////////////
 bool AllStates::DestroyLongHists(int maxLength, ParseTree &parsetree) {
   StringElem *longHist;
@@ -626,7 +626,7 @@ bool AllStates::DestroyLongHists(int maxLength, ParseTree &parsetree) {
 // Out Params: boolean signifying whether a state has been removed
 // In/Out Params: none
 // Pre- Cond: States are set
-// Post-Cond: no histories of less than max length - 1 remain        
+// Post-Cond: no histories of less than max length - 1 remain
 ///////////////////////////////////////////////////////////////////////////
 bool AllStates::DestroyShortHists(int maxLength, ParseTree &parsetree) {
   StringElem *shortHist;
@@ -669,7 +669,7 @@ bool AllStates::DestroyShortHists(int maxLength, ParseTree &parsetree) {
 // Out Params: none
 // In/Out Params: none
 // Pre- Cond: memory for state transitions have been allocated
-// Post-Cond: state transition values have been set   
+// Post-Cond: state transition values have been set
 ///////////////////////////////////////////////////////////////////////////
 void AllStates::StoreTransitions(int maxLength, char *alpha) {
   //for each state
@@ -686,7 +686,7 @@ void AllStates::StoreTransitions(int maxLength, char *alpha) {
 // Out Params: none
 // In/Out Params: none
 // Pre- Cond: States have been set and determinized
-// Post-Cond: State has a transition for each symbol     
+// Post-Cond: State has a transition for each symbol
 //////////////////////////////////////////////////////////////////////////
 void AllStates::FindNSetTransitions(int state, int maxLength, char *alpha) {
   int shortestLength;
@@ -763,7 +763,7 @@ void AllStates::FindNSetTransitions(int state, int maxLength, char *alpha) {
 // Out Params: none
 // In/Out Params: pointer to multidimensional array
 // Pre- Cond: memory is allocated for array
-// Post-Cond: memory is free 
+// Post-Cond: memory is free
 ////////////////////////////////////////////////////////////////////////
 void AllStates::DeAllocateArray(int **stateArray) {
   for (int i = 0; i < m_distSize; i++) {
@@ -804,7 +804,7 @@ void AllStates::AllocateArray(int **stateArray, int arraySize) {
 // Out Params: none
 // In/Out Params: none
 // Pre- Cond: States have been set
-// Post-Cond: All states are recurrent 
+// Post-Cond: All states are recurrent
 //////////////////////////////////////////////////////////////////////////
 void AllStates::CheckConnComponents(ParseTree &parsetree) {
   char *alpha = parsetree.getAlpha();
@@ -846,7 +846,7 @@ void AllStates::CheckConnComponents(ParseTree &parsetree) {
 // In/Out Params: array of recurrent states, number of states which are
 //                recurrent, table of transitons from max length strings
 // Pre- Cond: Memory has been allocated for the array of recurrent states
-// Post-Cond: The array of recurrent state indices has been set for the 
+// Post-Cond: The array of recurrent state indices has been set for the
 //            specific state (array of 'childstates' of given state)
 //////////////////////////////////////////////////////////////////////////
 void AllStates::FillRecurrStateArray(char *alpha, int maxLength, int index,
@@ -997,7 +997,7 @@ bool AllStates::RemoveTransientStates(int *stateArray, bool done,
 ///////////////////////////////////////////////////////////////////////////
 //Function: AllStates::CreateChildStateArray
 // Purpose: fills array of strings and array of integers which hold
-//          information about the placement of one state's 'child' strings 
+//          information about the placement of one state's 'child' strings
 //	    (which states they transition to)
 // In Params: parse tree of strings, size of array, index of state to check
 // Out Params: none
@@ -1066,7 +1066,7 @@ void AllStates::CreateChildStateArray(ParseTree &parsetree, int arraySize,
 //          transitioning to a state which is otherwise transient,
 //          has unique transitions when compared to other histories
 // In Params: history which transitions to othersise transient state,
-//            the otherwise transient state, the parent state of the 
+//            the otherwise transient state, the parent state of the
 //            history, and the alphabet
 // Out Params: boolean to denote whether history's transitions are unique
 // In/Out Params: none
@@ -1088,7 +1088,7 @@ bool AllStates::CheckUniqueTrans(StringElem *transString, int removalState,
   StringElem *temp = m_StateArray[parentState]->getStringList();
   int alphaCounter;
 
-  //check to see what the target history transitions are   
+  //check to see what the target history transitions are
   for (alphaCounter = 0; alphaCounter < m_distSize; alphaCounter++) {
     childHist2 = new char[histLength + 2 * SYMB_SIZE + END_STRING];
     strcpy(childHist2, transString->m_string);
@@ -1109,7 +1109,7 @@ bool AllStates::CheckUniqueTrans(StringElem *transString, int removalState,
   }
   //check every other (shorter) history's transitions
   histLength = strlen(temp->m_string);
-  //if it is a self loop, discount it  
+  //if it is a self loop, discount it
   if (removalState == parentState) {
     isUnique = false;
   }
@@ -1132,7 +1132,7 @@ bool AllStates::CheckUniqueTrans(StringElem *transString, int removalState,
 
           if (tempState != transList[alphaCounter]
               && tempState != NULL_STATE) {
-                isMatch = false;
+            isMatch = false;
           }
         }
         delete[] childHist2;
@@ -1163,7 +1163,7 @@ bool AllStates::CheckUniqueTrans(StringElem *transString, int removalState,
 // In/Out Params: the alphabet and data strings
 // Pre- Cond: Alphabet and Data arrays are set
 // Post-Cond: All strings of length one have been examined, initial states
-//            have been created  
+//            have been created
 //////////////////////////////////////////////////////////////////////////
 void AllStates::InitialFrequencies(ParseTree &parsetree) {
   G_Array g_array;
@@ -1174,7 +1174,7 @@ void AllStates::InitialFrequencies(ParseTree &parsetree) {
   //find strings of length one and their distributions
   int size = parsetree.FindRoots(charArray, intArray);
 
-  //make first, NULL, state with unconditional 
+  //make first, NULL, state with unconditional
   //frequencies for one and zero as string counts
   temp = new StringElem(m_distSize);
   temp->m_string = new char[5];
@@ -1183,7 +1183,7 @@ void AllStates::InitialFrequencies(ParseTree &parsetree) {
     temp->m_counts[k] = intArray[k];
   }
 
-  //add first state to array of states and 
+  //add first state to array of states and
   //calculate distributions
   Insert(temp, m_arraySize);
   m_StateArray[m_arraySize - 1]->CalcCurrentDist();
@@ -1291,8 +1291,8 @@ void AllStates::GetStateDistsMulti(ParseTree &parsetree, char input[],
         //Adjust for synch time, check for end of line
         if (CheckSynchError(i, state, synchString0, parsetree, isMulti,
                             i - diff - 1)) {
-                              state = SynchToStatesMulti(i, k, state, maxLength, &outData,
-                                                         data, dataLength, synchString0);
+          state = SynchToStatesMulti(i, k, state, maxLength, &outData,
+                                     data, dataLength, synchString0);
         }
 
         diff = i - diff - 1;
@@ -1316,8 +1316,8 @@ void AllStates::GetStateDistsMulti(ParseTree &parsetree, char input[],
         //Adjust for synch time, check for end of line
         if (CheckSynchError(i, state, synchString0, parsetree, isMulti,
                             i - diff - 1)) {
-                              state = SynchToStatesMulti(i, k, state, maxLength, &outData,
-                                                         data, dataLength, synchString0);
+          state = SynchToStatesMulti(i, k, state, maxLength, &outData,
+                                     data, dataLength, synchString0);
         }
 
         i--;
@@ -1346,7 +1346,7 @@ void AllStates::GetStateDistsMulti(ParseTree &parsetree, char input[],
 
 ///////////////////////////////////////////////////////////////////////////
 // Function: AllStates::CheckSynchError
-// Purpose: checks to see whether data is synchronized yet, and removes 
+// Purpose: checks to see whether data is synchronized yet, and removes
 //          unsynchronized data from parse tree
 // In Params: index of data, current state determined, boolean for multi-line mode
 // Out Params: a boolean representing whether more synchronizing is needed
@@ -1494,7 +1494,7 @@ AllStates::~AllStates() {
 
 
 ///////////////////////////////////////////////////////////////////////////
-// Function: AllStates     
+// Function: AllStates
 // Purpose: constructor for AllStates
 ///////////////////////////////////////////////////////////////////////////
 AllStates::AllStates(int distSize, double sigLevel, bool isChi) {

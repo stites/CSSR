@@ -29,7 +29,6 @@
 
 #include "TransTable.h"
 
-///////////////////////////////////////////////////////////////////////////////
 TransTable::TransTable(int numStates) {
   m_transArray = new TransNode *[numStates];
   m_parentArray = new TransNode *[numStates];

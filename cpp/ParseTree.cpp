@@ -158,7 +158,6 @@ void ParseTree::DecStringCount(char *stringToDec) {
   DecStringCount(stringToDec, m_root);
 }
 
-
 ///////////////////////////////////////////////////////////////////////////
 // Function: ParseTree::FindStrings
 // Purpose: collects all strings of length 'length' in an array
@@ -263,7 +262,7 @@ void ParseTree::FindStrings(TreeNode *root, int length, char *parentString, G_Ar
 
 ///////////////////////////////////////////////////////////////////////////
 // Function: ParseTree::CreateTree
-// Purpose: reads data and stores all strings of up to maximum length 
+// Purpose: reads data and stores all strings of up to maximum length
 //          in tree
 // In Params: none
 // Out Params: none
@@ -299,9 +298,9 @@ void ParseTree::FillTree() {
 
 
 //////////////////////////////////////////////////////////////////////////
-// Function: ParseTree::GetDataInput 
+// Function: ParseTree::GetDataInput
 // Purpose: reads in the data string
-// In Params: the data input filename 
+// In Params: the data input filename
 // Out Params: none
 // In/Out Params: none
 // Pre- Cond: Filenames must have been read in at command line,
@@ -347,9 +346,9 @@ void ParseTree::GetDataInput(char dataFile[]) {
 
 
 //////////////////////////////////////////////////////////////////////////
-// Function: ParseTree::GetAlphaInput 
+// Function: ParseTree::GetAlphaInput
 // Purpose: reads in the alphabet file
-// In Params: the alphabet input filename 
+// In Params: the alphabet input filename
 // Out Params: none
 // In/Out Params: none
 // Pre- Cond: Filenames must have been read in at command line,
@@ -394,12 +393,12 @@ void ParseTree::GetAlphaInput(char alphaFile[]) {
 
 
 //////////////////////////////////////////////////////////////////////////
-// Function: ParseTree::CheckAlphaInput 
+// Function: ParseTree::CheckAlphaInput
 // Purpose: checks the alphabet string for spaces or nonsense
 // In Params: ParseTree class variables --- m_alpha, m_alphaSize
 // Out Params: none
 // In/Out Params: none
-// Pre- Cond: Alpha file has been read in 
+// Pre- Cond: Alpha file has been read in
 // Post-Cond: Alphabet information in ParseTree class is valid
 //////////////////////////////////////////////////////////////////////////
 void ParseTree::CheckAlphaInput() {
@@ -435,7 +434,7 @@ void ParseTree::CheckAlphaInput() {
 
 
 //////////////////////////////////////////////////////////////////////////
-// Function: ParseTree::CheckDataInput 
+// Function: ParseTree::CheckDataInput
 // Purpose: checks the data string for spaces or nonsense
 // In Params: ParseTree class variables --- m_data, m_dataSize, m_alphaSize
 // Out Params: none
@@ -488,7 +487,7 @@ void ParseTree::CheckDataInput() {
 
 
 //////////////////////////////////////////////////////////////////////////
-// Function: ParseTree::ReadInput 
+// Function: ParseTree::ReadInput
 // Purpose: reads in the alphabet of symbols and data string
 // In Params: the input filenames
 // Out Params: an integer that denotes failure or success
@@ -613,7 +612,7 @@ void ParseTree::MakeSynchAdjustements(char *synchString, int index) {
 
 
 //////////////////////////////////////////////////////////////////////////
-// Function: ParseTree::Read_Process_MultiLine 
+// Function: ParseTree::Read_Process_MultiLine
 // Purpose: reads in the alphabet of symbols and data strings and fills tree
 // In Params: the input files
 // Out Params: an integer that denotes failure or success

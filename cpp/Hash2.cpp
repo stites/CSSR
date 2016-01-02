@@ -2,7 +2,7 @@
 // Title		:	Hash2
 // Date			:	March 20, 2002
 // Author		:	Kristina Klinkner
-// Description	:	creates a hash table of symbols and their index for use with 
+// Description	:	creates a hash table of symbols and their index for use with
 //				    CSSR
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -73,7 +73,7 @@ int HashTable2::Hash(ulong key) {
 //Function: HashTable2::Insert
 //Purpose: inserts a new element in the hash table, if there is
 //		   already an element at the appropriate index, puts new
-//		   element at the front of the list. 
+//		   element at the front of the list.
 //In parameter: new string and index
 ////////////////////////////////////////////////////////////////
 void HashTable2::Insert(char *string, int index) {

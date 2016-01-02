@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////////
-//Title:	TransTable.h
-//Author:	Kristina Klinkner
-//Date:		March 20, 2002
-//Description:	Header file for TransTable.cpp
+//Title:  TransTable.h
+//Author: Kristina Klinkner
+//Date:   March 20, 2002
+//Description: Header file for TransTable.cpp
 //
 ////////////////////////////////////////////////////////////////////////
 
@@ -11,7 +11,6 @@
 
 #include "Common.h"
 #include "States.h"
-
 
 struct TransNode {
     StringElem *stringPtr;

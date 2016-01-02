@@ -27,15 +27,13 @@ enum testType {
 };
 
 class Test {
-private:
+  private:
     testType m_type;
 
     //Chi-Square Functions
-    double RunKSTest(double dist1[], int count1, double dist2[], int count2,
-                     int distSize);
+    double RunKSTest(double dist1[], int count1, double dist2[], int count2, int distSize);
 
-    double RunChiTest(double dist1[], int count1, double dist2[], int count2,
-                      int distSize);
+    double RunChiTest(double dist1[], int count1, double dist2[], int count2, int distSize);
 
     float gammq(float a, float x);
 
@@ -56,13 +54,12 @@ private:
 
     double ProbKS(double alam);
 
-public:
+  public:
     Test(bool isChi) { if (isChi) { m_type = CHIS; } else { m_type = KS; }}
 
     ~Test();
 
-    double RunTest(double dist1[], int count1, double dist2[], int count2,
-                   int distSize);
+    double RunTest(double dist1[], int count1, double dist2[], int count2, int distSize);
 };
 
 #endif

@@ -86,7 +86,7 @@ float Test::gammq(float a, float x) {
 }
 
 
-//gser --- Returns the incomplete gamma function P(a,x) 
+//gser --- Returns the incomplete gamma function P(a,x)
 //evaluated by its series representation.  Also returns
 //natural log of gamma(a)
 void Test::gser(float *gamser, float a, float x, float *gln) {
@@ -118,7 +118,7 @@ void Test::gser(float *gamser, float a, float x, float *gln) {
   }
 }
 
-//gcf--- Returns the incomplete gamma function Q(a,x), evaulated by its 
+//gcf--- Returns the incomplete gamma function Q(a,x), evaulated by its
 //continued fraction representation as gammcf.  Also returns natural log
 //of gamma as gln
 void Test::gcf(float *gammcf, float a, float x, float *gln) {

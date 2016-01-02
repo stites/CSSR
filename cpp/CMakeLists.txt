@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(CSSR)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wall -O1 -std=c++11")
 
 # The version number.
 set(CSSR_VERSION_MAJOR 0)
@@ -21,6 +21,3 @@ set(SOURCE_FILES
     Common.h)
 
 add_executable(CSSR ${SOURCE_FILES})
-
-
-

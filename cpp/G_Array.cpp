@@ -2,7 +2,7 @@
 // Title		:	G_Array
 // Date			:	March 20, 2002
 // Author		:	Kristina Klinkner
-// Description	:	creates an array of pointers to elements, which 
+// Description	:	creates an array of pointers to elements, which
 //                      can be any size that will fit into memory.
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -95,7 +95,7 @@ G_Array::~G_Array() {
 /////////////////////////////////////////////////////////////
 //Function: ArrayElem::setCounts
 //Purpose: set m_counts to specified value
-//In parameters: the array with values and the length of the 
+//In parameters: the array with values and the length of the
 //               array
 ////////////////////////////////////////////////////////////
 void ArrayElem::setCounts(int counts[], int length) {

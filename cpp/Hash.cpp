@@ -69,7 +69,7 @@ int HashTable::Hash(ulong key) {
 //Function: HashTable::Insert
 //Purpose: inserts a new element in the hash table, if there is
 //		   already an element at the appropriate index, puts new
-//		   element at the front of the list. 
+//		   element at the front of the list.
 //In parameter: new element and it's parent state
 ////////////////////////////////////////////////////////////////
 void HashTable::Insert(StringElem *elem, State *state) {
@@ -134,7 +134,7 @@ State *HashTable::WhichState(char *string) {
 
 /////////////////////////////////////////////////////////////////
 //Function: Hash::Which StateNumber
-//Purpose: checks to see which state string is in; returns the 
+//Purpose: checks to see which state string is in; returns the
 //         number of the state
 //In parameter: string to check
 //Return value: assigned number of appropriate state

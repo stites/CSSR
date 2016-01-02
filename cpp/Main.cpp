@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
   //calculate frequency of occurence of symbols
   allstates.InitialFrequencies(parsetree);
 
-  //check all possible strings up to max 
+  //check all possible strings up to max
   //length and compare distributions
   for (int k = 1; k <= max_length; k++) {
     allstates.CalcNewDist(k, parsetree);
