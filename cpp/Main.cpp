@@ -38,14 +38,13 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char *argv[])
-  //argv[1] is Alphabet File, 
-  //argv[2] is Datafile, 
+int main(int argc, char *argv[]) {
+  //argv[1] is Alphabet File,
+  //argv[2] is Datafile,
   //argv[3] is maximum  length of string
   //argv[4] is the (optional) flag for changing the significance level
   //argv[5] is multiline version, if used
-  // argv[6] is use of chi-squared test (optional)
-{
+  //argv[6] is use of chi-squared test (optional)
   int max_length;
   char* data_file;
   char* alpha_file;
@@ -59,17 +58,17 @@ int main(int argc, char *argv[])
 
   // read in info from command line
   // check for proper arguments
-  if(argc !=4 )
-    {
-      if (argc == 5)
-          FiveArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
-      else if (argc == 6)
-          SixArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
-      else if (argc == 7)
-          SevenArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
-      else
-          PrintError();
+  if(argc !=4 ) {
+    if (argc == 5) {
+      FiveArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
+    } else if (argc == 6) {
+      SixArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
+    } else if (argc == 7) {
+      SevenArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
+    } else {
+      PrintError();
     }
+  }
 
   PrintCopyrightInfo();
 
@@ -80,27 +79,24 @@ int main(int argc, char *argv[])
 
   // if no significance level is set, use default
   // (should be set already, just to be careful)
-  if(!isSigLevel)
+  if(!isSigLevel) {
     sigLevel = SIGLEVEL;
-  else
+  } else {
     cout << "Significance level set to " << sigLevel <<".\n";
+  }
 
   //create parse tree to store all strings in data
   ParseTree parsetree(max_length);
 
   //if using multi-line input, read in data and enter
   //tree one line at a time
-  if(isMulti)
-  {
+  if(isMulti) {
     parsetree.ReadProcessMultiLine(alpha_file, data_file);
     cout << "Multi-line option is set.\n"
          << "Max line length is "<< MAX_LINE_SIZE
          << "\n";
-  }
 
-  //otherwise do data read first, then enter in tree
-  else
-  {
+  } else { //otherwise do data read first, then enter in tree
     //read in data and alphabet from files
     parsetree.ReadInput(alpha_file, data_file);
     //enter data in tree
@@ -118,8 +114,9 @@ int main(int argc, char *argv[])
 
   //check all possible strings up to max 
   //length and compare distributions
-  for(int k = 1; k <= max_length; k++)
+  for(int k = 1; k <= max_length; k++) {
     allstates.CalcNewDist(k, parsetree);
+  }
 
   //remove shorter strings
   stateRemoved = allstates.DestroyShortHists(max_length, parsetree);
