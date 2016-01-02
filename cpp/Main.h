@@ -18,23 +18,23 @@ const char *program = "CSSR";  //program name
 
 void PrintError() {
   cerr << program << " usage: " << "alphabet_file " << "data_file "
-       << "max_string_length " << "-m (optional multi-line)"
-       << " -s (optional sig level)"
-       << " -ch (optional use of chi-squared test)"
-       << endl
-       << "See README or http://bactra.org/CSSR/ for more help"
-       << endl;
+  << "max_string_length " << "-m (optional multi-line)"
+  << " -s (optional sig level)"
+  << " -ch (optional use of chi-squared test)"
+  << endl
+  << "See README or http://bactra.org/CSSR/ for more help"
+  << endl;
   exit(1);
 }
 
 
 void PrintCopyrightInfo() {
   cout << program << " version 0.0, Copyright (C) 2002 Kristina Klinkner "
-       << endl
-       << program << " comes with ABSOLUTELY NO WARRANTY.  "
-       << "This is free software, and you are welcome "
-       << "to redistribute it under certain conditions.  Read accompanying "
-       << "file 'COPYING-WARRANTY' for details." << endl << endl;
+  << endl
+  << program << " comes with ABSOLUTELY NO WARRANTY.  "
+  << "This is free software, and you are welcome "
+  << "to redistribute it under certain conditions.  Read accompanying "
+  << "file 'COPYING-WARRANTY' for details." << endl << endl;
 }
 
 void CheckArgs(char *argv[], bool &isMulti, bool &isSigLevel, double &sigLevel, bool &isChi, int index) {

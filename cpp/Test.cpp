@@ -40,29 +40,31 @@ void Test::chstwo(double bins1[], int n1, double bins2[], int n2, int nbins,
   float ratio1;
   float ratio2;
 
-  if(n1 > 0) {
-    ratio1 = (float)(((float)sqrt(n2))/((float)sqrt(n1)));
-  } else {
+  if (n1 > 0) {
+    ratio1 = (float) (((float) sqrt(n2)) / ((float) sqrt(n1)));
+  }
+  else {
     ratio1 = 0.0;
   }
 
-  if(n2 > 0) {
-    ratio2 = (float)(((float)sqrt(n1))/((float)sqrt(n2)));
-  } else {
+  if (n2 > 0) {
+    ratio2 = (float) (((float) sqrt(n1)) / ((float) sqrt(n2)));
+  }
+  else {
     ratio2 = 0.0;
   }
 
   for (j = 0; j < nbins; j++) {
-    if(bins1[j] == 0.0 && bins2[j] == 0.0) {
+    if (bins1[j] == 0.0 && bins2[j] == 0.0) {
       --(*df);                //No data means one less degree of freedom
-    } else {
-      temp = ratio1*bins1[j]*n1 - ratio2*bins2[j]*n2;
-      *chsq += temp*temp/(bins1[j]*n1+bins2[j]*n2);
+    }
+    else {
+      temp = ratio1 * bins1[j] * n1 - ratio2 * bins2[j] * n2;
+      *chsq += temp * temp / (bins1[j] * n1 + bins2[j] * n2);
     }
   }
-  *prob = gammq(0.5*(*df), 0.5*(*chsq));
+  *prob = gammq(0.5 * (*df), 0.5 * (*chsq));
 }
-
 
 
 //gammq  ---- returns the incomplete gamma function Q(a,x) = 1 - P(a,x).
@@ -70,13 +72,14 @@ float Test::gammq(float a, float x) {
   float gamser, gammcf, gln;
 
   //cout <<"a " << a<< " x "<<x<<endl;
-  if(x < 0.0 || a <= 0.0) {
+  if (x < 0.0 || a <= 0.0) {
     nerror("Invalid arguments in routine gammq");
   }
-  if( x < (a + 1.0)) {      //use the series representation
+  if (x < (a + 1.0)) {      //use the series representation
     gser(&gamser, a, x, &gln);
     return 1.0 - gamser;                //and take its complement
-  } else {
+  }
+  else {
     gcf(&gammcf, a, x, &gln);  //use the continued fraction representation
     return gammcf;
   }
@@ -91,21 +94,22 @@ void Test::gser(float *gamser, float a, float x, float *gln) {
   float sum, del, ap;
   *gln = gammln(a);
 
-  if(x <= 0.0) {
-    if(x < 0.0) {
+  if (x <= 0.0) {
+    if (x < 0.0) {
       nerror("x less than zero in series expansion gamma function");
     }
     *gamser = 0.0;
     return;
-  } else {
+  }
+  else {
     ap = a;
-    del = sum = 1.0/a;
-    for(n = 1; n <= ITMAX; n++) {
+    del = sum = 1.0 / a;
+    for (n = 1; n <= ITMAX; n++) {
       ++ap;
-      del *= x/ap;
+      del *= x / ap;
       sum += del;
-      if(fabs(del) < (fabs(sum)*EPS)) {
-        *gamser = sum*exp(-x + (a*log(x)) - (*gln));
+      if (fabs(del) < (fabs(sum) * EPS)) {
+        *gamser = sum * exp(-x + (a * log(x)) - (*gln));
         return;
       }
     }
@@ -123,36 +127,35 @@ void Test::gcf(float *gammcf, float a, float x, float *gln) {
 
   *gln = gammln(a);
   b = x + 1.0 - a;
-  c = 1.0/FPMIN;
-  d = 1.0/b;
+  c = 1.0 / FPMIN;
+  d = 1.0 / b;
   h = d;
 
-  for(i = 1; i <= ITMAX; i++) {     //iterate to convergence
-    an = -i*(i - a);
+  for (i = 1; i <= ITMAX; i++) {     //iterate to convergence
+    an = -i * (i - a);
     b += 2.0;      //Set up for evaluating continued
-    d = an*d + b;  //fraction by modified Lentz's method with b_0 = 0.
-    if(fabs(d) < FPMIN) {
+    d = an * d + b;  //fraction by modified Lentz's method with b_0 = 0.
+    if (fabs(d) < FPMIN) {
       d = FPMIN;
     }
-    c = b + an/c;
-    if(fabs(c) < FPMIN) {
+    c = b + an / c;
+    if (fabs(c) < FPMIN) {
       c = FPMIN;
     }
-    d = 1.0/d;
-    del = d*c;
+    d = 1.0 / d;
+    del = d * c;
     h *= del;
 
-    if(fabs(del - 1.0) < EPS) {
+    if (fabs(del - 1.0) < EPS) {
       break;
     }
   }
   if (i > ITMAX) {
     nerror("a too large, ITMAX too small in continued fraction gamma function");
   }
-  *gammcf = exp(-x + a*log(x) - (*gln))*h;   //Put factors in front
+  *gammcf = exp(-x + a * log(x) - (*gln)) * h;   //Put factors in front
   return;
 }
-
 
 
 //gammln --- returns natural log of gamma(xx), for xx> 0
@@ -165,13 +168,13 @@ float Test::gammln(float xx) {
 
   y = x = xx;
   tmp = x + 5.5;
-  tmp -= (x + 0.5)*log(tmp);
+  tmp -= (x + 0.5) * log(tmp);
   ser = 1.000000000190015;
 
-  for(j = 0; j <= 5; j++) {
-    ser += cof[j]/++y;
+  for (j = 0; j <= 5; j++) {
+    ser += cof[j] / ++y;
   }
-  return -tmp + log(2.5066282746310005*ser/x);
+  return -tmp + log(2.5066282746310005 * ser / x);
 }
 
 void Test::nerror(const char error_text[]) {
@@ -184,11 +187,13 @@ double Test::RunTest(double dist1[], int count1, double dist2[], int count2, int
   cout << " Count1: " << std::to_string(count1);
   cout << " Count2: " << std::to_string(count2);
   cout << endl;
-  if( m_type == KS ) {
+  if (m_type == KS) {
     return RunKSTest(dist1, count1, dist2, count2, distSize);
-  } else if(m_type == CHIS) {
+  }
+  else if (m_type == CHIS) {
     return RunChiTest(dist1, count1, dist2, count2, distSize);
-  } else {
+  }
+  else {
     cerr << "No type of statistical test set" << endl;
     exit(1);
   }
@@ -227,9 +232,9 @@ double Test::RunChiTest(double dist1[], int count1, double dist2[], int count2, 
 // Post-Cond: arrays are sorted and KS stat and sig level are known
 //////////////////////////////////////////////////////////////////////////
 void Test::KStwo(double data1[], unsigned long n1, double data2[],
-                 unsigned long n2,double *d, double *prob, int dist_size) {
+                 unsigned long n2, double *d, double *prob, int dist_size) {
   unsigned long j = 0;
-  double en1,en2,en,max;
+  double en1, en2, en, max;
   double *temp1 = new double[dist_size];
   double *temp2 = new double[dist_size];
 
@@ -242,28 +247,27 @@ void Test::KStwo(double data1[], unsigned long n1, double data2[],
   temp1[0] = data1[0];
   temp2[0] = data2[0];
 
-  for(int i = 1; i < dist_size; i++) {
-    temp1[i] = data1[i] + temp1[i-1];
-    temp2[i] = data2[i] + temp2[i-1];
+  for (int i = 1; i < dist_size; i++) {
+    temp1[i] = data1[i] + temp1[i - 1];
+    temp2[i] = data2[i] + temp2[i - 1];
   }
 
   //calculate KS statistic - take max difference between 2 values
   while (j < dist_size) {
     max = fabs(temp1[j] - temp2[j]);
-    if( max  > *d) {
+    if (max > *d) {
       *d = max;
     }
     j++;
   }
-  en = sqrt(en1*en2/(en1+en2));
+  en = sqrt(en1 * en2 / (en1 + en2));
 
   //calculate significance level
-  *prob = ProbKS((en + 0.12 + 0.11/en)*(*d));
+  *prob = ProbKS((en + 0.12 + 0.11 / en) * (*d));
 
-  delete [] temp1;
-  delete [] temp2;
+  delete[] temp1;
+  delete[] temp2;
 }
-
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -277,14 +281,14 @@ void Test::KStwo(double data1[], unsigned long n1, double data2[],
 //////////////////////////////////////////////////////////////////////////
 double Test::ProbKS(double alam) {
   int j;
-  double a2, fac=2.0, sum=0.0, term, termbf = 0.0;
+  double a2, fac = 2.0, sum = 0.0, term, termbf = 0.0;
 
   a2 = -2.0 * alam * alam;
 
-  for (j=1; j <= 100; j++) {
-    term = fac* exp(a2*j*j);
+  for (j = 1; j <= 100; j++) {
+    term = fac * exp(a2 * j * j);
     sum += term;
-    if (fabs(term) <= EPS1*termbf || fabs(term) <= EPS2*sum) {
+    if (fabs(term) <= EPS1 * termbf || fabs(term) <= EPS2 * sum) {
       return sum;
     }
     fac = -fac;
