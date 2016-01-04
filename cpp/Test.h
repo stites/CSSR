@@ -15,7 +15,7 @@
 //For chi-square test
 #define ITMAX 100
 #define EPS 3.0e-7    //Relative accuracy
-#define FPMIN 1.0e-30   //smallest floating point representation
+#define FPMIN 1.0e-30f   //smallest floating point representation
 
 //For KS-test
 #define EPS1 0.001         //KS numbers
@@ -53,6 +53,8 @@ class Test {
                unsigned long n2, double *d, double *prob, int dist_size);
 
     double ProbKS(double alam);
+
+    void PrintDistribution(double dist[]);
 
   public:
     Test(bool isChi) { if (isChi) { m_type = CHIS; } else { m_type = KS; }}

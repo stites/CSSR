@@ -215,6 +215,7 @@ void AllStates::CalcNewDist(int length, ParseTree &parsetree) {
   listSize = g_array.getSize();
 
   //for all of the strings
+  cout << "AllStates, List Size: " << std::to_string(listSize) << endl << endl;
   for (int i = 0; i < listSize; i++) {
     match = false;
     stringCount = 0;
@@ -231,15 +232,13 @@ void AllStates::CalcNewDist(int length, ParseTree &parsetree) {
     }
 
     //check whether new distribution matches that of parent state
-    match = CompareToParent(removalString, removalState, list[i],
-                            newDist, length, match, stringCount);
+    match = CompareToParent(removalString, removalState, list[i], newDist, length, match, stringCount);
 
     //check whether new distribution matches that of another existing state
-    match = RePartition(match, removalString, removalState, list[i], newDist,
-                        stringCount);
+    match = RePartition(match, removalString, removalState, list[i], newDist, stringCount);
 
     //if there were no matches make new state
-    if (match == false) {
+    if (!match) {
       //insert new string
       Insert(list[i], m_arraySize);
 
@@ -1538,10 +1537,11 @@ double AllStates::Compare(int k, int j) {
 // Pre- Cond: distributions have been calculated and set into arrays
 // Post-Cond: sig level is  known
 //////////////////////////////////////////////////////////////////////////
-double AllStates::Compare(int k, double newDist[], int count) {
-  return m_test->RunTest(m_StateArray[k]->getCurrentDist(),
-                         m_StateArray[k]->getCount(), newDist, count,
-                         m_distSize);
+double AllStates::Compare(int k, double newDist[], int newDistCount) {
+  double * currentDist = m_StateArray[k]->getCurrentDist();
+  int distCount = m_StateArray[k]->getCount();
+
+  return m_test->RunTest(currentDist, distCount, newDist, newDistCount, m_distSize);
 }
 
 

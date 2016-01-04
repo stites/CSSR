@@ -60,7 +60,7 @@ public:
 
     double Compare(int k, int j);
 
-    double Compare(int k, double newDist[], int count);
+    double Compare(int k, double newDist[], int newDistCount);
 
     double Compare(State *state, double newDist[], int count);
 

@@ -37,33 +37,19 @@ void Test::chstwo(double bins1[], int n1, double bins2[], int n2, int nbins,
 
   *df = nbins - knstrn;
   *chsq = 0.0;
-  float ratio1;
-  float ratio2;
-
-  if (n1 > 0) {
-    ratio1 = (float) (((float) sqrt(n2)) / ((float) sqrt(n1)));
-  }
-  else {
-    ratio1 = 0.0;
-  }
-
-  if (n2 > 0) {
-    ratio2 = (float) (((float) sqrt(n1)) / ((float) sqrt(n2)));
-  }
-  else {
-    ratio2 = 0.0;
-  }
+  float ratio1 = (n1 > 0) ? (((float) sqrt(n2)) / ((float) sqrt(n1))) : 0.0f;
+  float ratio2 = (n2 > 0) ? (((float) sqrt(n1)) / ((float) sqrt(n2))) : 0.0f;
 
   for (j = 0; j < nbins; j++) {
     if (bins1[j] == 0.0 && bins2[j] == 0.0) {
       --(*df);                //No data means one less degree of freedom
     }
     else {
-      temp = ratio1 * bins1[j] * n1 - ratio2 * bins2[j] * n2;
+      temp = ratio1 * ((float) bins1[j]) * n1 - ratio2 * ((float) bins2[j]) * n2;
       *chsq += temp * temp / (bins1[j] * n1 + bins2[j] * n2);
     }
   }
-  *prob = gammq(0.5 * (*df), 0.5 * (*chsq));
+  *prob = gammq(0.5f * (*df), 0.5f * (*chsq));
 }
 
 
@@ -77,7 +63,7 @@ float Test::gammq(float a, float x) {
   }
   if (x < (a + 1.0)) {      //use the series representation
     gser(&gamser, a, x, &gln);
-    return 1.0 - gamser;                //and take its complement
+    return 1.0f - gamser;                //and take its complement
   }
   else {
     gcf(&gammcf, a, x, &gln);  //use the continued fraction representation
@@ -103,13 +89,13 @@ void Test::gser(float *gamser, float a, float x, float *gln) {
   }
   else {
     ap = a;
-    del = sum = 1.0 / a;
+    del = sum = 1.0f / a;
     for (n = 1; n <= ITMAX; n++) {
       ++ap;
       del *= x / ap;
       sum += del;
       if (fabs(del) < (fabs(sum) * EPS)) {
-        *gamser = sum * exp(-x + (a * log(x)) - (*gln));
+        *gamser = sum * (float) exp(-x + (a * log(x)) - (*gln));
         return;
       }
     }
@@ -126,9 +112,9 @@ void Test::gcf(float *gammcf, float a, float x, float *gln) {
   float an, b, c, d, del, h;
 
   *gln = gammln(a);
-  b = x + 1.0 - a;
-  c = 1.0 / FPMIN;
-  d = 1.0 / b;
+  b = x + 1.0f - a;
+  c = 1.0f / FPMIN;
+  d = 1.0f / b;
   h = d;
 
   for (i = 1; i <= ITMAX; i++) {     //iterate to convergence
@@ -142,7 +128,7 @@ void Test::gcf(float *gammcf, float a, float x, float *gln) {
     if (fabs(c) < FPMIN) {
       c = FPMIN;
     }
-    d = 1.0 / d;
+    d = 1.0f / d;
     del = d * c;
     h *= del;
 
@@ -153,7 +139,7 @@ void Test::gcf(float *gammcf, float a, float x, float *gln) {
   if (i > ITMAX) {
     nerror("a too large, ITMAX too small in continued fraction gamma function");
   }
-  *gammcf = exp(-x + a * log(x) - (*gln)) * h;   //Put factors in front
+  *gammcf = (float) exp(-x + a * log(x) - (*gln)) * h;   //Put factors in front
   return;
 }
 
@@ -174,19 +160,32 @@ float Test::gammln(float xx) {
   for (j = 0; j <= 5; j++) {
     ser += cof[j] / ++y;
   }
-  return -tmp + log(2.5066282746310005 * ser / x);
+  return (float) (-tmp + log(2.5066282746310005 * ser / x));
 }
 
 void Test::nerror(const char error_text[]) {
   cerr << error_text << endl;
   exit(1);
 }
+void Test::PrintDistribution(double dist[]) {
+  int i;
+  for (i = 0; i < (sizeof(dist)/ sizeof(double)) + 1; i++) {
+    printf("%.6f", dist[i]);
+    cout << " ";
+  }
+  cout << endl;
+}
 
 double Test::RunTest(double dist1[], int count1, double dist2[], int count2, int distSize) {
-  cout << "Running test --";
-  cout << " Count1: " << std::to_string(count1);
-  cout << " Count2: " << std::to_string(count2);
+  cout << "Running test with distSize of " << std::to_string(distSize);
+  cout << ", Count1: " << std::to_string(count1);
+  cout << ", Count2: " << std::to_string(count2);
   cout << endl;
+  cout << "dist1: ";
+  PrintDistribution(dist1);
+  cout << "dist2: ";
+  PrintDistribution(dist2);
+
   if (m_type == KS) {
     return RunKSTest(dist1, count1, dist2, count2, distSize);
   }

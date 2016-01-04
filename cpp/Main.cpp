@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
   //create array of states
   AllStates allstates(parsetree.getAlphaSize(), sigLevel, isChi);
 
-  //calculate frequency of occurence of symbols
+  //calculate frequency of occurrence of symbols
   allstates.InitialFrequencies(parsetree);
 
   //check all possible strings up to max
