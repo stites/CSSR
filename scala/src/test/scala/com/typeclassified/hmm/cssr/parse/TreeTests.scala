@@ -2,7 +2,7 @@ package com.typeclassified.hmm.cssr.parse
 
 import breeze.linalg
 import breeze.linalg.DenseVector
-import com.typeclassified.hmm.cssr.ProbablisticAsserts
+import com.typeclassified.hmm.cssr.shared.ProbablisticAsserts
 import org.scalatest.{WordSpec, BeforeAndAfter, Matchers, FlatSpec}
 
 import scala.collection.mutable.ListBuffer

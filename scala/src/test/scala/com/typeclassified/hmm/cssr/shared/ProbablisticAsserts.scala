@@ -1,6 +1,5 @@
-package com.typeclassified.hmm.cssr
+package com.typeclassified.hmm.cssr.shared
 
-import com.typeclassified.hmm.cssr.shared.Probablistic
 import org.scalatest.Matchers
 
 trait ProbablisticAsserts extends Matchers {
