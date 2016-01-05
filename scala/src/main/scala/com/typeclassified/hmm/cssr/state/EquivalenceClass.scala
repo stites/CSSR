@@ -11,8 +11,7 @@ object EquivalenceClass {
 }
 
 class EquivalenceClass extends Probablistic {
-  // TODO: think about making this a set
-  var histories: ArrayBuffer[Leaf] = ArrayBuffer()
+  var histories: Set[Leaf] = Set()
 
   def addHistory(h: Leaf): Unit = {
     histories += h
