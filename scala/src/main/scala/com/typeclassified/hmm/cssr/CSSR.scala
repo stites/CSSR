@@ -71,6 +71,8 @@ object CSSR {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
         val s = xt.currentEquivalenceClass
+        if (!s.histories.contains(xt)) s.addHistory(xt)
+
         for ((a, alphaIdx) <- parseTree.alphabet.map) {
           // node in the parse tree with predictive dist
           val aXt = xt.findChildWithAdditionalHistory(a)

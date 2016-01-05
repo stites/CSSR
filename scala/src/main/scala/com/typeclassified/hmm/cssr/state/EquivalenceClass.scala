@@ -25,7 +25,7 @@ class EquivalenceClass extends Probablistic {
   }
 
   def normalizeAcrossHistories(): Unit = {
-    frequency = histories.foldRight(frequency)((history, totalFreq) => totalFreq :+ history.frequency)
+    frequency = histories.foldRight(DenseVector.zeros[Double](size))((history, totalFreq) => totalFreq + history.frequency)
 
     totalCounts = frequency.foldRight(0d)(_+_).toInt
 
