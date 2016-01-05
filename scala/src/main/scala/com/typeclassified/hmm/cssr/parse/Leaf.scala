@@ -27,8 +27,6 @@ class Leaf(observedSequence:String,
 
   val observation: Char = if ("".equals(observed)) 0.toChar else observed.head
 
-  println(getClass().getSimpleName, observation, observed, printParent())
-
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 
   val locations:mutable.HashMap[Int, Int] = mutable.HashMap[Int, Int]()

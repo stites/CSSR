@@ -1,11 +1,9 @@
 package com.typeclassified.hmm.cssr.test
 
-import breeze.linalg.{sum, DenseVector}
 import com.typeclassified.hmm.cssr.parse.Leaf
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typeclassified.hmm.cssr.test.hypothesis.{KolmogorovSmirnov=>KS}
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.math3.stat.inference.ChiSquareTest
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -13,11 +11,7 @@ import scala.collection.mutable.ListBuffer
 object Test {
   val logger = Logger(LoggerFactory.getLogger(Test.getClass))
 
-  def test(S: ListBuffer[EquivalenceClass],
-           aXt: Leaf,
-           s: EquivalenceClass,
-           sig: Double
-          ): Unit= {
+  def test(S: ListBuffer[EquivalenceClass], aXt: Leaf, s: EquivalenceClass, sig: Double): Unit= {
     if (nullHypothesis(s, aXt, sig)) {
       if (!s.histories.contains(aXt)) {
         aXt.changeEquivalenceClass(s)
@@ -37,6 +31,9 @@ object Test {
   }
 
   def nullHypothesis(s: EquivalenceClass, aXt: Leaf, sig:Double): Boolean = {
+    logger.debug(s"Running test -- Count1: ${s.totalCounts} Count2: ${aXt.totalCounts}")
+    logger.debug(s"dist1: ${s.distribution.toString}\t\tfreq1: ${s.frequency.toString()}")
+    logger.debug(s"dist2: ${aXt.distribution.toString}\t\tfreq2: ${aXt.frequency.toString()}")
     KS.kstwo(s.distribution, s.totalCounts, aXt.distribution, aXt.totalCounts) > sig
   }
 
@@ -55,8 +52,6 @@ object Test {
   }
 
   def move(x: Leaf, from: EquivalenceClass, to: EquivalenceClass): Unit = {
-    // ABC -> A
-    // (A->) C->B->A
     x.changeEquivalenceClass(to)
     from.rmHistory(x)
     to.addHistory(x)
