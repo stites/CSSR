@@ -1,16 +1,38 @@
+# Haskell
+# ==================
 .stack-work
-cpp/CSSR
 dist
-.stites
+
+# Scala
+# ==================
 .idea
 scala/scala.iml
+
+# Executables
+# ==================
+cpp/CSSR-*
+cpp/CSSR
+
+# Temp files
+# ==================
+# (really it all should go into tmp/)
+tmp/
 alphabet*.tmp*
 data*.tmp*
 *.log
 *.tar
 *.tar.gz
-resources
 *EP_*
-cpp/CSSR-*
-parse-tree-example
 EP.dot
+
+# Notes
+# ==================
+# which may include possible citations and references
+resources
+.stites
+
+# Long-term git worktrees
+# ==================
+# that C++ code is _HAIRY_
+cpp-refactor/
+
