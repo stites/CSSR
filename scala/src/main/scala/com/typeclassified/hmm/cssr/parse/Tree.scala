@@ -19,8 +19,10 @@ object Tree {
     for (size <- 1 to n+1) {
       logger.debug(s"loading data windows of size $size.")
       for (zippedSequence:Seq[(Char, Int)] <- xs.view.zipWithIndex.iterator.filterNot(p => "\r\n".contains(p._1)).sliding(size).withPartial(false)) {
+        // TODO: check the following statement to see if we need to rollback below:
         // if n lies in the interesting region between n-1 and n then we also pass the index to the leaf
-        loadHistory(tree, zippedSequence.map(_._1), if(size == n-1 || size == n) Some(zippedSequence.last._2) else None)
+        // (THIS MAY ONLY BE NEEDED TO AVOID CLUTTER FOR LEAVES <n-1)
+        loadHistory(tree, zippedSequence.map(_._1), Some(zippedSequence.last._2))
       }
     }
     tree.getDepth(n).foreach{ _.children = ListBuffer() }
