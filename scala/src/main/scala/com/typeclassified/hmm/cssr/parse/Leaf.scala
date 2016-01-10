@@ -1,5 +1,6 @@
 package com.typeclassified.hmm.cssr.parse
 
+import breeze.linalg.sum
 import com.typeclassified.hmm.cssr.shared.Probablistic
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 
@@ -100,7 +101,7 @@ class Leaf(observedSequence:String,
     val id = s"${getClass.getSimpleName}@${this.hashCode()}"
     val observedStr = if (observed.length == 0) observation.toString else observed
 
-    val props = s"{observed=${observedStr}, \tobservation=${observation.toString},\tfrequency=${vec}}"
+    val props = s"{observed=${observedStr}, \tobservation=${observation.toString},\tfrequency=${vec},\ttotal=${sum(frequency)}}"
     observedStr +"\t\t"+ id + "\t" + props
   }
 }

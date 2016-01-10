@@ -15,21 +15,20 @@ object CSSR {
   protected val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
 
   def run(config: Config) = {
-    logger.info("CSSR starting.\n")
+    logger.info("CSSR starting.")
 
     val (parseTree: Tree, allStates: ListBuffer[EquivalenceClass]) = initialization(config)
     logger.debug("Initialization complete...")
 
     sufficiency(parseTree, allStates, config.lMax, config.sig)
     logger.debug("Sufficiency complete...")
-    Results.logEquivalenceClasses(allStates)
 
     recursion(parseTree, allStates, config.sig, config.lMax)
     logger.debug("Recursion complete...")
-    Results.logEquivalenceClasses(allStates)
-    //        Results.logTreeStats(parseTree, allStates)
 
-    logger.info("\nCSSR completed successfully!")
+    Results.logEquivalenceClassDetails(allStates)
+
+    logger.info("CSSR completed successfully!")
   }
 
   /**
@@ -128,6 +127,7 @@ object CSSR {
                   if (optionalEyb.nonEmpty && optionalEyb.get == optionalExb.get) {
                     val sNew = EquivalenceClass()
                     S += sNew
+                    logger.debug("moving from Recursion")
                     Test.move(y, s, sNew)
                   }
                 }

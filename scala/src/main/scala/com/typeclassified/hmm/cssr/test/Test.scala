@@ -12,12 +12,14 @@ object Test {
   val logger = Logger(LoggerFactory.getLogger(Test.getClass))
 
   def test(S: ListBuffer[EquivalenceClass], aXt: Leaf, s: EquivalenceClass, sig: Double): Unit= {
+    logger.debug(s"Total number of states: ${S.length}")
     if (nullHypothesis(s, aXt, sig)) {
       if (!s.histories.contains(aXt)) {
         aXt.changeEquivalenceClass(s)
         s.addHistory(aXt)
       }
     } else {
+      logger.debug("Rejecting null hypothesis")
       val sStar: Option[EquivalenceClass] = restrictedHypothesesTesting(S.toList, s, aXt, sig)
       if (sStar.nonEmpty) {
         move(aXt, s, sStar.get)
@@ -31,9 +33,14 @@ object Test {
   }
 
   def nullHypothesis(s: EquivalenceClass, aXt: Leaf, sig:Double): Boolean = {
+    logger.debug("Testing: " + aXt.toString)
+    logger.debug(s"Have state information:")
+    logger.debug("======================================")
+    s.histories.foreach{ h => logger.debug(h.toString) }
+    logger.debug("======================================")
     logger.debug(s"Running test -- Count1: ${s.totalCounts} Count2: ${aXt.totalCounts}")
-    logger.debug(s"dist1: ${s.distribution.toString}\t\tfreq1: ${s.frequency.toString()}")
-    logger.debug(s"dist2: ${aXt.distribution.toString}\t\tfreq2: ${aXt.frequency.toString()}")
+    logger.debug(s"state: ${s.distribution.toString}\t\tfreq1: ${s.frequency.toString()}")
+    logger.debug(s" leaf: ${aXt.distribution.toString}\t\tfreq2: ${aXt.frequency.toString()}")
     KS.kstwo(s.distribution, s.totalCounts, aXt.distribution, aXt.totalCounts) > sig
   }
 
