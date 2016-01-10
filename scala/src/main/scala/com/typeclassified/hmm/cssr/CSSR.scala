@@ -27,6 +27,7 @@ object CSSR {
     logger.debug("Recursion complete...")
 
     Results.logEquivalenceClassDetails(allStates)
+    Results.logMetadata(config, AlphabetHolder.alphabet, allStates)
 
     logger.info("CSSR completed successfully!")
   }

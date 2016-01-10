@@ -7,4 +7,14 @@ case class Config (alphabetFile: File = new File("."),
                    lMax: Int = Parser.lMaxDefault,
                    sig: Double = Parser.sigDefault
                   ) {
+  override def toString: String = {
+    s"""Current Working Directory: ${System.getProperty("user.dir")}
+        |Alphabet file: ${alphabetFile.getPath}
+        |Data file: ${dataFile.getPath}
+        |History Length: ${lMax}
+        |Multi-line mode: ${false}
+        |Significance level: ${sig}
+        |Chi-squared test used: ${false}
+        |""".stripMargin
+  }
 }

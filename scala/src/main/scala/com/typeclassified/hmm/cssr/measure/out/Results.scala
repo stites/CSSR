@@ -1,26 +1,46 @@
 package com.typeclassified.hmm.cssr.measure.out
 
 import breeze.linalg.{sum, VectorBuilder, DenseVector}
-import com.typeclassified.hmm.cssr.parse.{Leaf, Tree}
+import _root_.com.typeclassified.hmm.cssr.cli.Config
+import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
 import com.typeclassified.hmm.cssr.state.{Machine, EquivalenceClass}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 
 object Results {
   protected val logger = Logger(LoggerFactory.getLogger(Results.getClass))
 
-  def logEquivalenceClasses(allStates:ListBuffer[EquivalenceClass]): Unit = {
+  def logMetadata(config:Config, alphabet: Alphabet, allStates:ListBuffer[EquivalenceClass]): Unit = {
     val newMachine = new Machine(allStates)
 
-    logger.info("===FOUND EQUIVALENCE CLASSES ====")
+    logger.info("")
+    logger.info("Metadata")
+    logger.info("=======================")
+    config.toString.split("\n").foreach { logger.info(_) }
 
+    logger.info("Results")
+    logger.info("=======================")
+    s"""Alphabet Size: ${alphabet.length}
+       |Number of Inferred States: ${allStates.length}
+       |Relative Entropy: ${"TBD"}
+       |Relative Entropy Rate: ${"TBD"}
+       |Statistical Complexity: ${"TBD"}
+       |Entropy Rate: ${"TBD"}
+       |Variation: ${"TBD"}
+       |""".stripMargin.split("\n").foreach { logger.info(_) }
+  }
+
+  def logEquivalenceClassDetails(allStates:ListBuffer[EquivalenceClass]): Unit = {
+    val newMachine = new Machine(allStates)
+    logger.info("===FOUND EQUIVALENCE CLASSES ====")
     for ((eqClass, i) <- newMachine.states.view.zipWithIndex) {
       logger.info(s"equiv class $i:")
-      logger.info(s"  Probability: ${newMachine.distribution(i)}")
-      logger.info(s"    Frequency: ${newMachine.frequency(i)}")
-      eqClass.histories.foreach(h => println(s"  $h"))
+      logger.info(s"          P(state): ${newMachine.distribution(i)}")
+      logger.info(s"  Probability Dist: ${eqClass.distribution.toString()}")
+      logger.info(s"    Frequency Dist: ${eqClass.frequency.toString()}")
+      eqClass.histories.toArray.sortBy(_.observed).foreach(h => logger.info(s"  $h"))
     }
   }
 
