@@ -35,4 +35,5 @@ resources
 # ==================
 # that C++ code is _HAIRY_
 cpp-refactor/
+cpp-refactor-std-lib/
 
