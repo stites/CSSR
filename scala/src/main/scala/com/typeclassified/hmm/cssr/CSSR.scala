@@ -1,6 +1,6 @@
 package com.typeclassified.hmm.cssr
 
-import com.typeclassified.hmm.cssr.cli.{Config, Parser}
+import com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typeclassified.hmm.cssr.test.Test
@@ -49,6 +49,7 @@ object CSSR {
     AlphabetHolder.alphabet = alphabet
     val rootClass = EquivalenceClass()
     val parseTree = Tree.loadData(Tree(alphabet, rootClass), dataSeq, config.lMax)
+    rootClass.addHistory(parseTree.root)
     val allStates = ListBuffer(rootClass)
 
     return (parseTree, allStates)
@@ -71,7 +72,6 @@ object CSSR {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
         val s = xt.currentEquivalenceClass
-        if (!s.histories.contains(xt)) s.addHistory(xt)
 
         for ((a, alphaIdx) <- parseTree.alphabet.map) {
           // node in the parse tree with predictive dist
