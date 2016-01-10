@@ -105,8 +105,6 @@ object CSSR {
     */
   def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double, lMax:Double) = {
     var recursive = false
-    // prune histories with too little information
-    S.foreach { state => state.histories --= state.histories.filter(_.observed.length < lMax-1) }
     // remove equivalence classes with empty histories
     S --= S.filter(_.histories.isEmpty)
 

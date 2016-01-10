@@ -34,11 +34,7 @@ class Leaf(observedSequence:String,
   var children: ListBuffer[Leaf] = ListBuffer()
 
   def printParent (x:Option[Leaf] = Some(this), acc:String = "") :String = {
-    if (x.isEmpty) {
-      acc
-    } else {
-      printParent(x.get.parent, acc + x.get.observation)
-    }
+    if (x.isEmpty) acc else printParent(x.get.parent, acc + x.get.observation)
   }
 
   def updateDistribution(xNext: Char, dataIdx:Option[Int] = None):Unit = {

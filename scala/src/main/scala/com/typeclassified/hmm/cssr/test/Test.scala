@@ -53,7 +53,9 @@ object Test {
 
   def move(x: Leaf, from: EquivalenceClass, to: EquivalenceClass): Unit = {
     x.changeEquivalenceClass(to)
-    from.rmHistory(x)
     to.addHistory(x)
+    from.rmHistory(x) // remove history as we have moved to "painting" the parse tree
+    // TODO: ask kristi or cosma about the following as it may be eliminating too many histories
+    if (x.parent.nonEmpty) from.rmHistory(x.parent.get)// remove ancestors as we need to disambiguate if progeny
   }
 }
