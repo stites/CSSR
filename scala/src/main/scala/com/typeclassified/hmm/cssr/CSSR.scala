@@ -28,6 +28,7 @@ object CSSR {
 
     Results.logEquivalenceClassDetails(allStates)
     Results.logMetadata(config, AlphabetHolder.alphabet, allStates)
+    Results.dotInfo(config, AlphabetHolder.alphabet, allStates)
 
     logger.info("CSSR completed successfully!")
   }

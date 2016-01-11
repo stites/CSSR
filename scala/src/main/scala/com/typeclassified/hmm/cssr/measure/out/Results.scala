@@ -9,6 +9,10 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
+/**
+  * todo: replace logger with output stream
+  *       add "change output" configuration.
+  */
 object Results {
   protected val logger = Logger(LoggerFactory.getLogger(Results.getClass))
 
@@ -32,6 +36,31 @@ object Results {
        |""".stripMargin.split("\n").foreach { logger.info(_) }
   }
 
+
+  def dotInfo (config: Config, alphabet: Alphabet, allStates:ListBuffer[EquivalenceClass]): String = {
+    val info = s"""digraph ${config.dataFile.getAbsolutePath} {
+      |size = \"6,8.5\";
+      |ratio = \"fill\";
+      |node [shape = circle];
+      |node [fontsize = 24];
+      |edge [fontsize = 24];
+      |""".stripMargin
+    val alpha = alphabet.raw
+    val precision = "%.7f"
+
+    val states = allStates.zipWithIndex.foldLeft("") {
+      case (memo, (state, i)) => memo + state.distribution.toArray.zipWithIndex.foldLeft("") {
+        case (memo, (prob, k)) => if (prob <= 0) memo else {
+          memo + s"""$i -> ${k} [label = "${alphabet.raw(k)}: ${"%.7f".format(prob)}"];\n"""
+        }
+      }
+    }
+    // TODO: Remove this and use output stream
+    (info + states + "}\n").split("\n").foreach { logger.debug(_) }
+
+    info + states + "}\n"
+  }
+
   def logEquivalenceClassDetails(allStates:ListBuffer[EquivalenceClass]): Unit = {
     val newMachine = new Machine(allStates)
     logger.info("===FOUND EQUIVALENCE CLASSES ====")
@@ -44,6 +73,8 @@ object Results {
     }
   }
 
+
+  @Deprecated
   def logTreeStats(tree:Tree, allStates:ListBuffer[EquivalenceClass]): Unit = {
     val machine = new Machine(allStates)
 
