@@ -10,7 +10,35 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object Machine {
 
+  def calculateStringProbs (histories:List[Leaf], parseTree:Tree, alphabet: Alphabet, machine: Machine):List[Double] = {
+    val stateMap:Map[EquivalenceClass, Int] = machine.states.toMap[EquivalenceClass, Int]
 
+    histories.map { history => {
+      machine.states.zipWithIndex.foldLeft[Double](0d) {
+        case (totalPerString, (startState:EquivalenceClass, i:Int)) => {
+          var totalPerState = 1d
+          var currentState = startState
+          var stateIndex = i
+          var isNullTrans = false
+
+          history.observed.toCharArray.foreach { c => {
+            if (!isNullTrans) {
+              totalPerState = totalPerState * currentState.distribution(alphabet.map(c))
+
+              val transition: Optional[EquivalenceClass] = machine.transitions(stateIndex).getOrElse(c, Optional.empty())
+
+              isNullTrans = !transition.isPresent
+              if (isNullTrans) totalPerState = 0d
+              else {
+                currentState = transition.get()
+                stateIndex = stateMap(currentState)
+              }
+            }
+          } }
+          totalPerState * machine.distribution(i)
+        } }
+    } }
+  }
 
   def findNthSetTransitions(states:Array[EquivalenceClass],
                             maxDepth: Int,
