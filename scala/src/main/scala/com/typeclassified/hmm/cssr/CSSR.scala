@@ -26,7 +26,7 @@ object CSSR {
     recursion(parseTree, allStates, config.sig, config.lMax)
     logger.debug("Recursion complete...")
 
-    val machine = new Machine(allStates)
+    val machine = new Machine(allStates, parseTree)
 
     Results.metadata(config).split("\n").foreach{logger.info(_)}
     Results.measurements(AlphabetHolder.alphabet, machine).split("\n").foreach{logger.info(_)}

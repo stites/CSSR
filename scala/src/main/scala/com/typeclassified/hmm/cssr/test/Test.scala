@@ -44,10 +44,7 @@ object Test {
     KS.kstwo(s.distribution, s.totalCounts, aXt.distribution, aXt.totalCounts) > sig
   }
 
-  def restrictedHypothesesTesting( S: List[EquivalenceClass],
-                                   s: EquivalenceClass,
-                                   ax: Leaf,
-                                   sig: Double )
+  def restrictedHypothesesTesting( S: List[EquivalenceClass], s: EquivalenceClass, ax: Leaf, sig: Double )
   :Option[EquivalenceClass] = {
     val SStar = S.filter(_ ne s)
     for (sStar <- SStar) {
@@ -59,6 +56,8 @@ object Test {
   }
 
   def move(x: Leaf, from: EquivalenceClass, to: EquivalenceClass): Unit = {
+//    val maybeRootRemoval = from.histories.find(_.observation == 0.toChar)
+//    if (maybeRootRemoval.nonEmpty) from.rmHistory(maybeRootRemoval.get)
     x.changeEquivalenceClass(to)
     to.addHistory(x)
     from.rmHistory(x) // remove history as we have moved to "painting" the parse tree

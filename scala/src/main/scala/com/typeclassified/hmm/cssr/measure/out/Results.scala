@@ -64,7 +64,7 @@ object Results {
 
   @Deprecated
   def logTreeStats(tree:Tree, allStates:ListBuffer[EquivalenceClass]): Unit = {
-    val machine = new Machine(allStates)
+    val machine = new Machine(allStates, tree)
 
     def go (path:String): DenseVector[Double] = {
       val dist = VectorBuilder[Double](tree.alphabet.length, 0d)
