@@ -12,4 +12,6 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass]) {
 
   val frequency = new DenseVector[Double](stateIndexes.map(_.size.toDouble))
   val distribution:DenseVector[Double] = frequency :/ sum(frequency)
+
+
 }

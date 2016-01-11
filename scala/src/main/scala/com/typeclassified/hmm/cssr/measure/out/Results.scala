@@ -10,43 +10,35 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable.ListBuffer
 
 /**
-  * todo: replace logger with output stream
+  * todo: replace strings with output stream
   *       add "change output" configuration.
   */
 object Results {
   protected val logger = Logger(LoggerFactory.getLogger(Results.getClass))
 
-  def logMetadata(config:Config, alphabet: Alphabet, allStates:ListBuffer[EquivalenceClass]): Unit = {
-    val newMachine = new Machine(allStates)
-
-    logger.info("")
-    logger.info("Metadata")
-    logger.info("=======================")
-    config.toString.split("\n").foreach { logger.info(_) }
-
-    logger.info("Results")
-    logger.info("=======================")
-    s"""Alphabet Size: ${alphabet.length}
-       |Number of Inferred States: ${allStates.length}
+  def measurements(alphabet: Alphabet, machine: Machine): String = {
+    s"""Results
+       |=======================
+       |Alphabet Size: ${alphabet.length}
+       |Number of Inferred States: ${machine.states.length}
        |Relative Entropy: ${"TBD"}
        |Relative Entropy Rate: ${"TBD"}
        |Statistical Complexity: ${"TBD"}
        |Entropy Rate: ${"TBD"}
        |Variation: ${"TBD"}
-       |""".stripMargin.split("\n").foreach { logger.info(_) }
+       |""".stripMargin
   }
 
+  def metadata(config: Config):String = "Metadata\n=======================\n" + config.toString
 
   def dotInfo (config: Config, alphabet: Alphabet, allStates:ListBuffer[EquivalenceClass]): String = {
-    val info = s"""digraph ${config.dataFile.getAbsolutePath} {
+    val info = s"""digraph ${config.dataFile.getCanonicalPath} {
       |size = \"6,8.5\";
       |ratio = \"fill\";
       |node [shape = circle];
       |node [fontsize = 24];
       |edge [fontsize = 24];
       |""".stripMargin
-    val alpha = alphabet.raw
-    val precision = "%.7f"
 
     val states = allStates.zipWithIndex.foldLeft("") {
       case (memo, (state, i)) => memo + state.distribution.toArray.zipWithIndex.foldLeft("") {
@@ -55,24 +47,20 @@ object Results {
         }
       }
     }
-    // TODO: Remove this and use output stream
-    (info + states + "}\n").split("\n").foreach { logger.debug(_) }
-
     info + states + "}\n"
   }
 
-  def logEquivalenceClassDetails(allStates:ListBuffer[EquivalenceClass]): Unit = {
-    val newMachine = new Machine(allStates)
-    logger.info("===FOUND EQUIVALENCE CLASSES ====")
-    for ((eqClass, i) <- newMachine.states.view.zipWithIndex) {
-      logger.info(s"equiv class $i:")
-      logger.info(s"          P(state): ${newMachine.distribution(i)}")
-      logger.info(s"  Probability Dist: ${eqClass.distribution.toString()}")
-      logger.info(s"    Frequency Dist: ${eqClass.frequency.toString()}")
-      eqClass.histories.toArray.sortBy(_.observed).foreach(h => logger.info(s"  $h"))
-    }
+  def stateDetails(machine: Machine): String = {
+    machine.states.view.zipWithIndex.map {
+      case (eqClass, i) =>
+        s"""State $i:
+        |        P(state): ${machine.distribution(i)}
+        |Probability Dist: ${eqClass.distribution.toString()}
+        |  Frequency Dist: ${eqClass.frequency.toString()}
+        |""".stripMargin +
+        eqClass.histories.toArray.sortBy(_.observed).map{_.toString}.mkString("\n")
+    }.mkString("\n")
   }
-
 
   @Deprecated
   def logTreeStats(tree:Tree, allStates:ListBuffer[EquivalenceClass]): Unit = {

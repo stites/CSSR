@@ -2,7 +2,7 @@ package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.measure.out.Results
-import com.typeclassified.hmm.cssr.state.EquivalenceClass
+import com.typeclassified.hmm.cssr.state.{Machine, EquivalenceClass}
 import com.typeclassified.hmm.cssr.test.Test
 import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.Logger
@@ -26,9 +26,12 @@ object CSSR {
     recursion(parseTree, allStates, config.sig, config.lMax)
     logger.debug("Recursion complete...")
 
-    Results.logEquivalenceClassDetails(allStates)
-    Results.logMetadata(config, AlphabetHolder.alphabet, allStates)
-    Results.dotInfo(config, AlphabetHolder.alphabet, allStates)
+    val machine = new Machine(allStates)
+
+    Results.metadata(config).split("\n").foreach{logger.info(_)}
+    Results.measurements(AlphabetHolder.alphabet, machine).split("\n").foreach{logger.info(_)}
+    Results.stateDetails(machine).split("\n").foreach{logger.info(_)}
+    Results.dotInfo(config, AlphabetHolder.alphabet, allStates).split("\n").foreach{logger.info(_)}
 
     logger.info("CSSR completed successfully!")
   }
