@@ -15,10 +15,15 @@ object Tree {
     //  Yield successive n-sized windows from the x's. Does not work with a length of 0.
     logger.debug(s"loading data of size ${xs.length}")
     logger.debug("==> running over windows of (size, count): "+(1 to n).map(i => (i, xs.length/i)))
+    var filteredCharacters = 0
 
     for (size <- 1 to n+1) {
       logger.debug(s"loading data windows of size $size.")
-      for (zippedSequence:Seq[(Char, Int)] <- xs.view.zipWithIndex.iterator.filterNot(p => "\r\n".contains(p._1)).sliding(size).withPartial(false)) {
+      for (zippedSequence:Seq[(Char, Int)] <- xs.view.zipWithIndex.iterator.filterNot(p => {
+        // gross, but alas, on a deadline:
+        filteredCharacters += 1
+        "\r\n".contains(p._1)
+      }).sliding(size).withPartial(false)) {
         // TODO: check the following statement to see if we need to rollback below:
         // if n lies in the interesting region between n-1 and n then we also pass the index to the leaf
         // (THIS MAY ONLY BE NEEDED TO AVOID CLUTTER FOR LEAVES <n-1)
@@ -27,8 +32,8 @@ object Tree {
     }
     tree.getDepth(n).foreach{ _.children = ListBuffer() }
     tree.maxLength = n
-    tree.dataSize = xs.length
-    tree.adjustedDataSize =  xs.length - n - 1 // TODO: multi-line
+    tree.dataSize = xs.length - filteredCharacters
+    tree.adjustedDataSize =  xs.length - n - 1 - filteredCharacters
     return tree
   }
 
