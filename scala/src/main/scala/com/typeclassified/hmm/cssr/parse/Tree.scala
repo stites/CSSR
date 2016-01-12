@@ -18,7 +18,7 @@ object Tree {
     var filteredCharacters = 0
     tree.maxLength = n
     tree.dataSize = xs.length - filteredCharacters
-    tree.adjustedDataSize =  xs.length - n - 1 - filteredCharacters
+    tree.adjustedDataSize =  xs.length - (n - 1) - filteredCharacters
 
     for (size <- 1 to n+1) {
       logger.debug(s"loading data windows of size $size.")

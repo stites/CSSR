@@ -49,7 +49,6 @@ object Machine {
 
     inferredDistribution.foreach{ s => println(s.toString) }
 
-    // TODO: ADJUSTED DATA SIZE IS OFF-BY-TWO!!!
     inferredDistribution
       .foldLeft[Double] (0d) { (total, pair) => {
         val (history:Leaf, inferredProbability:Double) = pair
