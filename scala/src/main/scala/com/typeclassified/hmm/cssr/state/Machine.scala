@@ -10,42 +10,37 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object Machine {
 
-  def calculateStringProbs (histories:Array[Leaf], parseTree:Tree, alphabet: Alphabet, machine: Machine):Array[(Leaf, Double)] = {
-    val stateMap:Map[EquivalenceClass, Int] = machine.states.view.zipWithIndex.toMap
+  def calculateInferredDistribution(histories:Array[Leaf], tree: Tree, alphabet: Alphabet, machine: Machine):Array[(Leaf, Double)] = {
+    histories.map{ h => ( h , calculateInferredHistoryProbability(h, tree, alphabet, machine) ) }
+  }
 
-    histories.map { history => {
-      val inferredProbability = machine.states.zipWithIndex.foldLeft[Double](0d) {
-        case (totalPerString, (startState:EquivalenceClass, i:Int)) => {
-          var totalPerState = 1d
-          var currentState = startState
-          var stateIndex = i
-          var isNullTrans = false
+  def calculateInferredHistoryProbability(leaf: Leaf, tree: Tree, alphabet: Alphabet, machine: Machine)
+  : Double = {
+    // FIXME: this would be perfect to replace with a state monad
+    var current:Option[Leaf] = Some(tree.root)
 
-          history.observed.toCharArray.foreach { c => {
-            if (!isNullTrans) {
-              totalPerState = totalPerState * currentState.distribution(alphabet.map(c))
+    leaf.observed.reverse.view.zipWithIndex.foldLeft[Double](1d){
+      (totalPerState, pair) => {
+        val (c, i) = pair
+        val currentState = current.get.currentEquivalenceClass
+        val next = current.get.findChildWithAdditionalHistory(c)
 
-              val transition: Optional[EquivalenceClass] = machine.transitions(stateIndex).getOrElse(c, Optional.empty())
+        println(totalPerState, c, current.get.observed, next.get.observed, leaf.observed)
 
-              isNullTrans = !transition.isPresent
-              if (isNullTrans) totalPerState = 0d
-              else {
-                currentState = transition.get()
-                stateIndex = stateMap(currentState)
-              }
-            }
-          } }
-          totalPerState * machine.distribution(i)
-        } }
-
-      (history, inferredProbability)
-    } }
+        current = next
+        if (!machine.states.contains(next.get.currentEquivalenceClass)) {
+          0d // we let this 0-probability eliminate null states.
+        } else {
+          totalPerState * currentState.distribution(alphabet.map(c))
+        }
+      }
+    }
   }
 
   def calculateVariation (parseTree:Tree, alphabet: Alphabet, machine: Machine) :Double = {
     val histories = parseTree.getDepth(parseTree.maxLength)
 
-    val inferredDistribution:Array[(Leaf, Double)] = calculateStringProbs(histories, parseTree, alphabet, machine )
+    val inferredDistribution:Array[(Leaf, Double)] = calculateInferredDistribution(histories, parseTree, alphabet, machine )
 
     inferredDistribution.foreach{ s => println(s.toString) }
 
@@ -103,5 +98,6 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
   val distribution:DenseVector[Double] = frequency :/ sum(frequency)
 
   val variation:Double = Machine.calculateVariation(tree, tree.alphabet, this)
+  println("variation", variation)
 }
 
