@@ -16,6 +16,9 @@ object Tree {
     logger.debug(s"loading data of size ${xs.length}")
     logger.debug("==> running over windows of (size, count): "+(1 to n).map(i => (i, xs.length/i)))
     var filteredCharacters = 0
+    tree.maxLength = n
+    tree.dataSize = xs.length - filteredCharacters
+    tree.adjustedDataSize =  xs.length - n - 1 - filteredCharacters
 
     for (size <- 1 to n+1) {
       logger.debug(s"loading data windows of size $size.")
@@ -31,9 +34,6 @@ object Tree {
       }
     }
     tree.getDepth(n).foreach{ _.children = ListBuffer() }
-    tree.maxLength = n
-    tree.dataSize = xs.length - filteredCharacters
-    tree.adjustedDataSize =  xs.length - n - 1 - filteredCharacters
     return tree
   }
 

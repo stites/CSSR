@@ -10,11 +10,11 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object Machine {
 
-  def calculateStringProbs (histories:List[Leaf], parseTree:Tree, alphabet: Alphabet, machine: Machine):List[Double] = {
-    val stateMap:Map[EquivalenceClass, Int] = machine.states.toMap[EquivalenceClass, Int]
+  def calculateStringProbs (histories:Array[Leaf], parseTree:Tree, alphabet: Alphabet, machine: Machine):Array[(Leaf, Double)] = {
+    val stateMap:Map[EquivalenceClass, Int] = machine.states.view.zipWithIndex.toMap
 
     histories.map { history => {
-      machine.states.zipWithIndex.foldLeft[Double](0d) {
+      val inferredProbability = machine.states.zipWithIndex.foldLeft[Double](0d) {
         case (totalPerString, (startState:EquivalenceClass, i:Int)) => {
           var totalPerState = 1d
           var currentState = startState
@@ -37,7 +37,25 @@ object Machine {
           } }
           totalPerState * machine.distribution(i)
         } }
+
+      (history, inferredProbability)
     } }
+  }
+
+  def calculateVariation (parseTree:Tree, alphabet: Alphabet, machine: Machine) :Double = {
+    val histories = parseTree.getDepth(parseTree.maxLength)
+
+    val inferredDistribution:Array[(Leaf, Double)] = calculateStringProbs(histories, parseTree, alphabet, machine )
+
+    inferredDistribution.foreach{ s => println(s.toString) }
+
+    // TODO: ADJUSTED DATA SIZE IS OFF-BY-TWO!!!
+    inferredDistribution
+      .foldLeft[Double] (0d) { (total, pair) => {
+        val (history:Leaf, inferredProbability:Double) = pair
+        val historyProbability:Double = sum(history.frequency / parseTree.adjustedDataSize)
+        total + math.abs(historyProbability - inferredProbability)
+      } }
   }
 
   def findNthSetTransitions(states:Array[EquivalenceClass],
@@ -82,8 +100,9 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
   val statePaths:Array[Array[String]] = states.map{_.histories.map(_.observed).toArray}
   val fullStates:Map[Optional[EquivalenceClass], Array[Leaf]] = Machine.allHistoriesByState(tree, states)
   val transitions:Array[Map[Char, Optional[EquivalenceClass]]] = Machine.findNthSetTransitions(states, tree.maxLength, fullStates)
-
   val frequency:DenseVector[Double] = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
   val distribution:DenseVector[Double] = frequency :/ sum(frequency)
+
+  val variation:Double = Machine.calculateVariation(tree, tree.alphabet, this)
 }
 
