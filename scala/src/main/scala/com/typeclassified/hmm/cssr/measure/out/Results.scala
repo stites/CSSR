@@ -21,11 +21,11 @@ object Results {
        |=======================
        |Alphabet Size: ${alphabet.length}
        |Number of Inferred States: ${machine.states.length}
-       |Relative Entropy: ${"TBD"}
-       |Relative Entropy Rate: ${"TBD"}
-       |Statistical Complexity: ${"TBD"}
-       |Entropy Rate: ${"TBD"}
-       |Variation: ${"TBD"}
+       |Relative Entropy: ${machine.relativeEntropy}
+       |Relative Entropy Rate: ${machine.relativeEntropyRate}
+       |Statistical Complexity: ${machine.statisticalComplexity}
+       |Entropy Rate: ${machine.entropyRate}
+       |Variation: ${machine.variation}
        |""".stripMargin
   }
 
