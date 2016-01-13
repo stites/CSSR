@@ -88,10 +88,28 @@ object Machine {
   def calculateVariation (inferredDistribution:Array[(Leaf, Double)], adjustedDataSize:Double): Double = {
     inferredDistribution
       .foldLeft[Double] (0d) { (total, pair) => {
-        val (history:Leaf, inferredProbability:Double) = pair
-        val historyProbability:Double = sum(history.frequency / adjustedDataSize)
-        total + math.abs(historyProbability - inferredProbability)
-      } }
+      val (history:Leaf, inferredProbability:Double) = pair
+      val historyProbability:Double = sum(history.frequency / adjustedDataSize)
+      total + math.abs(historyProbability - inferredProbability)
+    } }
+  }
+
+  def calculateRelativeEntropy(inferredDistribution:Array[(Leaf, Double)], adjustedDataSize:Double):Double = {
+    inferredDistribution.foreach(println(_))
+
+    val almostRelEntropy:Double = inferredDistribution.foldLeft(0d) {
+      case (relEntropy, (leaf, inferredProb)) => {
+        val observedFrequency = leaf.totalCounts / adjustedDataSize
+
+        if (observedFrequency > 0){
+          relEntropy + ( observedFrequency * (math.log(observedFrequency) - math.log(inferredProb)))
+        } else {
+          relEntropy
+        }
+      }
+    }
+
+    almostRelEntropy / math.log(2)
   }
 
   def findNthSetTransitions(states:Array[EquivalenceClass], maxDepth: Int, alphabet: Alphabet, fullStates:Map[Option[EquivalenceClass], Array[Leaf]])
@@ -154,7 +172,7 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
   val inferredDistribution:Array[(Leaf, Double)] = Machine.calculateInferredDistribution(tree, this)
 
   val variation:Double = Machine.calculateVariation(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropy = "TBD"
+  val relativeEntropy = Machine.calculateRelativeEntropy(inferredDistribution, tree.adjustedDataSize)
   val relativeEntropyRate = "TBD"
   val statisticalComplexity = "TBD"
   val entropyRate = "TBD"
