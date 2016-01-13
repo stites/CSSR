@@ -11,8 +11,10 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 object Machine {
   protected val logger = Logger(LoggerFactory.getLogger(Machine.getClass))
 
-  def calculateInferredDistribution(histories:Array[Leaf], tree: Tree, alphabet: Alphabet, machine: Machine):Array[(Leaf, Double)] = {
-    histories.map{ h => ( h , calculateInferredHistoryProbability(h, tree, alphabet, machine) ) }
+  def calculateInferredDistribution(tree: Tree, machine: Machine):Array[(Leaf, Double)] = {
+    tree
+      .getDepth(tree.maxLength)
+      .map { h => (h , calculateInferredHistoryProbability(h, tree, tree.alphabet, machine) ) }
   }
 
   def calculateInferredHistoryProbability(leaf: Leaf, tree: Tree, alphabet: Alphabet, machine: Machine): Double = {
@@ -83,17 +85,11 @@ object Machine {
     */
   }
 
-  def calculateVariation (parseTree:Tree, alphabet: Alphabet, machine: Machine) :Double = {
-    val histories = parseTree.getDepth(parseTree.maxLength)
-
-    val inferredDistribution:Array[(Leaf, Double)] = calculateInferredDistribution(histories, parseTree, alphabet, machine )
-
-    inferredDistribution.foreach{ s => println(s.toString) }
-
+  def calculateVariation (inferredDistribution:Array[(Leaf, Double)], adjustedDataSize:Double): Double = {
     inferredDistribution
       .foldLeft[Double] (0d) { (total, pair) => {
         val (history:Leaf, inferredProbability:Double) = pair
-        val historyProbability:Double = sum(history.frequency / parseTree.adjustedDataSize)
+        val historyProbability:Double = sum(history.frequency / adjustedDataSize)
         total + math.abs(historyProbability - inferredProbability)
       } }
   }
@@ -145,15 +141,19 @@ object Machine {
 }
 
 class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
-  val states:Array[EquivalenceClass] = equivalenceClasses.toArray
-  val stateIndexes:Array[Set[Int]] = states.map{_.histories.flatMap{_.locations.keySet}}
-  val statePaths:Array[Array[String]] = states.map{_.histories.map(_.observed).toArray}
+  // initialization
+  val states:Array[EquivalenceClass]             = equivalenceClasses.toArray
+  val stateIndexes:Array[Set[Int]]               = states.map{_.histories.flatMap{_.locations.keySet}}
+  val statePaths:Array[Array[String]]            = states.map{_.histories.map{_.observed}.toArray}
+  val frequency:DenseVector[Double]              = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
+  val distribution:DenseVector[Double]           = frequency :/ sum(frequency)
   val fullStates:Map[Option[EquivalenceClass], Array[Leaf]] = Machine.allHistoriesByState(tree, states)
-  val transitionsByStateIdx:Array[Map[Char, Option[Int]]] = Machine.findNthSetTransitions(states, tree.maxLength, tree.alphabet, fullStates)
-  val frequency:DenseVector[Double] = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
-  val distribution:DenseVector[Double] = frequency :/ sum(frequency)
+  val transitionsByStateIdx:Array[Map[Char, Option[Int]]]   = Machine.findNthSetTransitions(states, tree.maxLength, tree.alphabet, fullStates)
 
-  val variation:Double = Machine.calculateVariation(tree, tree.alphabet, this)
+  // Requires context of the machine itself -> not ideal, but logical
+  val inferredDistribution:Array[(Leaf, Double)] = Machine.calculateInferredDistribution(tree, this)
+
+  val variation:Double = Machine.calculateVariation(inferredDistribution, tree.adjustedDataSize)
   val relativeEntropy = "TBD"
   val relativeEntropyRate = "TBD"
   val statisticalComplexity = "TBD"
