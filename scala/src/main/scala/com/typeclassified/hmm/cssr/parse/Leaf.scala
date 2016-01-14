@@ -34,7 +34,7 @@ class Leaf(observedSequence:String,
 
   var children: ListBuffer[Leaf] = ListBuffer()
 
-  def printParent (x:Option[Leaf] = Some(this), acc:String = "") :String = {
+  def printParent (x:Option[Leaf] = Option(this), acc:String = "") :String = {
     if (x.isEmpty) acc else printParent(x.get.parent, acc + x.get.observation)
   }
 
@@ -71,7 +71,7 @@ class Leaf(observedSequence:String,
     val maybeNext = findChildWithAdditionalHistory(xNext)
     var next:Leaf = null
     if (maybeNext.isEmpty) {
-      next = new Leaf(xNext+:observed, parseTree, currentEquivalenceClass, Some(this))
+      next = new Leaf(xNext+:observed, parseTree, currentEquivalenceClass, Option(this))
       children += next
     } else {
       next = maybeNext.get
@@ -93,7 +93,7 @@ class Leaf(observedSequence:String,
 
   def getStateOnTransitionTo(b:Char):Option[EquivalenceClass] = {
     val optionalLeaf = parseTree.navigateHistory((b + observed).toList)
-    if (optionalLeaf.nonEmpty) Some(optionalLeaf.get.currentEquivalenceClass) else None
+    if (optionalLeaf.nonEmpty) Option(optionalLeaf.get.currentEquivalenceClass) else None
   }
 
   override def toString: String = {

@@ -175,7 +175,7 @@ object Machine {
         inferredRatioMemo += inferredRatio
       } else {
         // TODO: fill this out formally, later
-        logger.error("Something disastrous just happened")
+        logger.error("Optionthing disastrous just happened")
       }
 
       relEntRateAlpha = histFreqByAlpha *  math.log(histFreqByAlpha / inferredRatio)
@@ -184,61 +184,24 @@ object Machine {
     (inferredRatio, relEntRateAlpha)
   }
 
-  def relativeEntropyRate(dist:InferredDistribution, adjustedDataSize:Double, alphabet: Alphabet):Double = {
+  def relativeEntropyRate(dist:InferredDistribution, adjustedDataSize:Double, tree: Tree, machine: Machine):Double = {
     logger.debug("Relative Entropy Rate")
     logger.debug("===========================")
 
     val relativeEntropyRate:Double = dist.foldLeft(0d) {
       case (partialRelEntRate, (leaf, inferredProb)) =>
-        val relEntForHist = relativeEntropyRateForHistory(alphabet, adjustedDataSize, leaf, inferredProb)
-        /*
-          int *counts = list[index]->getCounts();
-  double histFrequency = 0;
-  double relEntRateAlpha = 0;
-  double relEntRateHist = 0;
-  double accumulatedInferredRatio = 0;
-  double dataDist;
-  double stringProb;
-  char *history;
-  char alphaElem;
-
-  for (int j = 0; j < alphaSize; j++) {
-    histFrequency += ((double) counts[j]);
-  }
-  //for each alpha value/symbol
-  for (int k = 0; k < alphaSize; k++) {
-    //get distribution for data
-    dataDist = ((double) counts[k]) / histFrequency;
-    stringProb = stringProbs[index];
-    history = list[index]->getString();
-    alphaElem = alpha[k];
-    relEntRateAlpha = CalcRelEntRateAlpha(stringProb, history, accumulatedInferredRatio, dataDist, alphaElem,
-                                          hashtable);
-    relEntRateHist += relEntRateAlpha;
-  }
-
-  //correct for underflow error
-  if (relEntRateHist < 0) {
-    relEntRateHist = 0;
-  }
-
-  histFrequency = (double) (histFrequency / ((double) adjustedDataSize));
-  return histFrequency * relEntRateHist;
-         */
-        partialRelEntRate + relEntForHist
+        partialRelEntRate + relativeEntropyRateForHistory(adjustedDataSize, leaf, inferredProb, tree, machine)
     }
 
     relativeEntropyRate
   }
-
-//  def calculateRelativeEntropyRateForHistory(history:Leaf, dist:InferredDistribution, alphabet: Alphabet, )
 
   def findNthSetTransitions(states:Array[EquivalenceClass], maxDepth: Int, alphabet: Alphabet, fullStates:StateToAllHistories)
   :StateTransitionMap = {
 
     val transitions = states.map {
       equivalenceClass => {
-        val startHistories = fullStates(Some(equivalenceClass)).filter(_.observed.length == maxDepth-1)
+        val startHistories = fullStates(Option(equivalenceClass)).filter(_.observed.length == maxDepth-1)
         val endHistories = startHistories.flatMap(_.children)
         endHistories.groupBy(_.observation)
           .mapValues[Option[Int]] {
@@ -247,7 +210,7 @@ object Machine {
             if (validNextStates.size != 1) {
               None
             } else {
-              Some(states.indexOf(validNextStates.head))
+              Option(states.indexOf(validNextStates.head))
             }
           } }
       } }
@@ -268,9 +231,9 @@ object Machine {
       .foldLeft(mutable.Map[Option[EquivalenceClass], ArrayBuffer[Leaf]]()){
         (map, leaf) => {
           val eq = leaf.currentEquivalenceClass
-          if (map.keySet.contains(Some(eq))) map(Some(eq)) += leaf
+          if (map.keySet.contains(Option(eq))) map(Option(eq)) += leaf
           else if (!states.contains(eq)) map(None) += leaf
-          else map(Some(eq)) = ArrayBuffer(leaf)
+          else map(Option(eq)) = ArrayBuffer(leaf)
           map
         }
       }.toMap.mapValues(_.toArray)
@@ -294,7 +257,7 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
 
   val variation:Double = M.variation(inferredDistribution, tree.adjustedDataSize)
   val relativeEntropy = M.relativeEntropy(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropyRate = M.relativeEntropyRate(inferredDistribution, tree.adjustedDataSize, tree.alphabet)
+  val relativeEntropyRate = M.relativeEntropyRate(inferredDistribution, tree.adjustedDataSize, tree, this)
   val statisticalComplexity = "TBD"
   val entropyRate = "TBD"
 }

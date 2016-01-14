@@ -30,7 +30,7 @@ object Tree {
         // TODO: check the following statement to see if we need to rollback below:
         // if n lies in the interesting region between n-1 and n then we also pass the index to the leaf
         // (THIS MAY ONLY BE NEEDED TO AVOID CLUTTER FOR LEAVES <n-1)
-        loadHistory(tree, zippedSequence.map(_._1), Some(zippedSequence.last._2))
+        loadHistory(tree, zippedSequence.map(_._1), Option(zippedSequence.last._2))
       }
     }
     tree.getDepth(n).foreach{ _.children = ListBuffer() }
