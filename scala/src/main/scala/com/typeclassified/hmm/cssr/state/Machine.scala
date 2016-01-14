@@ -22,27 +22,28 @@ object Machine {
   def inferredDistribution(tree: Tree, machine: Machine):InferredDistribution = {
     val inferred = tree
       .getDepth(tree.maxLength)
-      .map { h => (h , inferredHistoryProbability(h, tree, tree.alphabet, machine) ) }
+      .map { h => (h , inferredHistoryProbability(h.observed, tree, tree.alphabet, machine) ) }
 
     logger.debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
     logger.debug(s"inferred distribution size: ${inferred.length}")
+    inferred.map{ case (l, p) => (l.observed, p) }.foreach{ i => println(i) }
 
     inferred
   }
 
-  def inferredHistoryProbability(leaf: Leaf, tree: Tree, alphabet: Alphabet, machine: Machine): Double = {
+  def inferredHistoryProbability(history:String, tree: Tree, alphabet: Alphabet, machine: Machine): Double = {
     // FIXME: this would be perfect to replace with a state monad
     logger.info("Generating Inferred probabilities from State Machine")
 
     val totalPerString = machine.states.view.zipWithIndex.map {
       case (state, i) =>
-        logger.debug(s"${leaf.observed} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
+        logger.debug(s"${history} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
         val frequency = state.distribution
         var currentStateIdx = i
         var isNullState = false
 
 
-        val totalPerState = leaf.observed
+        val totalPerState = history
           // TODO: IF WE ARE, INDEED, LOADING THE PARSE TREE INCORRECTLY THEN WE MUST REMOVE THIS LINE
           .reverse
           .view.zipWithIndex
@@ -146,15 +147,84 @@ object Machine {
 
     relativeEntropy
   }
+  // the frequency of occurence of the history with that particular alpha symbol
+  protected def relativeEntropyRateForHistory(adjustedDataSize:Double, history: Leaf, inferredProb:Double, tree: Tree, machine: Machine):Double = {
+    val relEntRateHistTotal:Double = tree.alphabet.raw.foldLeft(0d){
+      (relEntRateHist, alpha) => {
+        val histFreqByAlpha = history.frequency(tree.alphabet.map(alpha)) / history.totalCounts
+        val (accumulatedInferredRatio, relEntRateAlpha) = relativeEntropyRateForHistoryByAlphabet(history, inferredProb, tree, machine, histFreqByAlpha, alpha)
+        relEntRateHist + relEntRateAlpha
+      }
+    }
 
-  def relativeEntropyRate(dist:InferredDistribution, adjustedDataSize:Double):Double = {
+    val histProbability:Double = history.totalCounts / adjustedDataSize
+
+    if (relEntRateHistTotal < 0) 0 else relEntRateHistTotal / histProbability
+  }
+
+  protected def relativeEntropyRateForHistoryByAlphabet(history:Leaf, inferredProb:Double, tree:Tree, machine: Machine, histFreqByAlpha:Double, alpha:Char)
+  :(Double, Double) = {
+    val childStringProb = inferredHistoryProbability(alpha + history.observed,  tree, tree.alphabet, machine)
+    var inferredRatioMemo:Double = 0
+    var inferredRatio:Double = 0
+    var relEntRateAlpha:Double = 0
+
+    if (histFreqByAlpha > 0) {
+      if (inferredProb > 0) {
+        inferredRatio = childStringProb / inferredProb
+        inferredRatioMemo += inferredRatio
+      } else {
+        // TODO: fill this out formally, later
+        logger.error("Something disastrous just happened")
+      }
+
+      relEntRateAlpha = histFreqByAlpha *  math.log(histFreqByAlpha / inferredRatio)
+    }
+
+    (inferredRatio, relEntRateAlpha)
+  }
+
+  def relativeEntropyRate(dist:InferredDistribution, adjustedDataSize:Double, alphabet: Alphabet):Double = {
     logger.debug("Relative Entropy Rate")
     logger.debug("===========================")
 
     val relativeEntropyRate:Double = dist.foldLeft(0d) {
       case (partialRelEntRate, (leaf, inferredProb)) =>
-//        val relEntForHist = calculateRelativeEntropyRateForHistory(stringProbs, list, hashtable, i, alpha, alphaSize, adjustedDataSize);
-        val relEntForHist = 0d
+        val relEntForHist = relativeEntropyRateForHistory(alphabet, adjustedDataSize, leaf, inferredProb)
+        /*
+          int *counts = list[index]->getCounts();
+  double histFrequency = 0;
+  double relEntRateAlpha = 0;
+  double relEntRateHist = 0;
+  double accumulatedInferredRatio = 0;
+  double dataDist;
+  double stringProb;
+  char *history;
+  char alphaElem;
+
+  for (int j = 0; j < alphaSize; j++) {
+    histFrequency += ((double) counts[j]);
+  }
+  //for each alpha value/symbol
+  for (int k = 0; k < alphaSize; k++) {
+    //get distribution for data
+    dataDist = ((double) counts[k]) / histFrequency;
+    stringProb = stringProbs[index];
+    history = list[index]->getString();
+    alphaElem = alpha[k];
+    relEntRateAlpha = CalcRelEntRateAlpha(stringProb, history, accumulatedInferredRatio, dataDist, alphaElem,
+                                          hashtable);
+    relEntRateHist += relEntRateAlpha;
+  }
+
+  //correct for underflow error
+  if (relEntRateHist < 0) {
+    relEntRateHist = 0;
+  }
+
+  histFrequency = (double) (histFrequency / ((double) adjustedDataSize));
+  return histFrequency * relEntRateHist;
+         */
         partialRelEntRate + relEntForHist
     }
 
@@ -224,7 +294,7 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
 
   val variation:Double = M.variation(inferredDistribution, tree.adjustedDataSize)
   val relativeEntropy = M.relativeEntropy(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropyRate = M.relativeEntropyRate(inferredDistribution, tree.adjustedDataSize)
+  val relativeEntropyRate = M.relativeEntropyRate(inferredDistribution, tree.adjustedDataSize, tree.alphabet)
   val statisticalComplexity = "TBD"
   val entropyRate = "TBD"
 }
