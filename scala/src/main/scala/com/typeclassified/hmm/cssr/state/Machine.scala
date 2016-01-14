@@ -1,7 +1,7 @@
 package com.typeclassified.hmm.cssr.state
 
 import breeze.linalg.{sum, DenseVector}
-import com.typeclassified.hmm.cssr.measure.{EntropyRate, RelativeEntropyRate, RelativeEntropy, Variation}
+import com.typeclassified.hmm.cssr.measure._
 import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
 import com.typeclassified.hmm.cssr.state.{Machine => M}
 import com.typeclassified.hmm.cssr.state.Machine.{StateTransitionMap, InferredDistribution}
@@ -165,10 +165,10 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
   // Requires context of the machine itself -> not ideal, but logical
   val inferredDistribution:M.InferredDistribution = M.inferredDistribution(tree, tree.maxLength, this)
 
-  val variation:Double = Variation.variation(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropy = RelativeEntropy.relativeEntropy(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropyRate = RelativeEntropyRate.relativeEntropyRate(inferredDistribution, tree, this)
-  val statisticalComplexity = "TBD"
-  val entropyRate = EntropyRate.entropyRate(this)
+  val variation:Double             = Variation.variation(inferredDistribution, tree.adjustedDataSize)
+  val entropyRate:Double           = EntropyRate.entropyRate(this)
+  val relativeEntropy:Double       = RelativeEntropy.relativeEntropy(inferredDistribution, tree.adjustedDataSize)
+  val relativeEntropyRate:Double   = RelativeEntropyRate.relativeEntropyRate(inferredDistribution, tree, this)
+  val statisticalComplexity:Double = StatisticalComplexity.cMu(distribution)
 }
 
