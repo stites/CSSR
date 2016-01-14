@@ -22,13 +22,18 @@ object Machine {
     logger.info("Generating Inferred probabilities from State Machine")
 
     val totalPerString = machine.states.view.zipWithIndex.map {
-      case (state, i) => {
+      case (state, i) =>
         logger.debug(s"${leaf.observed} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
         val frequency = state.distribution
         var currentStateIdx = i
         var isNullState = false
 
-        val totalPerState = leaf.observed.reverse.view.zipWithIndex.foldLeft[Double](1d){
+
+        val totalPerState = leaf.observed
+          // TODO: IF WE ARE, INDEED, LOADING THE PARSE TREE INCORRECTLY THEN WE MUST REMOVE THIS LINE
+          .reverse
+          .view.zipWithIndex
+          .foldLeft[Double](1d){
           (totalPerState, pair) => {
             val (c, i) = pair
             val currentState = machine.states(currentStateIdx)
@@ -43,12 +48,12 @@ object Machine {
               val totalPerStateCached = totalPerState * currentState.distribution(alphabet.map(c))
 
               logger.debug(s"""{
-                |freq at current state: ${currentState.distribution(alphabetIdx)},
-                |j: $i, symbol: $c@$alphabetIdx,
-                |totalPerState: $totalPerState,
-                |totalPerStateCached: $totalPerStateCached,
-                |transitioning to: ${transitionStateIdx.get},
-                |}""".stripMargin.replace('\n', ' '))
+                               |freq at current state: ${currentState.distribution(alphabetIdx)},
+                               |j: $i, symbol: $c@$alphabetIdx,
+                               |totalPerState: $totalPerState,
+                               |totalPerStateCached: $totalPerStateCached,
+                               |transitioning to: ${transitionStateIdx.get},
+                               |}""".stripMargin.replace('\n', ' '))
 
               totalPerStateCached
             }
@@ -56,7 +61,6 @@ object Machine {
         }
         logger.debug(s"final totalPerState: $totalPerState")
         machine.distribution(i) * totalPerState
-      }
     }.sum[Double]
 
     logger.debug(s"Final Frequency for History: $totalPerString")
@@ -95,18 +99,31 @@ object Machine {
   }
 
   def calculateRelativeEntropy(inferredDistribution:Array[(Leaf, Double)], adjustedDataSize:Double):Double = {
-    inferredDistribution.foreach(println(_))
+    logger.debug("Relative Entropy")
+    logger.debug("===========================")
 
+    // FIXME : this _should not be <0_ however calculations provide the contrary
+    // when the generated, inferred probability is greater than the observed one - we find the added log-ratio is < 0
+    // currently, we have too many of that for the even process. This also begs the question: should there _ever_ be
+    // a calculation where the log-ratio is < 0, since it was permissible in the C++. It may be that this is not the case
+    // since I believe we are using K-L distribution for conditional, empirical distributions (yes?)
     val almostRelEntropy:Double = inferredDistribution.foldLeft(0d) {
-      case (relEntropy, (leaf, inferredProb)) => {
+      case (relEntropy, (leaf, inferredProb)) =>
         val observedFrequency = leaf.totalCounts / adjustedDataSize
+        logger.debug(s"${leaf.toString}")
+        logger.debug(s"historyProb: $observedFrequency")
 
         if (observedFrequency > 0){
-          relEntropy + ( observedFrequency * (math.log(observedFrequency) - math.log(inferredProb)))
+          val logRatio = math.log(observedFrequency) - math.log(inferredProb)
+          val newRel = relEntropy + observedFrequency * logRatio
+          logger.debug(s"inferredProb: $inferredProb")
+          logger.debug(s"logRatio:$logRatio")
+          logger.debug(s"relEntropy:$newRel")
+          newRel
         } else {
+          logger.debug(s"NO AGGREGATION! dataProb: $observedFrequency")
           relEntropy
         }
-      }
     }
 
     almostRelEntropy / math.log(2)
