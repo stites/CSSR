@@ -23,11 +23,11 @@ object RelativeEntropy {
     *    d= \sum_{k} p_k * \log_2 * { p_k \over q_k }
     * \end{equation}
     *
-    * @param dist
+    * @param dist the inferred distribution of the *histories of max length*.
     * @param adjustedDataSize
     * @return
     */
-  def kullbackLeiblerDistance(dist:InferredDistribution, adjustedDataSize:Double):Double = {
+  def relativeEntropy(dist:InferredDistribution, adjustedDataSize:Double):Double = {
     logger.debug("Relative Entropy")
     logger.debug("===========================")
 
@@ -38,29 +38,29 @@ object RelativeEntropy {
     // since I believe we are using K-L distribution for conditional, empirical distributions (yes?)
     val relativeEntropy:Double = dist.foldLeft(0d) {
       case (incrementalRelEnt, (leaf, inferredProb)) =>
-        val observedFrequency = leaf.totalCounts / adjustedDataSize
+        val observedProb = leaf.totalCounts / adjustedDataSize
         logger.debug(s"${leaf.toString}")
-        logger.debug(s"historyProb: $observedFrequency")
+        logger.debug(s"historyProb: $observedProb")
 
         // it seems to me that we should be checking if the inferred probability is > 0.
         // By virtue of this: should the conditional be flipped? Note: this makes the final rel entropy non-negative
         //        if (inferredProb > 0){
-        //          val logRatio = math.log(inferredProb / observedFrequency) // note that math.log in scala is the natural log
+        //          val logRatio = math.log(inferredProb / observedProb) // note that math.log in scala is the natural log
         //          val cacheRE = incrementalRelEnt + inferredProb * logRatio
-        if (observedFrequency > 0){
-          val logRatio = math.log(observedFrequency / inferredProb) // note that math.log in scala is the natural log
-          val cacheRE = incrementalRelEnt + observedFrequency * logRatio
+        if (observedProb > 0){
+          val logRatio = math.log(observedProb / inferredProb) // note that math.log in scala is the natural log
+          val cacheRE = incrementalRelEnt + (observedProb * logRatio)
           logger.debug(s"inferredProb: $inferredProb")
           logger.debug(s"logRatio:$logRatio")
           logger.debug(s"incrementalRelEnt:$cacheRE")
           cacheRE
         } else {
           //          logger.debug(s"NO AGGREGATION! dataProb: $inferredProb")
-          logger.debug(s"NO AGGREGATION! dataProb: $observedFrequency")
+          logger.debug(s"NO AGGREGATION! dataProb: $observedProb")
           incrementalRelEnt
         }
     }
-    relativeEntropy
+    if (relativeEntropy < 0) 0 else relativeEntropy
   }
 
 }

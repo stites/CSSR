@@ -166,7 +166,7 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
   val inferredDistribution:M.InferredDistribution = M.inferredDistribution(tree, tree.maxLength, this)
 
   val variation:Double = Variation.variation(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropy = RelativeEntropy.kullbackLeiblerDistance(inferredDistribution, tree.adjustedDataSize)
+  val relativeEntropy = RelativeEntropy.relativeEntropy(inferredDistribution, tree.adjustedDataSize)
   val relativeEntropyRate = RelativeEntropyRate.relativeEntropyRate(inferredDistribution, tree, this)
   val statisticalComplexity = "TBD"
   val entropyRate = "TBD"
