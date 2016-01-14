@@ -1,6 +1,7 @@
 package com.typeclassified.hmm.cssr.state
 
 import breeze.linalg.{sum, DenseVector}
+import com.typeclassified.hmm.cssr.measure.{RelativeEntropyRate, RelativeEntropy, Variation}
 import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
 import com.typeclassified.hmm.cssr.state.{Machine => M}
 import com.typeclassified.hmm.cssr.state.Machine.{StateTransitionMap, InferredDistribution}
@@ -19,9 +20,9 @@ object Machine {
 
   type StateToAllHistories = Map[Option[EquivalenceClass], Array[Leaf]]
 
-  def inferredDistribution(tree: Tree, machine: Machine):InferredDistribution = {
+  def inferredDistribution(tree: Tree, depth:Int, machine: Machine):InferredDistribution = {
     val inferred = tree
-      .getDepth(tree.maxLength)
+      .getDepth(depth)
       .map { h => (h , inferredHistoryProbability(h.observed, tree, tree.alphabet, machine) ) }
 
     logger.debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
@@ -33,11 +34,11 @@ object Machine {
 
   def inferredHistoryProbability(history:String, tree: Tree, alphabet: Alphabet, machine: Machine): Double = {
     // FIXME: this would be perfect to replace with a state monad
-    logger.info("Generating Inferred probabilities from State Machine")
+//    logger.info("Generating Inferred probabilities from State Machine")
 
     val totalPerString = machine.states.view.zipWithIndex.map {
       case (state, i) =>
-        logger.debug(s"${history} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
+//        logger.debug(s"${history} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
         val frequency = state.distribution
         var currentStateIdx = i
         var isNullState = false
@@ -61,6 +62,7 @@ object Machine {
               currentStateIdx = transitionStateIdx.get
               val totalPerStateCached = totalPerState * currentState.distribution(alphabet.map(c))
 
+              /*
               logger.debug(s"""{
                                |freq at current state: ${currentState.distribution(alphabetIdx)},
                                |j: $i, symbol: $c@$alphabetIdx,
@@ -68,16 +70,17 @@ object Machine {
                                |totalPerStateCached: $totalPerStateCached,
                                |transitioning to: ${transitionStateIdx.get},
                                |}""".stripMargin.replace('\n', ' '))
+              */
 
               totalPerStateCached
             }
           }
         }
-        logger.debug(s"final totalPerState: $totalPerState")
+//        logger.debug(s"final totalPerState: $totalPerState")
         machine.distribution(i) * totalPerState
     }.sum[Double]
 
-    logger.debug(s"Final Frequency for History: $totalPerString")
+    logger.debug(s"Final Probability for History: $totalPerString")
     totalPerString
 
     /*
@@ -101,99 +104,6 @@ object Machine {
       }
     }
     */
-  }
-
-  def variation(dist:InferredDistribution, adjustedDataSize:Double): Double = {
-    dist.foldLeft[Double] (0d) { (total, pair) => {
-      val (history:Leaf, inferredProbability:Double) = pair
-      val historyProbability:Double = sum(history.frequency / adjustedDataSize)
-      total + math.abs(historyProbability - inferredProbability)
-    } }
-  }
-
-  def relativeEntropy(dist:InferredDistribution, adjustedDataSize:Double):Double = {
-    logger.debug("Relative Entropy")
-    logger.debug("===========================")
-
-    // FIXME : this _should not be <0_ however calculations provide the contrary
-    // when the generated, inferred probability is greater than the observed one - we find the added log-ratio is < 0
-    // currently, we have too many of that for the even process. This also begs the question: should there _ever_ be
-    // a calculation where the log-ratio is < 0, since it was permissible in the C++. It may be that this is not the case
-    // since I believe we are using K-L distribution for conditional, empirical distributions (yes?)
-    val relativeEntropy:Double = dist.foldLeft(0d) {
-      case (incrementalRelEnt, (leaf, inferredProb)) =>
-        val observedFrequency = leaf.totalCounts / adjustedDataSize
-        logger.debug(s"${leaf.toString}")
-        logger.debug(s"historyProb: $observedFrequency")
-
-        // it seems to me that we should be checking if the inferred probability is > 0.
-        // By virtue of this: should the conditional be flipped? Note: this makes the final rel entropy non-negative
-//        if (inferredProb > 0){
-//          val logRatio = math.log(inferredProb / observedFrequency) // note that math.log in scala is the natural log
-//          val cacheRE = incrementalRelEnt + inferredProb * logRatio
-        if (observedFrequency > 0){
-          val logRatio = math.log(observedFrequency / inferredProb) // note that math.log in scala is the natural log
-          val cacheRE = incrementalRelEnt + observedFrequency * logRatio
-          logger.debug(s"inferredProb: $inferredProb")
-          logger.debug(s"logRatio:$logRatio")
-          logger.debug(s"incrementalRelEnt:$cacheRE")
-          cacheRE
-        } else {
-//          logger.debug(s"NO AGGREGATION! dataProb: $inferredProb")
-          logger.debug(s"NO AGGREGATION! dataProb: $observedFrequency")
-          incrementalRelEnt
-        }
-    }
-
-    relativeEntropy
-  }
-  // the frequency of occurence of the history with that particular alpha symbol
-  protected def relativeEntropyRateForHistory(adjustedDataSize:Double, history: Leaf, inferredProb:Double, tree: Tree, machine: Machine):Double = {
-    val relEntRateHistTotal:Double = tree.alphabet.raw.foldLeft(0d){
-      (relEntRateHist, alpha) => {
-        val histFreqByAlpha = history.frequency(tree.alphabet.map(alpha)) / history.totalCounts
-        val (accumulatedInferredRatio, relEntRateAlpha) = relativeEntropyRateForHistoryByAlphabet(history, inferredProb, tree, machine, histFreqByAlpha, alpha)
-        relEntRateHist + relEntRateAlpha
-      }
-    }
-
-    val histProbability:Double = history.totalCounts / adjustedDataSize
-
-    if (relEntRateHistTotal < 0) 0 else relEntRateHistTotal / histProbability
-  }
-
-  protected def relativeEntropyRateForHistoryByAlphabet(history:Leaf, inferredProb:Double, tree:Tree, machine: Machine, histFreqByAlpha:Double, alpha:Char)
-  :(Double, Double) = {
-    val childStringProb = inferredHistoryProbability(alpha + history.observed,  tree, tree.alphabet, machine)
-    var inferredRatioMemo:Double = 0
-    var inferredRatio:Double = 0
-    var relEntRateAlpha:Double = 0
-
-    if (histFreqByAlpha > 0) {
-      if (inferredProb > 0) {
-        inferredRatio = childStringProb / inferredProb
-        inferredRatioMemo += inferredRatio
-      } else {
-        // TODO: fill this out formally, later
-        logger.error("Optionthing disastrous just happened")
-      }
-
-      relEntRateAlpha = histFreqByAlpha *  math.log(histFreqByAlpha / inferredRatio)
-    }
-
-    (inferredRatio, relEntRateAlpha)
-  }
-
-  def relativeEntropyRate(dist:InferredDistribution, adjustedDataSize:Double, tree: Tree, machine: Machine):Double = {
-    logger.debug("Relative Entropy Rate")
-    logger.debug("===========================")
-
-    val relativeEntropyRate:Double = dist.foldLeft(0d) {
-      case (partialRelEntRate, (leaf, inferredProb)) =>
-        partialRelEntRate + relativeEntropyRateForHistory(adjustedDataSize, leaf, inferredProb, tree, machine)
-    }
-
-    relativeEntropyRate
   }
 
   def findNthSetTransitions(states:Array[EquivalenceClass], maxDepth: Int, alphabet: Alphabet, fullStates:StateToAllHistories)
@@ -253,11 +163,11 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
   val transitionsByStateIdx:M.StateTransitionMap = M.findNthSetTransitions(states, tree.maxLength, tree.alphabet, fullStates)
 
   // Requires context of the machine itself -> not ideal, but logical
-  val inferredDistribution:M.InferredDistribution = M.inferredDistribution(tree, this)
+  val inferredDistribution:M.InferredDistribution = M.inferredDistribution(tree, tree.maxLength, this)
 
-  val variation:Double = M.variation(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropy = M.relativeEntropy(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropyRate = M.relativeEntropyRate(inferredDistribution, tree.adjustedDataSize, tree, this)
+  val variation:Double = Variation.variation(inferredDistribution, tree.adjustedDataSize)
+  val relativeEntropy = RelativeEntropy.kullbackLeiblerDistance(inferredDistribution, tree.adjustedDataSize)
+  val relativeEntropyRate = RelativeEntropyRate.relativeEntropyRate(inferredDistribution, tree, this)
   val statisticalComplexity = "TBD"
   val entropyRate = "TBD"
 }

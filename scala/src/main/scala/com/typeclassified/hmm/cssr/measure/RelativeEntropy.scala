@@ -3,11 +3,16 @@ package com.typeclassified.hmm.cssr.measure
 import breeze.linalg.{DenseVector, sum}
 import breeze.numerics.log
 import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
+import com.typeclassified.hmm.cssr.state.Machine.InferredDistribution
 import com.typeclassified.hmm.cssr.state.{Machine, EquivalenceClass}
+import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
 
 object RelativeEntropy {
+  protected val logger = Logger(LoggerFactory.getLogger(RelativeEntropy.getClass))
+
   /**
     * calculates the probability of all the max length strings in the
     * data based on the inferred machine:
@@ -18,74 +23,44 @@ object RelativeEntropy {
     *    d= \sum_{k} p_k * \log_2 * { p_k \over q_k }
     * \end{equation}
     *
-    * @param parseTree
-    * @param machine
-    * @param alphabet
+    * @param dist
+    * @param adjustedDataSize
+    * @return
     */
-  def kullbackLeiblerDistance (parseTree:Tree, machine:Machine, alphabet: Alphabet): Double = {
-    // these are our Ps
-    val ps:Array[Array[Leaf]] = machine.states.map(_.histories.toArray)
-    val pStateProbDist:DenseVector[Double] = getProbabilityDistribution(ps, parseTree)
+  def kullbackLeiblerDistance(dist:InferredDistribution, adjustedDataSize:Double):Double = {
+    logger.debug("Relative Entropy")
+    logger.debug("===========================")
 
-    // these are our Qs
-    val observedEqClasses:Map[EquivalenceClass, Array[Leaf]] = parseTree.collectLeaves(parseTree.root.children).groupBy(_.currentEquivalenceClass)
-    val qs:Array[Array[Leaf]] = machine.states.map {
-      eq => observedEqClasses(eq).filter(_.observed.length == parseTree.maxLength)
+    // FIXME : this _should not be <0_ however calculations provide the contrary
+    // when the generated, inferred probability is greater than the observed one - we find the added log-ratio is < 0
+    // currently, we have too many of that for the even process. This also begs the question: should there _ever_ be
+    // a calculation where the log-ratio is < 0, since it was permissible in the C++. It may be that this is not the case
+    // since I believe we are using K-L distribution for conditional, empirical distributions (yes?)
+    val relativeEntropy:Double = dist.foldLeft(0d) {
+      case (incrementalRelEnt, (leaf, inferredProb)) =>
+        val observedFrequency = leaf.totalCounts / adjustedDataSize
+        logger.debug(s"${leaf.toString}")
+        logger.debug(s"historyProb: $observedFrequency")
+
+        // it seems to me that we should be checking if the inferred probability is > 0.
+        // By virtue of this: should the conditional be flipped? Note: this makes the final rel entropy non-negative
+        //        if (inferredProb > 0){
+        //          val logRatio = math.log(inferredProb / observedFrequency) // note that math.log in scala is the natural log
+        //          val cacheRE = incrementalRelEnt + inferredProb * logRatio
+        if (observedFrequency > 0){
+          val logRatio = math.log(observedFrequency / inferredProb) // note that math.log in scala is the natural log
+          val cacheRE = incrementalRelEnt + observedFrequency * logRatio
+          logger.debug(s"inferredProb: $inferredProb")
+          logger.debug(s"logRatio:$logRatio")
+          logger.debug(s"incrementalRelEnt:$cacheRE")
+          cacheRE
+        } else {
+          //          logger.debug(s"NO AGGREGATION! dataProb: $inferredProb")
+          logger.debug(s"NO AGGREGATION! dataProb: $observedFrequency")
+          incrementalRelEnt
+        }
     }
-    val qStateProbDist:DenseVector[Double] = getProbabilityDistribution(qs, parseTree)
-
-    sum( pStateProbDist :* (log(pStateProbDist) :/ (log(qStateProbDist) :* math.log(2))) )
+    relativeEntropy
   }
 
-  def getLeafFreqDistributions(leavesByState:Array[Array[Leaf]], tree: Tree): Array[DenseVector[Double]] = {
-    leavesByState.map { s =>
-      new DenseVector( s.map { h =>
-        tree.navigateHistory(h.observed.init.toList) match {
-          case Some(leaf) => leaf.frequency(tree.alphabet.map(h.observation))
-          case None => 0d
-        } } )
-    }
-  }
-
-  def getProbabilityDistribution(leavesByState:Array[Array[Leaf]], tree: Tree):DenseVector[Double] = {
-    val frequencyDistributions:Array[DenseVector[Double]] = getLeafFreqDistributions(leavesByState, tree)
-    val totalCount:Double = frequencyDistributions.foldLeft(0d)((acc, vec)=> acc + sum(vec))
-    val probabilityDistributions:Array[DenseVector[Double]] = frequencyDistributions.map(_/totalCount)
-
-    // ...or maybe these are what we want...
-    val stateFreqDist:DenseVector[Double] = new DenseVector(frequencyDistributions.map(sum(_)))
-    val stateProbDist:DenseVector[Double] = stateFreqDist / totalCount
-
-    stateProbDist
-  }
-
-
-
-
-
-
-  // ============================================================================
-
-  def original (parseTree:Tree, machine:Machine, alphabet: Alphabet): Double = {
-//    HistoryProbablities.calcStringProbs(gArray, parseTree.maxLength, S, alphabet)
-
-    var relEntropy:Double = 0
-    var logRatio:Double = 0
-
-    /*
-    for ((history, i) <- gArray.view.zipWithIndex) {
-      val occurrence:Double = sum(history.frequency)
-      val dataProb:Double = occurrence / parseTree.adjustedDataSize
-
-      if (dataProb > 0) {
-        logRatio = math.log(dataProb) - math.log(stringProbs(i))
-        logRatio *= dataProb
-        relEntropy += logRatio
-      }
-    }
-    relEntropy = relEntropy/math.log(2)
-    */
-
-    return if (relEntropy > 0) relEntropy else 0
-  }
 }

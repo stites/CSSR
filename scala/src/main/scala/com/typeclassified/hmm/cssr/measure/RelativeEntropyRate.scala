@@ -1,135 +1,78 @@
 package com.typeclassified.hmm.cssr.measure
 
+import com.typeclassified.hmm.cssr.parse.{Tree, Leaf}
+import com.typeclassified.hmm.cssr.state.Machine
+import com.typeclassified.hmm.cssr.state.Machine.InferredDistribution
+import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
+
 object RelativeEntropyRate {
-  /*
-  void Machine::CalcRelEntRate(ParseTree& parsetree, HashTable2* hashtable, bool isMulti) {
-  G_Array g_array;
-  int dataSize = parsetree.getDataSize();
-  int alphaSize = parsetree.getAlphaSize();
-  int maxLength = parsetree.getMaxLength();
-  int adjustedDataSize = parsetree.getAdjustedDataSize();
-  // We can't begin a substring of length maxLength at the last (maxLength-1)
-  // positions in the data string, so we adjust the data size
-  parsetree.FindStrings(maxLength - 1, &g_array);
-  int size = g_array.getSize();
-  double* stringProbs = new double[size];
-  ArrayElem** list = g_array.getList();
-  double totalRelEntRate = 0;
-  double relEntRateHist = 0;
-  double childStringProb = 0;
-  char* alpha = parsetree.getAlpha();
+  protected val logger = Logger(LoggerFactory.getLogger(RelativeEntropyRate.getClass))
 
-  //determine the inferred distributions of max - 1 length strings
-  CalcStringProbs(&g_array, maxLength - 1, hashtable, stringProbs);
+  def relativeEntropyRate(maxLengthDist:InferredDistribution, tree: Tree, machine: Machine):Double = {
+    logger.debug("Relative Entropy Rate")
+    logger.debug("===========================")
 
-  //for each string
-  for(int i = 0; i< size; i++) {
-    relEntRateHist = CalcRelEntRateHist(stringProbs, list, hashtable, i, alpha, alphaSize, adjustedDataSize);
+    val nextLastHistoryDist = Machine.inferredDistribution(tree, tree.maxLength-1, machine)
 
-    totalRelEntRate +=relEntRateHist;
+    val relativeEntropyRate:Double = nextLastHistoryDist.foldLeft(0d) {
+      case (partialRelEntRate, (leaf, inferredProb)) =>
+        val totalRelEntRate = partialRelEntRate + relEntropyRateForHistory(leaf, inferredProb, tree, machine)
+        logger.debug(s"totalRelEntRate: $totalRelEntRate")
+        totalRelEntRate
+    }
+
+    relativeEntropyRate
   }
 
-  //convert to binary
-  m_relEntRate = totalRelEntRate/log(2);
-  delete[] stringProbs;
-}
-   */
-  /*
-  double Machine::CalcRelEntRateHist(double* stringProbs,
-                                     ArrayElem** list,
-                                     HashTable2* hashtable,
-                                     int index,
-                                     char* alpha,
-                                     int alphaSize,
-                                     int adjustedDataSize
-                                     ) {
-    int* counts= list[index]->getCounts();
-    double histFrequency = 0;
-    double relEntRateAlpha = 0;
-    double relEntRateHist = 0;
-    double accumulatedInferredRatio = 0;
-    double dataDist;
-    double stringProb;
-    char* history;
-    char alphaElem;
+  // the frequency of occurrence of the history with that particular alpha symbol
+  protected def relEntropyRateForHistory(history: Leaf, inferredProb:Double, tree: Tree, machine: Machine):Double = {
+    logger.debug(s"stringProb: ${inferredProb}, for history: ${history.toString}")
 
-    for(int j = 0; j< alphaSize;j++ ) {
-      histFrequency +=((double) counts[j]);
-    }
-    //for each alpha value/symbol
-    for(int k  = 0; k < alphaSize; k++) {
-      //get distribution for data
-      dataDist = ((double)counts[k])/histFrequency;
-      stringProb = stringProbs[index];
-      history = list[index]->getString();
-      alphaElem = alpha[k];
-      relEntRateAlpha = CalcRelEntRateAlpha(stringProb, history, accumulatedInferredRatio, dataDist, alphaElem, hashtable);
-      relEntRateHist +=  relEntRateAlpha;
-    }
+    val relEntRateHistTotal:Double = tree.alphabet
+      .raw
+      .foldLeft(0d){
+        (relEntRateHist, alpha) => {
+          val histFreqByAlpha = history.frequency(tree.alphabet.map(alpha)) / history.totalCounts
+          val (inferredRatio, relEntRateAlpha) = relEntropyRateByNextAlphabet(history.observed, inferredProb, tree, machine, histFreqByAlpha, alpha)
+          logger.debug(s"relEntRateAlpha: $relEntRateAlpha")
+          logger.debug(s"relEntRateHist: ${relEntRateHist + relEntRateAlpha}")
 
-    //correct for underflow error
-    if (relEntRateHist < 0) {
-      relEntRateHist = 0;
-    }
+          relEntRateHist + relEntRateAlpha
+        }
+      }
 
-    histFrequency = (double)(histFrequency/((double)adjustedDataSize));
-    return histFrequency*relEntRateHist;
-  }
-   */
-  /*
-  double Machine::CalcRelEntRateAlpha(double stringProb,
-                                    char* history,
-                                    double& accumulatedInferredRatio,
-                                    double dataDist, char alphaElem,
-                                    HashTable2* hashtable
-                                    ) {
-  double logRatio = 0;
-  double relEntRateAlpha = 0;
-  double childStringProb = 0;
-  char* symbol = new char[2];
-  symbol[1] = '\0';
-  double inferredRatio = 0;
-  char* tempChildString;
+    val histProbability:Double = history.totalCounts / tree.adjustedDataSize
+    logger.debug(s"histFrequency: $histProbability")
 
-  //if child string appears in data
-  if(dataDist > 0) {
-    //get distribution for machine
-    symbol[0] = alphaElem;
-    tempChildString = new char[strlen(history) + 2];
-    strcpy(tempChildString, history);
-    strcat(tempChildString, symbol);
-
-    //determine the inferred distribution for the value given the history
-    childStringProb = CalcStringProb(tempChildString, hashtable);
-    if(stringProb > 0) {
-      inferredRatio = childStringProb/(stringProb);
-      accumulatedInferredRatio += inferredRatio;
-
-    //neglect this ratio but continue with program
-    } else {
-      cerr << "\nWarning: Inferred machine says actual history ("
-           << history << ") is"
-           << " impossible in Machine::CalcRelEntRateAlpha.\n\n"
-           << "Note: It is likely that this sequence only occurs once, in the "
-           << "beginning of the data, and has been treated as transitory by "
-           << "the code and mistakenly deleted from the machine. See 'ReadMe' for details.\n"
-           << endl;
-    }
-
-    //take the log ratio between the
-    //conditional distributions of the inferred and data
-    logRatio = log(dataDist/inferredRatio);
-
-    //multiply by the conditional distribition from the data
-    relEntRateAlpha = dataDist*logRatio;
-
-    delete[] tempChildString;
-  } else {
-    relEntRateAlpha = 0;
+    if (relEntRateHistTotal < 0) 0 else relEntRateHistTotal * histProbability
   }
 
-  delete[] symbol;
-  return relEntRateAlpha;
-}
-   */
+  protected def relEntropyRateByNextAlphabet(history:String, inferredProb:Double, tree:Tree, machine: Machine, histFreqByAlpha:Double, alpha:Char)
+  :(Double, Double) = {
+    val childStringProb = Machine.inferredHistoryProbability(alpha + history, tree, tree.alphabet, machine)
+    var inferredRatio:Double = 0
+    var relEntRateAlpha:Double = 0
+
+    if (histFreqByAlpha > 0) {
+      if (inferredProb > 0) {
+        inferredRatio = childStringProb / inferredProb
+      } else {
+        // TODO: fill this out formally, later
+        logger.error("Something disastrous just happened")
+      }
+
+      relEntRateAlpha = histFreqByAlpha *  math.log(histFreqByAlpha / inferredRatio)
+    }
+
+    logger.debug(s"string: $history, plus alpha: $alpha")
+    logger.debug(s"childStringProb: $childStringProb")
+    logger.debug(s"stringProb: $inferredProb")
+    logger.debug(s"inferredRatio: $inferredRatio")
+    logger.debug(s"dataDist: $histFreqByAlpha")
+    logger.debug(s"logRatio: $inferredRatio")
+
+    (inferredRatio, relEntRateAlpha)
+  }
+
 }
