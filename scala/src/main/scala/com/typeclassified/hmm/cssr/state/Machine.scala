@@ -3,8 +3,9 @@ package com.typeclassified.hmm.cssr.state
 import breeze.linalg.{sum, DenseVector}
 import com.typeclassified.hmm.cssr.measure._
 import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
+import com.typeclassified.hmm.cssr.measure.{InferProbabilities => I}
 import com.typeclassified.hmm.cssr.state.{Machine => M}
-import com.typeclassified.hmm.cssr.state.Machine.{StateTransitionMap, InferredDistribution}
+import com.typeclassified.hmm.cssr.state.Machine.{StateToAllHistories, StateTransitionMap}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
@@ -14,101 +15,25 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 object Machine {
   protected val logger = Logger(LoggerFactory.getLogger(Machine.getClass))
 
-  type InferredDistribution = Array[(Leaf, Double)]
-
   type StateTransitionMap = Array[Map[Char, Option[Int]]]
 
   type StateToAllHistories = Map[Option[EquivalenceClass], Array[Leaf]]
 
-  def inferredDistribution(tree: Tree, depth:Int, machine: Machine):InferredDistribution = {
-    val inferred = tree
-      .getDepth(depth)
-      .map { h => (h , inferredHistoryProbability(h.observed, tree, tree.alphabet, machine) ) }
-
-    logger.debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
-    logger.debug(s"inferred distribution size: ${inferred.length}")
-    inferred.map{ case (l, p) => (l.observed, p) }.foreach{ i => println(i) }
-
-    inferred
-  }
-
-  def inferredHistoryProbability(history:String, tree: Tree, alphabet: Alphabet, machine: Machine): Double = {
-    // FIXME: this would be perfect to replace with a state monad
-//    logger.info("Generating Inferred probabilities from State Machine")
-
-    val totalPerString = machine.states.view.zipWithIndex.map {
-      case (state, i) =>
-//        logger.debug(s"${history} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
-        val frequency = state.distribution
-        var currentStateIdx = i
-        var isNullState = false
-
-
-        val totalPerState = history
-          // TODO: IF WE ARE, INDEED, LOADING THE PARSE TREE INCORRECTLY THEN WE MUST REMOVE THIS LINE
-          .reverse
-          .view.zipWithIndex
-          .foldLeft[Double](1d){
-          (totalPerState, pair) => {
-            val (c, i) = pair
-            val currentState = machine.states(currentStateIdx)
-            val transitionStateIdx = machine.transitionsByStateIdx(currentStateIdx)(c)
-            isNullState = isNullState || transitionStateIdx.isEmpty
-            val alphabetIdx = alphabet.map(c)
-
-            if (isNullState) {
-              0d
-            } else {
-              currentStateIdx = transitionStateIdx.get
-              val totalPerStateCached = totalPerState * currentState.distribution(alphabet.map(c))
-
-              /*
-              logger.debug(s"""{
-                               |freq at current state: ${currentState.distribution(alphabetIdx)},
-                               |j: $i, symbol: $c@$alphabetIdx,
-                               |totalPerState: $totalPerState,
-                               |totalPerStateCached: $totalPerStateCached,
-                               |transitioning to: ${transitionStateIdx.get},
-                               |}""".stripMargin.replace('\n', ' '))
-              */
-
-              totalPerStateCached
-            }
-          }
+  def allHistoriesByState (tree: Tree, states:Array[EquivalenceClass]):StateToAllHistories = {
+    tree.collectLeaves()
+      .foldLeft(mutable.Map[Option[EquivalenceClass], ArrayBuffer[Leaf]]()){
+        (map, leaf) => {
+          val eq = leaf.currentEquivalenceClass
+          if (map.keySet.contains(Option(eq))) map(Option(eq)) += leaf
+          else if (!states.contains(eq)) map(None) += leaf
+          else map(Option(eq)) = ArrayBuffer(leaf)
+          map
         }
-//        logger.debug(s"final totalPerState: $totalPerState")
-        machine.distribution(i) * totalPerState
-    }.sum[Double]
-
-    logger.debug(s"Final Probability for History: $totalPerString")
-    totalPerString
-
-    /*
-    // TODO: ask about this: seems like we are just hitting a steady-state on every history. is this normal? if so, it looks like we are double-ish counting.
-    leaf.observed.reverse.view.zipWithIndex.foldLeft[Double](1d){
-      (totalPerState, pair) => {
-        val (c, i) = pair
-
-        val currentState = current.get.currentEquivalenceClass
-        val next = current.get.findChildWithAdditionalHistory(c)
-        val nextEqClassIdx = machine.states.indexOf(next.get.currentEquivalenceClass)
-
-        println(totalPerState, c, current.get.observed, next.get.observed, leaf.observed, nextEqClassIdx)
-
-        current = next
-        if (!machine.states.contains(next.get.currentEquivalenceClass)) {
-          0d // we let this 0-probability eliminate null states.
-        } else {
-          totalPerState * currentState.distribution(alphabet.map(c))
-        }
-      }
-    }
-    */
+      }.toMap.mapValues(_.toArray)
   }
 
   def findNthSetTransitions(states:Array[EquivalenceClass], maxDepth: Int, alphabet: Alphabet, fullStates:StateToAllHistories)
   :StateTransitionMap = {
-
     val transitions = states.map {
       equivalenceClass => {
         val startHistories = fullStates(Option(equivalenceClass)).filter(_.observed.length == maxDepth-1)
@@ -135,35 +60,22 @@ object Machine {
       }
     }
   }
-
-  def allHistoriesByState (tree: Tree, states:Array[EquivalenceClass]):StateToAllHistories = {
-    tree.collectLeaves()
-      .foldLeft(mutable.Map[Option[EquivalenceClass], ArrayBuffer[Leaf]]()){
-        (map, leaf) => {
-          val eq = leaf.currentEquivalenceClass
-          if (map.keySet.contains(Option(eq))) map(Option(eq)) += leaf
-          else if (!states.contains(eq)) map(None) += leaf
-          else map(Option(eq)) = ArrayBuffer(leaf)
-          map
-        }
-      }.toMap.mapValues(_.toArray)
-  }
 }
 
 class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
   // initialization
-  val states:Array[EquivalenceClass]             = equivalenceClasses.toArray
-  val stateIndexes:Array[Set[Int]]               = states.map{_.histories.flatMap{_.locations.keySet}}
-  val statePaths:Array[Array[String]]            = states.map{_.histories.map{_.observed}.toArray}
+  val states:Array[EquivalenceClass]           = equivalenceClasses.toArray
+  val stateIndexes:Array[Set[Int]]             = states.map{_.histories.flatMap{_.locations.keySet}}
+  val statePaths:Array[Array[String]]          = states.map{_.histories.map{_.observed}.toArray}
 
-  val frequency:DenseVector[Double]              = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
-  val distribution:DenseVector[Double]           = frequency :/ sum(frequency)
+  val frequency:DenseVector[Double]            = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
+  val distribution:DenseVector[Double]         = frequency :/ sum(frequency)
 
-  val fullStates:M.StateToAllHistories           = M.allHistoriesByState(tree, states)
-  val transitionsByStateIdx:M.StateTransitionMap = M.findNthSetTransitions(states, tree.maxLength, tree.alphabet, fullStates)
+  val fullStates:StateToAllHistories           = M.allHistoriesByState(tree, states)
+  val transitionsByStateIdx:StateTransitionMap = M.findNthSetTransitions(states, tree.maxLength, tree.alphabet, fullStates)
 
   // Requires context of the machine itself -> not ideal, but logical
-  val inferredDistribution:M.InferredDistribution = M.inferredDistribution(tree, tree.maxLength, this)
+  val inferredDistribution:I.InferredDistribution = I.inferredDistribution(tree, tree.maxLength, this)
 
   val variation:Double             = Variation.variation(inferredDistribution, tree.adjustedDataSize)
   val entropyRate:Double           = EntropyRate.entropyRate(this)

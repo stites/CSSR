@@ -2,6 +2,7 @@ package com.typeclassified.hmm.cssr.measure
 
 import breeze.linalg.{DenseVector, sum}
 import breeze.numerics.log
+import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistribution
 import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
 import com.typeclassified.hmm.cssr.state.Machine.InferredDistribution
 import com.typeclassified.hmm.cssr.state.{Machine, EquivalenceClass}
