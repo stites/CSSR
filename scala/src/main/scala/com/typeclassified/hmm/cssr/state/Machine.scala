@@ -12,9 +12,13 @@ object Machine {
   protected val logger = Logger(LoggerFactory.getLogger(Machine.getClass))
 
   def calculateInferredDistribution(tree: Tree, machine: Machine):Array[(Leaf, Double)] = {
-    tree
+    val inferred = tree
       .getDepth(tree.maxLength)
       .map { h => (h , calculateInferredHistoryProbability(h, tree, tree.alphabet, machine) ) }
+
+    logger.debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
+
+    inferred
   }
 
   def calculateInferredHistoryProbability(leaf: Leaf, tree: Tree, alphabet: Alphabet, machine: Machine): Double = {
@@ -107,26 +111,32 @@ object Machine {
     // currently, we have too many of that for the even process. This also begs the question: should there _ever_ be
     // a calculation where the log-ratio is < 0, since it was permissible in the C++. It may be that this is not the case
     // since I believe we are using K-L distribution for conditional, empirical distributions (yes?)
-    val almostRelEntropy:Double = inferredDistribution.foldLeft(0d) {
-      case (relEntropy, (leaf, inferredProb)) =>
+    val relativeEntropy:Double = inferredDistribution.foldLeft(0d) {
+      case (incrementalRelEnt, (leaf, inferredProb)) =>
         val observedFrequency = leaf.totalCounts / adjustedDataSize
         logger.debug(s"${leaf.toString}")
         logger.debug(s"historyProb: $observedFrequency")
 
+        // it seems to me that we should be checking if the inferred probability is > 0.
+        // By virtue of this: should the conditional be flipped? Note: this makes the final rel entropy non-negative
+//        if (inferredProb > 0){
+//          val logRatio = math.log(inferredProb / observedFrequency) // note that math.log in scala is the natural log
+//          val cacheRE = incrementalRelEnt + inferredProb * logRatio
         if (observedFrequency > 0){
-          val logRatio = math.log(observedFrequency) - math.log(inferredProb)
-          val newRel = relEntropy + observedFrequency * logRatio
+          val logRatio = math.log(observedFrequency / inferredProb) // note that math.log in scala is the natural log
+          val cacheRE = incrementalRelEnt + observedFrequency * logRatio
           logger.debug(s"inferredProb: $inferredProb")
           logger.debug(s"logRatio:$logRatio")
-          logger.debug(s"relEntropy:$newRel")
-          newRel
+          logger.debug(s"incrementalRelEnt:$cacheRE")
+          cacheRE
         } else {
+//          logger.debug(s"NO AGGREGATION! dataProb: $inferredProb")
           logger.debug(s"NO AGGREGATION! dataProb: $observedFrequency")
-          relEntropy
+          incrementalRelEnt
         }
     }
 
-    almostRelEntropy / math.log(2)
+    relativeEntropy
   }
 
   def findNthSetTransitions(states:Array[EquivalenceClass], maxDepth: Int, alphabet: Alphabet, fullStates:Map[Option[EquivalenceClass], Array[Leaf]])
