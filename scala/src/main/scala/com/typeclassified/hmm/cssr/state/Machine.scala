@@ -2,6 +2,8 @@ package com.typeclassified.hmm.cssr.state
 
 import breeze.linalg.{sum, DenseVector}
 import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
+import com.typeclassified.hmm.cssr.state.{Machine => M}
+import com.typeclassified.hmm.cssr.state.Machine.{StateTransitionMap, InferredDistribution}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
@@ -11,17 +13,24 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 object Machine {
   protected val logger = Logger(LoggerFactory.getLogger(Machine.getClass))
 
-  def calculateInferredDistribution(tree: Tree, machine: Machine):Array[(Leaf, Double)] = {
+  type InferredDistribution = Array[(Leaf, Double)]
+
+  type StateTransitionMap = Array[Map[Char, Option[Int]]]
+
+  type StateToAllHistories = Map[Option[EquivalenceClass], Array[Leaf]]
+
+  def inferredDistribution(tree: Tree, machine: Machine):InferredDistribution = {
     val inferred = tree
       .getDepth(tree.maxLength)
-      .map { h => (h , calculateInferredHistoryProbability(h, tree, tree.alphabet, machine) ) }
+      .map { h => (h , inferredHistoryProbability(h, tree, tree.alphabet, machine) ) }
 
     logger.debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
+    logger.debug(s"inferred distribution size: ${inferred.length}")
 
     inferred
   }
 
-  def calculateInferredHistoryProbability(leaf: Leaf, tree: Tree, alphabet: Alphabet, machine: Machine): Double = {
+  def inferredHistoryProbability(leaf: Leaf, tree: Tree, alphabet: Alphabet, machine: Machine): Double = {
     // FIXME: this would be perfect to replace with a state monad
     logger.info("Generating Inferred probabilities from State Machine")
 
@@ -93,16 +102,15 @@ object Machine {
     */
   }
 
-  def calculateVariation (inferredDistribution:Array[(Leaf, Double)], adjustedDataSize:Double): Double = {
-    inferredDistribution
-      .foldLeft[Double] (0d) { (total, pair) => {
+  def variation(dist:InferredDistribution, adjustedDataSize:Double): Double = {
+    dist.foldLeft[Double] (0d) { (total, pair) => {
       val (history:Leaf, inferredProbability:Double) = pair
       val historyProbability:Double = sum(history.frequency / adjustedDataSize)
       total + math.abs(historyProbability - inferredProbability)
     } }
   }
 
-  def calculateRelativeEntropy(inferredDistribution:Array[(Leaf, Double)], adjustedDataSize:Double):Double = {
+  def relativeEntropy(dist:InferredDistribution, adjustedDataSize:Double):Double = {
     logger.debug("Relative Entropy")
     logger.debug("===========================")
 
@@ -111,7 +119,7 @@ object Machine {
     // currently, we have too many of that for the even process. This also begs the question: should there _ever_ be
     // a calculation where the log-ratio is < 0, since it was permissible in the C++. It may be that this is not the case
     // since I believe we are using K-L distribution for conditional, empirical distributions (yes?)
-    val relativeEntropy:Double = inferredDistribution.foldLeft(0d) {
+    val relativeEntropy:Double = dist.foldLeft(0d) {
       case (incrementalRelEnt, (leaf, inferredProb)) =>
         val observedFrequency = leaf.totalCounts / adjustedDataSize
         logger.debug(s"${leaf.toString}")
@@ -139,8 +147,24 @@ object Machine {
     relativeEntropy
   }
 
-  def findNthSetTransitions(states:Array[EquivalenceClass], maxDepth: Int, alphabet: Alphabet, fullStates:Map[Option[EquivalenceClass], Array[Leaf]])
-  :Array[Map[Char, Option[Int]]] = {
+  def relativeEntropyRate(dist:InferredDistribution, adjustedDataSize:Double):Double = {
+    logger.debug("Relative Entropy Rate")
+    logger.debug("===========================")
+
+    val relativeEntropyRate:Double = dist.foldLeft(0d) {
+      case (partialRelEntRate, (leaf, inferredProb)) =>
+//        val relEntForHist = calculateRelativeEntropyRateForHistory(stringProbs, list, hashtable, i, alpha, alphaSize, adjustedDataSize);
+        val relEntForHist = 0d
+        partialRelEntRate + relEntForHist
+    }
+
+    relativeEntropyRate
+  }
+
+//  def calculateRelativeEntropyRateForHistory(history:Leaf, dist:InferredDistribution, alphabet: Alphabet, )
+
+  def findNthSetTransitions(states:Array[EquivalenceClass], maxDepth: Int, alphabet: Alphabet, fullStates:StateToAllHistories)
+  :StateTransitionMap = {
 
     val transitions = states.map {
       equivalenceClass => {
@@ -161,8 +185,7 @@ object Machine {
     ensureFullTransitionMap(transitions, alphabet.raw)
   }
 
-  protected def ensureFullTransitionMap(transitionMap:Array[Map[Char, Option[Int]]], symbolsToFill: Array[Char])
-  :Array[Map[Char, Option[Int]]] = {
+  protected def ensureFullTransitionMap(transitionMap:StateTransitionMap, symbolsToFill: Array[Char]):StateTransitionMap = {
     transitionMap.map {
       symbolsToFill.foldRight(_) {
         (alphabetChar, tMap) => if (tMap.keySet.contains(alphabetChar)) tMap else tMap + (alphabetChar -> None)
@@ -170,8 +193,7 @@ object Machine {
     }
   }
 
-  def allHistoriesByState (tree: Tree, states:Array[EquivalenceClass])
-  : Map[Option[EquivalenceClass], Array[Leaf]] = {
+  def allHistoriesByState (tree: Tree, states:Array[EquivalenceClass]):StateToAllHistories = {
     tree.collectLeaves()
       .foldLeft(mutable.Map[Option[EquivalenceClass], ArrayBuffer[Leaf]]()){
         (map, leaf) => {
@@ -190,17 +212,19 @@ class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
   val states:Array[EquivalenceClass]             = equivalenceClasses.toArray
   val stateIndexes:Array[Set[Int]]               = states.map{_.histories.flatMap{_.locations.keySet}}
   val statePaths:Array[Array[String]]            = states.map{_.histories.map{_.observed}.toArray}
+
   val frequency:DenseVector[Double]              = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
   val distribution:DenseVector[Double]           = frequency :/ sum(frequency)
-  val fullStates:Map[Option[EquivalenceClass], Array[Leaf]] = Machine.allHistoriesByState(tree, states)
-  val transitionsByStateIdx:Array[Map[Char, Option[Int]]]   = Machine.findNthSetTransitions(states, tree.maxLength, tree.alphabet, fullStates)
+
+  val fullStates:M.StateToAllHistories           = M.allHistoriesByState(tree, states)
+  val transitionsByStateIdx:M.StateTransitionMap = M.findNthSetTransitions(states, tree.maxLength, tree.alphabet, fullStates)
 
   // Requires context of the machine itself -> not ideal, but logical
-  val inferredDistribution:Array[(Leaf, Double)] = Machine.calculateInferredDistribution(tree, this)
+  val inferredDistribution:M.InferredDistribution = M.inferredDistribution(tree, this)
 
-  val variation:Double = Machine.calculateVariation(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropy = Machine.calculateRelativeEntropy(inferredDistribution, tree.adjustedDataSize)
-  val relativeEntropyRate = "TBD"
+  val variation:Double = M.variation(inferredDistribution, tree.adjustedDataSize)
+  val relativeEntropy = M.relativeEntropy(inferredDistribution, tree.adjustedDataSize)
+  val relativeEntropyRate = M.relativeEntropyRate(inferredDistribution, tree.adjustedDataSize)
   val statisticalComplexity = "TBD"
   val entropyRate = "TBD"
 }
