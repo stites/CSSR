@@ -14,7 +14,7 @@ object Parser {
   val lMax        = "lMax"
   val lMaxDefault = 5
   val sig         = "sig"
-  val sigDefault  = 0.05
+  val sigDefault  = 0.02
 
   val file = "[file]"
   val value = "[value]"

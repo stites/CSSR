@@ -55,13 +55,15 @@ object Results {
       .reduceLeft(_+_)
   }
 
-  def stateDetails(machine: Machine): String = {
+  def stateDetails(machine: Machine, alphabet: Alphabet): String = {
     machine.states.view.zipWithIndex.map {
       case (eqClass, i) =>
         s"""State $i:
         |        P(state): ${machine.distribution(i)}
+        |        Alphabet: ${alphabet.toString}
         |Probability Dist: ${eqClass.distribution.toString()}
         |  Frequency Dist: ${eqClass.frequency.toString()}
+        |     transitions: ${machine.transitionsByStateIdx(i)}
         |""".stripMargin +
         eqClass.histories.toArray.sortBy(_.observed).map{_.toString}.mkString("\n")
     }.mkString("\n")

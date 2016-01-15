@@ -11,9 +11,9 @@ case class Config (alphabetFile: File = new File("."),
     s"""Current Working Directory: ${System.getProperty("user.dir")}
         |Alphabet file: ${alphabetFile.getPath}
         |Data file: ${dataFile.getPath}
-        |History Length: ${lMax}
+        |History Length: $lMax
         |Multi-line mode: ${false}
-        |Significance level: ${sig}
+        |Significance level: $sig
         |Chi-squared test used: ${false}
         |""".stripMargin
   }
