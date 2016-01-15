@@ -29,7 +29,7 @@ object TestMachines {
     val resultsPath:Path = Files.createTempDirectory(scriptName)
     val cmd:String = ((scriptPath +: params) ++ Seq(resultsPath.toAbsolutePath.toString + "/")).mkString(" ")
 
-    logger.debug(s"Running $scriptName with command:\n${cmd}")
+    logger.debug(s"Running $scriptName with command:\n$cmd")
 
     (cmd #> System.out).!
 
