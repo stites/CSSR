@@ -4,8 +4,9 @@ import breeze.linalg.{sum, DenseVector}
 import com.typeclassified.hmm.cssr.measure._
 import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
 import com.typeclassified.hmm.cssr.measure.{InferProbabilities => I}
+import com.typeclassified.hmm.cssr.state.{EquivalenceClass => EC}
 import com.typeclassified.hmm.cssr.state.{Machine => M}
-import com.typeclassified.hmm.cssr.state.Machine.{StateToAllHistories, StateTransitionMap}
+import com.typeclassified.hmm.cssr.state.Machine.{StateToHistories, StateTransitionMap}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
@@ -17,11 +18,19 @@ object Machine {
 
   type StateTransitionMap = Array[Map[Char, Option[Int]]]
 
-  type StateToAllHistories = Map[Option[EquivalenceClass], Array[Leaf]]
+  type StateToHistories = Map[Option[EC.State], Array[Leaf]]
 
-  def allHistoriesByState (tree: Tree, states:Array[EquivalenceClass]):StateToAllHistories = {
+  /**
+    * A map of states in the state array mapped to every history in the given parse tree.
+    * In this circumstance, a mapping of (None -> Array) indicates histories that exist in the null state.
+ *
+    * @param tree
+    * @param states
+    * @return complete map of all histories with corresponding States
+    */
+  def allHistoriesByState (tree: Tree, states:Array[EC.State]):StateToHistories = {
     tree.collectLeaves()
-      .foldLeft(mutable.Map[Option[EquivalenceClass], ArrayBuffer[Leaf]]()){
+      .foldLeft(mutable.Map[Option[EC.State], ArrayBuffer[Leaf]]()){
         (map, leaf) => {
           val eq = leaf.currentEquivalenceClass
           if (map.keySet.contains(Option(eq))) map(Option(eq)) += leaf
@@ -32,21 +41,20 @@ object Machine {
       }.toMap.mapValues(_.toArray)
   }
 
-  def findNthSetTransitions(states:Array[EquivalenceClass], maxDepth: Int, alphabet: Alphabet, fullStates:StateToAllHistories)
+  def findNthSetTransitions(states:Array[EC.State], maxDepth: Int, alphabet: Alphabet, fullStates:StateToHistories)
   :StateTransitionMap = {
     val transitions = states.map {
       equivalenceClass => {
         val startHistories = fullStates(Option(equivalenceClass)).filter(_.observed.length == maxDepth-1)
         val endHistories = startHistories.flatMap(_.children)
-        endHistories.groupBy(_.observation)
+
+        endHistories
+          .groupBy(_.observation)
           .mapValues[Option[Int]] {
           nextHistories => {
             val validNextStates = nextHistories.map(_.currentEquivalenceClass).filter(states.contains(_)).toSet
-            if (validNextStates.size != 1) {
-              None
-            } else {
-              Option(states.indexOf(validNextStates.head))
-            }
+
+            if (validNextStates.size != 1) None else Option(states.indexOf(validNextStates.head))
           } }
       } }
 
@@ -64,14 +72,14 @@ object Machine {
 
 class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
   // initialization
-  val states:Array[EquivalenceClass]           = equivalenceClasses.toArray
+  val states:Array[EC.State]                   = equivalenceClasses.toArray
   val stateIndexes:Array[Set[Int]]             = states.map{_.histories.flatMap{_.locations.keySet}}
   val statePaths:Array[Array[String]]          = states.map{_.histories.map{_.observed}.toArray}
 
   val frequency:DenseVector[Double]            = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
   val distribution:DenseVector[Double]         = frequency :/ sum(frequency)
 
-  val fullStates:StateToAllHistories           = M.allHistoriesByState(tree, states)
+  val fullStates:StateToHistories           = M.allHistoriesByState(tree, states)
   val transitionsByStateIdx:StateTransitionMap = M.findNthSetTransitions(states, tree.maxLength, tree.alphabet, fullStates)
 
   // Requires context of the machine itself -> not ideal, but logical

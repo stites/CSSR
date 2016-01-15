@@ -40,14 +40,19 @@ object Results {
       |edge [fontsize = 24];
       |""".stripMargin
 
-    val states = allStates.zipWithIndex.foldLeft("") {
-      case (memo, (state, i)) => memo + state.distribution.toArray.zipWithIndex.foldLeft("") {
-        case (memo, (prob, k)) => if (prob <= 0) memo else {
-          memo + s"""$i -> ${k} [label = "${alphabet.raw(k)}: ${"%.7f".format(prob)}"];\n"""
-        }
+    allStates
+      .zipWithIndex
+      .map {
+        case (state, i) =>
+          state.distribution
+            .toArray
+            .view.zipWithIndex
+            .foldLeft[String]("") {
+              case (memo, (prob, k)) if prob <= 0 => memo
+              case (memo, (prob, k)) => memo + s"""$i -> $k [label = "${alphabet.raw(k)}: ${"%.7f".format(prob)}"];\n"""
+            }
       }
-    }
-    info + states + "}\n"
+      .reduceLeft(_+_)
   }
 
   def stateDetails(machine: Machine): String = {

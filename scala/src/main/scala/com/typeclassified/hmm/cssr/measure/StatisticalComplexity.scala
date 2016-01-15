@@ -1,14 +1,14 @@
 package com.typeclassified.hmm.cssr.measure
 
-import breeze.linalg.{DenseVector, sum}
-import breeze.numerics.log
-import com.typeclassified.hmm.cssr.state.Machine
+import breeze.linalg.DenseVector
 
-// I Think this is the Grassberger-Crutchfield-Young "statistical complexity"
-// taking a shot in the dark at what the name might be implying
-// relying on anti-cargo-cult paradigms to indicate something is wrong
+
+/**
+  * I think this is the Grassberger-Crutchfield-Young "statistical complexity."
+  * I'm taking a shot in the dark at what the name might be.
+  */
 object StatisticalComplexity {
-  def cMu(stateDistribution:DenseVector[Double]) :Double = {
-    (-1) * stateDistribution.foldLeft(0d) { (cMu, prob) => cMu + (prob * math.log(prob)) }
-  }
+
+  def cMu(dist:DenseVector[Double]):Double = (-1) * dist.foldLeft(0d) { (cMu, p) => cMu + (p * math.log(p)) }
+
 }

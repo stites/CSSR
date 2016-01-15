@@ -1,15 +1,8 @@
 package com.typeclassified.hmm.cssr.measure
 
-import breeze.linalg.{DenseVector, sum}
-import breeze.numerics.log
 import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistribution
-import com.typeclassified.hmm.cssr.parse.{Alphabet, Leaf, Tree}
-import com.typeclassified.hmm.cssr.state.Machine.InferredDistribution
-import com.typeclassified.hmm.cssr.state.{Machine, EquivalenceClass}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
-
-import scala.collection.mutable.ArrayBuffer
 
 object RelativeEntropy {
   protected val logger = Logger(LoggerFactory.getLogger(RelativeEntropy.getClass))
@@ -49,10 +42,9 @@ object RelativeEntropy {
         //          val logRatio = math.log(inferredProb / observedProb) // note that math.log in scala is the natural log
         //          val cacheRE = incrementalRelEnt + inferredProb * logRatio
         if (observedProb > 0){
-          val logRatio = math.log(observedProb / inferredProb) // note that math.log in scala is the natural log
-          val cacheRE = incrementalRelEnt + (observedProb * logRatio)
+          val cacheRE = incrementalRelEnt + calcRelEntPartial(observedProb, inferredProb)
           logger.debug(s"inferredProb: $inferredProb")
-          logger.debug(s"logRatio:$logRatio")
+          logger.debug(s"logRatio:${math.log(observedProb / inferredProb)}")
           logger.debug(s"incrementalRelEnt:$cacheRE")
           cacheRE
         } else {
@@ -64,4 +56,6 @@ object RelativeEntropy {
     if (relativeEntropy < 0) 0 else relativeEntropy
   }
 
+  // note that math.log in scala is the natural log
+  def calcRelEntPartial(a:Double, b:Double):Double = a * math.log(a / b)
 }

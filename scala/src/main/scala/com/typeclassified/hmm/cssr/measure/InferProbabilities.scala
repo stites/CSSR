@@ -1,8 +1,7 @@
 package com.typeclassified.hmm.cssr.measure
 
-import breeze.linalg.DenseVector
 import com.typeclassified.hmm.cssr.parse.{Tree, Alphabet, Leaf}
-import com.typeclassified.hmm.cssr.state.{EquivalenceClass, Machine}
+import com.typeclassified.hmm.cssr.state.Machine
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
@@ -34,49 +33,47 @@ object InferProbabilities {
     // FIXME: this would be perfect to replace with a state monad
     //    logger.info("Generating Inferred probabilities from State Machine")
 
-    val totalPerString = machine.states.view.zipWithIndex.map {
-      case (state, i) =>
-        //        logger.debug(s"${history} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
-        val frequency = state.distribution
-        var currentStateIdx = i
-        var isNullState = false
+    val totalPerString = machine.states
+      .view
+      .zipWithIndex
+      .map {
+        case (state, i) =>
+          // logger.debug(s"${history} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
+          var currentStateIdx = i
+          var isNullState = false
 
+          val historyTotalPerState = history
+            // TODO: IF WE ARE, INDEED, LOADING THE PARSE TREE INCORRECTLY THEN WE MUST REMOVE THIS LINE
+            .reverse
+            .foldLeft[Double](1d){
+            (characterTotalPerState, c) => {
+              val currentState = machine.states(currentStateIdx)
+              val transitionStateIdx = machine.transitionsByStateIdx(currentStateIdx)(c)
+              isNullState = isNullState || transitionStateIdx.isEmpty
 
-        val totalPerState = history
-          // TODO: IF WE ARE, INDEED, LOADING THE PARSE TREE INCORRECTLY THEN WE MUST REMOVE THIS LINE
-          .reverse
-          .view.zipWithIndex
-          .foldLeft[Double](1d){
-          (totalPerState, pair) => {
-            val (c, i) = pair
-            val currentState = machine.states(currentStateIdx)
-            val transitionStateIdx = machine.transitionsByStateIdx(currentStateIdx)(c)
-            isNullState = isNullState || transitionStateIdx.isEmpty
-            val alphabetIdx = alphabet.map(c)
+              if (isNullState) {
+                0d
+              } else {
+                currentStateIdx = transitionStateIdx.get
+                val totalPerStateCached = characterTotalPerState * currentState.distribution(alphabet.map(c))
 
-            if (isNullState) {
-              0d
-            } else {
-              currentStateIdx = transitionStateIdx.get
-              val totalPerStateCached = totalPerState * currentState.distribution(alphabet.map(c))
+                /*
+                logger.debug(s"""{
+                                 |freq at current state: ${currentState.distribution(alphabetIdx)},
+                                 |j: $i, symbol: $c,
+                                 |historyTotalPerState: characterTotalPerState,
+                                 |totalPerStateCached: $totalPerStateCached,
+                                 |transitioning to: ${transitionStateIdx.get},
+                                 |}""".stripMargin.replace('\n', ' '))
+                */
 
-              /*
-              logger.debug(s"""{
-                               |freq at current state: ${currentState.distribution(alphabetIdx)},
-                               |j: $i, symbol: $c@$alphabetIdx,
-                               |totalPerState: $totalPerState,
-                               |totalPerStateCached: $totalPerStateCached,
-                               |transitioning to: ${transitionStateIdx.get},
-                               |}""".stripMargin.replace('\n', ' '))
-              */
-
-              totalPerStateCached
+                totalPerStateCached
+              }
             }
           }
-        }
-        //        logger.debug(s"final totalPerState: $totalPerState")
-        machine.distribution(i) * totalPerState
-    }.sum[Double]
+          //        logger.debug(s"final historyTotalPerState: $historyTotalPerState")
+          machine.distribution(i) * historyTotalPerState
+      }.sum[Double]
 
     logger.debug(s"Final Probability for History: $totalPerString")
     totalPerString
