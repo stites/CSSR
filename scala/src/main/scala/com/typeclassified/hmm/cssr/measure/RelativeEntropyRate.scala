@@ -66,7 +66,7 @@ object RelativeEntropyRate {
       logger.error("Something disastrous just happened")
     }
 
-    val childStringProb = InferProbabilities.inferredHistory(alpha + history, tree.alphabet, machine)
+    val childStringProb = InferProbabilities.inferredHistory(alpha + history, tree, machine)
     // eliminate branching? depends on scala's ln behavior as well as how it treats infinities
     val inferredRatio:Double = if (isValid) childStringProb / inferredProb else 0
     val relEntRateAlpha:Double = if (isValid) RE.calcRelEntPartial(histFreqByAlpha, inferredRatio) else 0

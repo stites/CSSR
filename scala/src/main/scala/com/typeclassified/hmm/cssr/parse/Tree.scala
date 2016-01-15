@@ -1,5 +1,6 @@
 package com.typeclassified.hmm.cssr.parse
 
+import com.typeclassified.hmm.cssr.parse.Tree.NewToOldDirection.NewToOldDirection
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
@@ -11,6 +12,11 @@ object Tree {
   def apply(alphabet: Alphabet, equivalenceClass: EquivalenceClass) = new Tree(alphabet, equivalenceClass)
   def apply(alphabet: Alphabet) = new Tree(alphabet)
 
+  object NewToOldDirection  extends Enumeration {
+    type NewToOldDirection = Value
+    val RightToLeft, LeftToRight = Value
+  }
+
   def loadData(tree:Tree, xs: Array[Char], n: Int): Tree = {
     //  Yield successive n-sized windows from the x's. Does not work with a length of 0.
     logger.debug(s"loading data of size ${xs.length}")
@@ -19,6 +25,7 @@ object Tree {
     tree.maxLength = n
     tree.dataSize = xs.length - filteredCharacters
     tree.adjustedDataSize =  xs.length - (n - 1) - filteredCharacters
+    tree.direction = NewToOldDirection.LeftToRight
 
     for (size <- 1 to n+1) {
       logger.debug(s"loading data windows of size $size.")
@@ -30,7 +37,7 @@ object Tree {
         // TODO: check the following statement to see if we need to rollback below:
         // if n lies in the interesting region between n-1 and n then we also pass the index to the leaf
         // (THIS MAY ONLY BE NEEDED TO AVOID CLUTTER FOR LEAVES <n-1)
-        loadHistory(tree, zippedSequence.map(_._1), Option(zippedSequence.last._2))
+        loadHistory(tree, zippedSequence.map(_._1), Option(zippedSequence.head._2))
       }
     }
     tree.getDepth(n).foreach{ _.children = ListBuffer() }
@@ -39,23 +46,41 @@ object Tree {
 
   def loadHistory(tree: Tree, observed: Seq[Char], idx:Option[Int] = None): Unit = {
 
-    def go(history: List[Char], active:Leaf, tree: Tree, fullHistory:String, depth:Int=0): Option[Leaf] = {
+    def goRightNewToLeftOld(history: List[Char], active:Leaf, tree: Tree, fullHistory:String, depth:Int=0): Option[Leaf] = {
       if (history.isEmpty) return Option.empty
-
       val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
       val histIdx:Int = depth+1
 
       if (maybeNext.nonEmpty) {
         if (history.init.isEmpty) active.updateDistribution(history.last, idx)
 
-        return go(history.init, maybeNext.get, tree, fullHistory, histIdx)
+        return goRightNewToLeftOld(history.init, maybeNext.get, tree, fullHistory, histIdx)
       } else {
         val next = active.addChild(fullHistory(fullHistory.length - histIdx), idx)
-        return go(history.init, next, tree, fullHistory, histIdx)
+        return goRightNewToLeftOld(history.init, next, tree, fullHistory, histIdx)
       }
     }
 
-    go(observed.toList, tree.root, tree, observed.mkString)
+
+    def goLeftNewToRightOld(history: List[Char], active:Leaf, tree: Tree, fullHistory:String, depth:Int=0): Option[Leaf] = {
+      if (history.isEmpty) return Option.empty
+      val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.head)
+      val histIdx:Int = depth+1
+
+      if (maybeNext.nonEmpty) {
+        if (history.tail.isEmpty) active.updateDistribution(history.head, idx)
+        return goLeftNewToRightOld(history.tail, maybeNext.get, tree, fullHistory, histIdx)
+      } else {
+        val next = active.addChild(fullHistory(histIdx - 1), idx)
+        return goLeftNewToRightOld(history.tail, next, tree, fullHistory, histIdx)
+      }
+    }
+
+    if (tree.direction == NewToOldDirection.LeftToRight) {
+      goLeftNewToRightOld(observed.toList, tree.root, tree, observed.mkString)
+    } else if (tree.direction == NewToOldDirection.RightToLeft) {
+      goRightNewToLeftOld(observed.toList, tree.root, tree, observed.mkString)
+    }
   }
 }
 
@@ -67,6 +92,8 @@ class Tree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) 
   var dataSize:Double = _
 
   var adjustedDataSize:Double = _
+
+  var direction:NewToOldDirection = _
 
   /**
     * navigate from root to x_hist leaf and update the distribution with x0

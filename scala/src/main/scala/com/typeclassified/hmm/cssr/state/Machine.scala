@@ -34,7 +34,7 @@ object Machine {
         (map, leaf) => {
           val eq = leaf.currentEquivalenceClass
           if (map.keySet.contains(Option(eq))) map(Option(eq)) += leaf
-          else if (!states.contains(eq)) map(None) += leaf
+          else if (!states.contains(eq)) map.getOrElseUpdate(None, ArrayBuffer()) += leaf
           else map(Option(eq)) = ArrayBuffer(leaf)
           map
         }

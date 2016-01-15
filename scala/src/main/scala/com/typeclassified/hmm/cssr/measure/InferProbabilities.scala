@@ -1,5 +1,6 @@
 package com.typeclassified.hmm.cssr.measure
 
+import com.typeclassified.hmm.cssr.parse.Tree.NewToOldDirection
 import com.typeclassified.hmm.cssr.parse.{Tree, Alphabet, Leaf}
 import com.typeclassified.hmm.cssr.state.Machine
 import com.typesafe.scalalogging.Logger
@@ -17,7 +18,7 @@ object InferProbabilities {
   def inferredDistribution(tree: Tree, depth:Int, machine: Machine):InferredDistribution = {
     val inferred = tree
       .getDepth(depth)
-      .map { h => (h , inferredHistory(h.observed, tree.alphabet, machine) ) }
+      .map { h => (h , inferredHistory(h.observed, tree, machine) ) }
 
     logger.debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
     logger.debug(s"inferred distribution size: ${inferred.length}")
@@ -29,7 +30,7 @@ object InferProbabilities {
   /**
     * calculates the probability of a single, raw history (in string form) based on a given machine and alphabet
     */
-  def inferredHistory(history:String, alphabet: Alphabet, machine: Machine): Double = {
+  def inferredHistory(history:String, tree: Tree, machine: Machine): Double = {
     // FIXME: this would be perfect to replace with a state monad
     //    logger.info("Generating Inferred probabilities from State Machine")
 
@@ -41,10 +42,9 @@ object InferProbabilities {
           // logger.debug(s"${history} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
           var currentStateIdx = i
           var isNullState = false
+          val string = if (tree.direction == NewToOldDirection.LeftToRight) history else history.reverse
 
-          val historyTotalPerState = history
-            // TODO: IF WE ARE, INDEED, LOADING THE PARSE TREE INCORRECTLY THEN WE MUST REMOVE THIS LINE
-            .reverse
+          val historyTotalPerState = string
             .foldLeft[Double](1d){
             (characterTotalPerState, c) => {
               val currentState = machine.states(currentStateIdx)
@@ -55,7 +55,7 @@ object InferProbabilities {
                 0d
               } else {
                 currentStateIdx = transitionStateIdx.get
-                val totalPerStateCached = characterTotalPerState * currentState.distribution(alphabet.map(c))
+                val totalPerStateCached = characterTotalPerState * currentState.distribution(tree.alphabet.map(c))
 
                 /*
                 logger.debug(s"""{
