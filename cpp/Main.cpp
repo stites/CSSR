@@ -46,26 +46,29 @@ int main(int argc, char *argv[]) {
   //argv[5] is multiline version, if used
   //argv[6] is use of chi-squared test (optional)
   int max_length;
-  char* data_file;
-  char* alpha_file;
+  char *data_file;
+  char *alpha_file;
   HashTable2 *alphaHash;
   bool isMulti = false;
   bool stateRemoved = false; //dummy
-  Machine* machine;
+  Machine *machine;
   double sigLevel = SIGLEVEL;
   bool isSigLevel = false;
   bool isChi = false;
 
   // read in info from command line
   // check for proper arguments
-  if(argc !=4 ) {
+  if (argc != 4) {
     if (argc == 5) {
       FiveArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
-    } else if (argc == 6) {
+    }
+    else if (argc == 6) {
       SixArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
-    } else if (argc == 7) {
+    }
+    else if (argc == 7) {
       SevenArgs(argv, isMulti, isSigLevel, sigLevel, isChi);
-    } else {
+    }
+    else {
       PrintError();
     }
   }
@@ -79,10 +82,11 @@ int main(int argc, char *argv[]) {
 
   // if no significance level is set, use default
   // (should be set already, just to be careful)
-  if(!isSigLevel) {
+  if (!isSigLevel) {
     sigLevel = SIGLEVEL;
-  } else {
-    cout << "Significance level set to " << sigLevel <<".\n";
+  }
+  else {
+    cout << "Significance level set to " << sigLevel << ".\n";
   }
 
   //create parse tree to store all strings in data
@@ -90,13 +94,14 @@ int main(int argc, char *argv[]) {
 
   //if using multi-line input, read in data and enter
   //tree one line at a time
-  if(isMulti) {
+  if (isMulti) {
     parsetree.ReadProcessMultiLine(alpha_file, data_file);
     cout << "Multi-line option is set.\n"
-         << "Max line length is "<< MAX_LINE_SIZE
-         << "\n";
+    << "Max line length is " << MAX_LINE_SIZE
+    << "\n";
 
-  } else { //otherwise do data read first, then enter in tree
+  }
+  else { //otherwise do data read first, then enter in tree
     //read in data and alphabet from files
     parsetree.ReadInput(alpha_file, data_file);
     //enter data in tree
@@ -114,7 +119,7 @@ int main(int argc, char *argv[]) {
 
   //check all possible strings up to max 
   //length and compare distributions
-  for(int k = 1; k <= max_length; k++) {
+  for (int k = 1; k <= max_length; k++) {
     allstates.CalcNewDist(k, parsetree);
   }
 
