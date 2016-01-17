@@ -6,38 +6,31 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-#ifndef  __HASH2_H
-#define  __HASH2_H
+#ifndef	__HASH2_H
+#define	__HASH2_H
 #define HASHSIZE2  19
 
 #include "Common.h"
 
 class HashTable2 {
-private:
+ private:
 
-    struct HashTable2Entry {
-        char *m_string;
-        int m_index;
-        HashTable2Entry *m_nextPtr;
-    };
+  struct HashTable2Entry {
+    char* m_string;
+    int m_index;
+    HashTable2Entry* m_nextPtr;
+  };
 
-    HashTable2Entry *m_data[HASHSIZE2];
+  HashTable2Entry* m_data[HASHSIZE2];
+  int Hash(ulong key);
+  ulong CreateKey(char* string);
 
-    int Hash(ulong key);
+ public:
 
-    ulong CreateKey(char *string);
-
-public:
-
-    HashTable2();
-
-    ~HashTable2();
-
-    void Insert(char *string, int index);
-
-    int WhichIndex(char *string);
-
-    void Print();
+  HashTable2();
+  ~HashTable2();
+  void Insert(char* string, int index);
+  int WhichIndex(char* string);
+  void Print();
 };
-
 #endif

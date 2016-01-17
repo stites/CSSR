@@ -1,7 +1,7 @@
 .PHONY: all clean cleanobj
 
 CC          = c++               # to be OS-agnostic
-CFLAGS      = -Wextra -Wall -O2
+CFLAGS      = -Wextra -Wall -O1
 CFLAGS_MAIN = -g $(CFLAGS)
 MAIN        = CSSR
 SOURCES     = main.o hash.o states.o allStates.o parsetree.o g_array.o hash2.o machine.o transtable.o test.o
