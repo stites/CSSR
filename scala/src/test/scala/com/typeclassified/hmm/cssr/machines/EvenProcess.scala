@@ -34,6 +34,7 @@ class EvenProcess (val repetitions:Int) extends TestMachine {
   val stateSequence:ArrayBuffer[Int] = ArrayBuffer()
   val alphabet = "AB"
 
+  /*
   scaffoldFiles("evenProcess", alphabet, (pw) => {
     var currentState:Int = 0
 
@@ -159,5 +160,6 @@ class EvenProcess (val repetitions:Int) extends TestMachine {
     return(log($_[0])/log(2.0));
   }
 
+  */
 
 }

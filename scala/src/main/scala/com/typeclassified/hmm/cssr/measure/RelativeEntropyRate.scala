@@ -7,7 +7,7 @@ import com.typeclassified.hmm.cssr.state.Machine
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
-object RelativeEntropyRate {
+object RelativeEntropyRate extends MathUtils {
   protected val logger = Logger(LoggerFactory.getLogger(RelativeEntropyRate.getClass))
 
   def relativeEntropyRate(maxLengthDist:InferredDistribution, tree: Tree, machine: Machine):Double = {
@@ -69,7 +69,7 @@ object RelativeEntropyRate {
     val childStringProb = InferProbabilities.inferredHistory(alpha + history, tree, machine)
     // eliminate branching? depends on scala's ln behavior as well as how it treats infinities
     val inferredRatio:Double = if (isValid) childStringProb / inferredProb else 0
-    val relEntRateAlpha:Double = if (isValid) RE.calcRelEntPartial(histFreqByAlpha, inferredRatio) else 0
+    val relEntRateAlpha:Double = if (isValid) discreteEntropy(histFreqByAlpha, inferredRatio) else 0
 
     logger.debug(s"string: $history, plus alpha: $alpha")
     logger.debug(s"childStringProb: $childStringProb")

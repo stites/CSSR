@@ -4,7 +4,7 @@ import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistributi
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
-object RelativeEntropy {
+object RelativeEntropy extends MathUtils {
   protected val logger = Logger(LoggerFactory.getLogger(RelativeEntropy.getClass))
 
   /**
@@ -42,7 +42,7 @@ object RelativeEntropy {
         //          val logRatio = math.log(inferredProb / observedProb) // note that math.log in scala is the natural log
         //          val cacheRE = incrementalRelEnt + inferredProb * logRatio
         if (observedProb > 0){
-          val cacheRE = incrementalRelEnt + calcRelEntPartial(observedProb, inferredProb)
+          val cacheRE = incrementalRelEnt + discreteEntropy(observedProb, inferredProb)
           logger.debug(s"inferredProb: $inferredProb")
           logger.debug(s"logRatio:${math.log(observedProb / inferredProb)}")
           logger.debug(s"incrementalRelEnt:$cacheRE")
@@ -56,6 +56,4 @@ object RelativeEntropy {
     if (relativeEntropy < 0) 0 else relativeEntropy
   }
 
-  // note that math.log in scala is the natural log
-  def calcRelEntPartial(a:Double, b:Double):Double = a * math.log(a / b)
 }
