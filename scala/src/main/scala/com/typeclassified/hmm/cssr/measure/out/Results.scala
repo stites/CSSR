@@ -16,10 +16,11 @@ import scala.collection.mutable.ListBuffer
 object Results {
   protected val logger = Logger(LoggerFactory.getLogger(Results.getClass))
 
-  def measurements(alphabet: Alphabet, machine: Machine): String = {
+  def measurements(alphabet: Alphabet, tree:Tree, machine: Machine): String = {
     s"""Results
        |=======================
        |Alphabet Size: ${alphabet.length}
+       |Data Size: ${tree.adjustedDataSize}
        |Number of Inferred States: ${machine.states.length}
        |Relative Entropy: ${machine.relativeEntropy}
        |Relative Entropy Rate: ${machine.relativeEntropyRate}

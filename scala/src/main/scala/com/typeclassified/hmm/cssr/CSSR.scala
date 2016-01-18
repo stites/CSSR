@@ -31,7 +31,7 @@ object CSSR {
     Results.metadata(config).split("\n").foreach{logger.info(_)}
     Results.stateDetails(machine, AlphabetHolder.alphabet).split("\n").foreach{logger.info(_)}
     Results.dotInfo(config, AlphabetHolder.alphabet, allStates).split("\n").foreach{logger.info(_)}
-    Results.measurements(AlphabetHolder.alphabet, machine).split("\n").foreach{logger.info(_)}
+    Results.measurements(AlphabetHolder.alphabet, parseTree, machine).split("\n").foreach{logger.info(_)}
 
     logger.info("CSSR completed successfully!")
   }
