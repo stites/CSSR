@@ -101,7 +101,7 @@ class Leaf(observedSequence:String,
     val id = s"${getClass.getSimpleName}@${this.hashCode()}"
     val observedStr = if (observed.length == 0) observation.toString else observed
 
-    val props = s"{observed=${observedStr}, \tobservation=${observation.toString},\tfrequency=${vec},\ttotal=${sum(frequency)}}"
+    val props = s"{observed=${observedStr.reverse}, \tobservation=${observation.toString},\tfrequency=$vec,\ttotal=${sum(frequency)}}"
     observedStr +"\t\t"+ id + "\t" + props
   }
 }
