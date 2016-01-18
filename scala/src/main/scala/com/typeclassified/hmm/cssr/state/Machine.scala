@@ -23,12 +23,12 @@ object Machine {
   /**
     * A map of states in the state array mapped to every history in the given parse tree.
     * In this circumstance, a mapping of (None -> Array) indicates histories that exist in the null state.
- *
+    *
     * @param tree
     * @param states
     * @return complete map of all histories with corresponding States
     */
-  def allHistoriesByState (tree: Tree, states:Array[EC.State]):StateToHistories = {
+  def allHistoriesByState (tree: Tree, states:ListBuffer[EC.State]):StateToHistories = {
     tree.collectLeaves()
       .foldLeft(mutable.Map[Option[EC.State], ArrayBuffer[Leaf]]()){
         (map, leaf) => {
@@ -41,7 +41,7 @@ object Machine {
       }.toMap.mapValues(_.toArray)
   }
 
-  def findNthSetTransitions(states:Array[EC.State], maxDepth: Int, alphabet: Alphabet, fullStates:StateToHistories)
+  def findNthSetTransitions(maxDepth: Int, alphabet: Alphabet, fullStates:StateToHistories)(states:Seq[EC.State])
   :StateTransitionMap = {
     val transitions = states.map {
       equivalenceClass => {
@@ -56,7 +56,7 @@ object Machine {
 
             if (validNextStates.size != 1) None else Option(states.indexOf(validNextStates.head))
           } }
-      } }
+      } }.toArray
 
     ensureFullTransitionMap(transitions, alphabet.raw)
   }
@@ -68,19 +68,27 @@ object Machine {
       }
     }
   }
+
+  def removeTransientStates(states:ListBuffer[EC.State], allTransitions:StateTransitionMap):Array[EC.State] = {
+    states.view
+      .zip(allTransitions)
+      .filter { case (_, stateTransitions) => stateTransitions.values.exists(_.isDefined) }
+      .map(_._1)
+      .toArray
+  }
 }
 
 class Machine (equivalenceClasses: ListBuffer[EquivalenceClass], tree:Tree) {
-  // initialization
-  val states:Array[EC.State]                   = equivalenceClasses.toArray
+  val fullStates:StateToHistories              = M.allHistoriesByState(tree, equivalenceClasses)
+  protected val transitionsByIdxGen            = M.findNthSetTransitions(tree.maxLength, tree.alphabet, fullStates)(_)
+
+  val states:Array[EC.State]                   = M.removeTransientStates(equivalenceClasses, transitionsByIdxGen(equivalenceClasses))
+  val transitionsByStateIdx:StateTransitionMap = transitionsByIdxGen(states)
   val stateIndexes:Array[Set[Int]]             = states.map{_.histories.flatMap{_.locations.keySet}}
   val statePaths:Array[Array[String]]          = states.map{_.histories.map{_.observed}.toArray}
 
   val frequency:DenseVector[Double]            = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
   val distribution:DenseVector[Double]         = frequency :/ sum(frequency)
-
-  val fullStates:StateToHistories           = M.allHistoriesByState(tree, states)
-  val transitionsByStateIdx:StateTransitionMap = M.findNthSetTransitions(states, tree.maxLength, tree.alphabet, fullStates)
 
   // Requires context of the machine itself -> not ideal, but logical
   val inferredDistribution:I.InferredDistribution = I.inferredDistribution(tree, tree.maxLength, this)

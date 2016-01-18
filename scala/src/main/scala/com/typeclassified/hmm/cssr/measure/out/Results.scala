@@ -21,12 +21,12 @@ object Results {
        |=======================
        |Alphabet Size: ${alphabet.length}
        |Data Size: ${tree.adjustedDataSize}
-       |Number of Inferred States: ${machine.states.length}
        |Relative Entropy: ${machine.relativeEntropy}
        |Relative Entropy Rate: ${machine.relativeEntropyRate}
        |Statistical Complexity: ${machine.statisticalComplexity}
        |Entropy Rate: ${machine.entropyRate}
        |Variation: ${machine.variation}
+       |Number of Inferred States: ${machine.states.length}
        |""".stripMargin
   }
 
