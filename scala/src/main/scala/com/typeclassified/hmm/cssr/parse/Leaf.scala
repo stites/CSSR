@@ -98,11 +98,12 @@ class Leaf(observedSequence:String,
 
   override def toString: String = {
     val vec = frequency.toArray.mkString("(", ", ", ")")
-    val id = s"${getClass.getSimpleName}@${this.hashCode()}"
-    val observedStr = if (observed.length == 0) observation.toString else observed
+    val id = s"${getClass.getSimpleName}@${hashCode()}"
+    val observedStr = if (observed.length == 0) observation.toString else observed.reverse
+    val nTabs = if (observedStr.length < 4) 3 else 2
 
-    val props = s"{observed=${observedStr.reverse}, \tobservation=${observation.toString},\tfrequency=$vec,\ttotal=${sum(frequency)}}"
-    observedStr +"\t\t"+ id + "\t" + props
+    val props = s"{observed=$observedStr, \tobservation=${observation.toString},\tfrequency=$vec,\ttotal=${sum(frequency)}}"
+    observedStr + "\t" * nTabs + id + "\t" + props
   }
 }
 

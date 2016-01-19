@@ -32,10 +32,10 @@ object Machine {
     tree.collectLeaves()
       .foldLeft(mutable.Map[Option[EC.State], ArrayBuffer[Leaf]]()){
         (map, leaf) => {
-          val eq = leaf.currentEquivalenceClass
-          if (map.keySet.contains(Option(eq))) map(Option(eq)) += leaf
-          else if (!states.contains(eq)) map.getOrElseUpdate(None, ArrayBuffer()) += leaf
-          else map(Option(eq)) = ArrayBuffer(leaf)
+          val eqClass = leaf.currentEquivalenceClass
+          if (map.keySet.contains(Option(eqClass))) map(Option(eqClass)) += leaf
+          else if (!states.contains(eqClass)) map.getOrElseUpdate(None, ArrayBuffer()) += leaf
+          else map(Option(eqClass)) = ArrayBuffer(leaf)
           map
         }
       }.toMap.mapValues(_.toArray)
@@ -44,8 +44,8 @@ object Machine {
   def findNthSetTransitions(maxDepth: Int, alphabet: Alphabet, fullStates:StateToHistories)(states:Seq[EC.State])
   :StateTransitionMap = {
     val transitions = states.map {
-      equivalenceClass => {
-        val startHistories = fullStates(Option(equivalenceClass)).filter(_.observed.length == maxDepth-1)
+      eqClass => {
+        val startHistories = fullStates(Option(eqClass)).filter(_.observed.length == maxDepth-1)
         val endHistories = startHistories.flatMap(_.children)
 
         endHistories
