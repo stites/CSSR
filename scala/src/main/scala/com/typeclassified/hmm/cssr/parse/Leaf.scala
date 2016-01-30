@@ -91,6 +91,16 @@ class Leaf(observedSequence:String,
     children.find(_.observation == xNext)
   }
 
+  def getLoopingStateOnTransitionTo(tree:Tree, b:Char):Option[EquivalenceClass] = {
+    val isLast:Boolean = this.observed.length == tree.maxLength && parent.nonEmpty
+    val navigatableHistory = if (isLast) b + parent.get.observed else b + observed
+
+    tree
+      .navigateHistory(navigatableHistory.toList)
+      .flatMap{ l => Option(l.currentEquivalenceClass) }
+  }
+
+
   def getStateOnTransitionTo(b:Char):Option[EquivalenceClass] = {
     val optionalLeaf = parseTree.navigateHistory((b + observed).toList)
     if (optionalLeaf.nonEmpty) Option(optionalLeaf.get.currentEquivalenceClass) else None

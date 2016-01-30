@@ -118,11 +118,12 @@ object CSSR {
 
         if (x0.nonEmpty && optionalTsb.nonEmpty) {
           for (x <- s.histories.tail) {
-            val optionalExb = x.getStateOnTransitionTo(b)
+            val optionalExb = x.getLoopingStateOnTransitionTo(parseTree, b)
             if (optionalExb.nonEmpty && optionalTsb.get.ne(optionalExb.get)) {
+              logger.debug("recursive set to false")
               recursive = false
               for (y <- s.histories) {
-                val optionalEyb = y.getStateOnTransitionTo(b)
+                val optionalEyb = y.getLoopingStateOnTransitionTo(parseTree, b)
                 if (optionalEyb.nonEmpty && optionalEyb.get.eq(optionalExb.get)) {
                   val sNew = EquivalenceClass()
                   S += sNew

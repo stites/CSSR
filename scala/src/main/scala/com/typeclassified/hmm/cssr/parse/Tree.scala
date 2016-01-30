@@ -130,7 +130,7 @@ class Tree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) 
 
   def collectLeaves(layer:ListBuffer[Leaf] = ListBuffer(root), collected:ListBuffer[Leaf]=ListBuffer()):Array[Leaf] = {
     if (layer.isEmpty) {
-      return collected.toArray
+      collected.toArray
     } else {
       val (foundLeaves, nextLayer) = layer.partition(_.children.isEmpty)
       collectLeaves(nextLayer.flatMap(_.children), collected ++ layer)
