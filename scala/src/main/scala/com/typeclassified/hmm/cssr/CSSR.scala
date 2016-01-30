@@ -56,7 +56,7 @@ object CSSR {
     rootClass.addHistory(parseTree.root)
     val allStates = ListBuffer(rootClass)
 
-    return (parseTree, allStates)
+    (parseTree, allStates)
   }
 
   /**
@@ -76,14 +76,9 @@ object CSSR {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
         val s = xt.currentEquivalenceClass
-
-        for ((a, alphaIdx) <- parseTree.alphabet.map) {
-          // node in the parse tree with predictive dist
-          val aXt = xt.findChildWithAdditionalHistory(a)
+        for (aXt <- xt.children) {
           s.normalizeAcrossHistories()
-          if (aXt.nonEmpty) {
-            Test.test(S, aXt.get, s, sig)
-          }
+          Test.test(S, aXt, s, sig)
         }
       }
     }
@@ -109,32 +104,30 @@ object CSSR {
     */
   def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double, lMax:Double) = {
     var recursive = false
-    // remove equivalence classes with empty histories
-    S --= S.filter(_.histories.isEmpty)
 
     while (!recursive) {
       // clean out transient states as well?
       recursive = true
       for (s <- S; (b, alphabetIdx) <- parseTree.alphabet.map) {
-        if (s.histories.nonEmpty) {
-          // TODO: investigate partitioning the equivalence class like so
-          // val stateGroupedByTransition:Map[Option[EquivalenceClass], ArrayBuffer[Leaf]] = s.histories
-          //     .groupBy(_.getStateOnTransitionTo(b))
-          val x0: Leaf = s.histories.head
-          val optionalTsb = x0.getStateOnTransitionTo(b)
-          if (optionalTsb.nonEmpty && x0.distribution(alphabetIdx) <= 0) {
-            for (x <- s.histories.tail) {
-              val optionalExb = x.getStateOnTransitionTo(b)
-              if (optionalExb.nonEmpty && optionalTsb.get != optionalExb.get) {
-                recursive = false
-                for (y <- s.histories) {
-                  val optionalEyb = y.getStateOnTransitionTo(b)
-                  if (optionalEyb.nonEmpty && optionalEyb.get == optionalExb.get) {
-                    val sNew = EquivalenceClass()
-                    S += sNew
-                    logger.debug("moving from Recursion")
-                    Test.move(y, s, sNew)
-                  }
+        // TODO: investigate partitioning the equivalence class like so
+        // val stateGroupedByTransition:Map[Option[EquivalenceClass], ArrayBuffer[Leaf]] = s.histories
+        //     .groupBy(_.getStateOnTransitionTo(b))
+
+        val x0 = s.histories.headOption
+        val optionalTsb = x0.flatMap{ l => l.getStateOnTransitionTo(b) }
+
+        if (x0.nonEmpty && optionalTsb.nonEmpty) {
+          for (x <- s.histories.tail) {
+            val optionalExb = x.getStateOnTransitionTo(b)
+            if (optionalExb.nonEmpty && optionalTsb.get.ne(optionalExb.get)) {
+              recursive = false
+              for (y <- s.histories) {
+                val optionalEyb = y.getStateOnTransitionTo(b)
+                if (optionalEyb.nonEmpty && optionalEyb.get.eq(optionalExb.get)) {
+                  val sNew = EquivalenceClass()
+                  S += sNew
+                  logger.debug("moving from Recursion")
+                  Test.move(y, s, sNew)
                 }
               }
             }

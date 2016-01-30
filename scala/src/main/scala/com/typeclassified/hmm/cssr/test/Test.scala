@@ -30,6 +30,7 @@ object Test {
         move(aXt, s, sNew)
       }
     }
+    S --= S.filter(_.histories.isEmpty)
   }
 
   def nullHypothesis(s: EquivalenceClass, aXt: Leaf, sig:Double): Boolean = {
@@ -49,15 +50,13 @@ object Test {
     val SStar = S.filter(_ ne s)
     for (sStar <- SStar) {
       if (nullHypothesis(sStar, ax, sig)) {
-        return Option.apply(sStar)
+        return Option(sStar)
       }
     }
-    Option.empty
+    None
   }
 
   def move(x: Leaf, from: EquivalenceClass, to: EquivalenceClass): Unit = {
-//    val maybeRootRemoval = from.histories.find(_.observation == 0.toChar)
-//    if (maybeRootRemoval.nonEmpty) from.rmHistory(maybeRootRemoval.get)
     x.changeEquivalenceClass(to)
     to.addHistory(x)
     from.rmHistory(x) // remove history as we have moved to "painting" the parse tree
