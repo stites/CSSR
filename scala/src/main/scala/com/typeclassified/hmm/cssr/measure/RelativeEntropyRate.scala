@@ -3,22 +3,22 @@ package com.typeclassified.hmm.cssr.measure
 import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistribution
 import com.typeclassified.hmm.cssr.measure.{RelativeEntropy => RE}
 import com.typeclassified.hmm.cssr.parse.{Tree, Leaf}
-import com.typeclassified.hmm.cssr.state.Machine
+import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
 object RelativeEntropyRate extends MathUtils {
   protected val logger = Logger(LoggerFactory.getLogger(RelativeEntropyRate.getClass))
 
-  def relativeEntropyRate(maxLengthDist:InferredDistribution, tree: Tree, machine: Machine):Double = {
+  def relativeEntropyRate(maxLengthDist:InferredDistribution, tree: Tree, allStates: AllStates):Double = {
     logger.debug("Relative Entropy Rate")
     logger.debug("===========================")
 
-    val nextLastHistoryDist = InferProbabilities.inferredDistribution(tree, tree.maxLength-1, machine)
+    val nextLastHistoryDist = InferProbabilities.inferredDistribution(tree, tree.maxLength-1, allStates)
 
     val relativeEntropyRate:Double = nextLastHistoryDist.foldLeft(0d) {
       case (partialRelEntRate, (leaf, inferredProb)) =>
-        val totalRelEntRate = partialRelEntRate + relEntropyRateForHistory(leaf, inferredProb, tree, machine)
+        val totalRelEntRate = partialRelEntRate + relEntropyRateForHistory(leaf, inferredProb, tree, allStates)
         logger.debug(s"totalRelEntRate: $totalRelEntRate")
         totalRelEntRate
     }
@@ -27,7 +27,7 @@ object RelativeEntropyRate extends MathUtils {
   }
 
   // the frequency of occurrence of the history with that particular alpha symbol
-  protected def relEntropyRateForHistory(history: Leaf, inferredProb:Double, tree: Tree, machine: Machine):Double = {
+  protected def relEntropyRateForHistory(history: Leaf, inferredProb:Double, tree: Tree, allStates: AllStates):Double = {
     logger.debug(s"stringProb: $inferredProb, for history: ${history.toString}")
 
     val relEntRateHistTotal:Double = tree.alphabet
@@ -35,7 +35,7 @@ object RelativeEntropyRate extends MathUtils {
       .foldLeft(0d){
         (relEntRateHist, alpha) => {
           val histFreqByAlpha = history.frequency(tree.alphabet.map(alpha)) / history.totalCounts
-          val (inferredRatio, relEntRateAlpha) = relEntropyRateByNextAlphabet(history.observed, inferredProb, tree, machine, histFreqByAlpha, alpha)
+          val (inferredRatio, relEntRateAlpha) = relEntropyRateByNextAlphabet(history.observed, inferredProb, tree, allStates, histFreqByAlpha, alpha)
 
           logger.debug(s"relEntRateAlpha: $relEntRateAlpha")
           logger.debug(s"relEntRateHist: ${relEntRateHist + relEntRateAlpha}")
@@ -54,7 +54,7 @@ object RelativeEntropyRate extends MathUtils {
   protected def relEntropyRateByNextAlphabet(history:String,
                                              inferredProb:Double,
                                              tree:Tree,
-                                             machine: Machine,
+                                             allStates: AllStates,
                                              histFreqByAlpha:Double,
                                              alpha:Char)
   :(Double, Double) = {
@@ -66,7 +66,7 @@ object RelativeEntropyRate extends MathUtils {
       logger.error("Something disastrous just happened")
     }
 
-    val childStringProb = InferProbabilities.inferredHistory(alpha + history, tree, machine)
+    val childStringProb = InferProbabilities.inferredHistory(alpha + history, tree, allStates)
     // eliminate branching? depends on scala's ln behavior as well as how it treats infinities
     val inferredRatio:Double = if (isValid) childStringProb / inferredProb else 0
     val relEntRateAlpha:Double = if (isValid) discreteEntropy(histFreqByAlpha, inferredRatio) else 0

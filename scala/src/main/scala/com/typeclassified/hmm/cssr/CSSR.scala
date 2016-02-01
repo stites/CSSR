@@ -2,12 +2,13 @@ package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.measure.out.Results
-import com.typeclassified.hmm.cssr.state.{Machine, EquivalenceClass}
+import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
 import com.typeclassified.hmm.cssr.test.Test
 import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
@@ -23,10 +24,10 @@ object CSSR {
     sufficiency(parseTree, allStates, config.lMax, config.sig)
     logger.debug("Sufficiency complete...")
 
-    recursion(parseTree, allStates, config.sig, config.lMax)
+    val finalStates = recursion(parseTree, allStates, config.sig, config.lMax)
     logger.debug("Recursion complete...")
 
-    val machine = new Machine(allStates, parseTree)
+    val machine = new Machine(finalStates, parseTree)
 
     Results.metadata(config).split("\n").foreach{logger.info(_)}
     Results.stateDetails(machine, AlphabetHolder.alphabet).split("\n").foreach{logger.info(_)}
@@ -105,6 +106,11 @@ object CSSR {
   def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double, lMax:Double) = {
     var recursive = false
 
+    destroyShortHistories(S, lMax)
+    val trans = findLeTransitions(parseTree, S)
+    val transients = findLeTransientsAndOrphans(trans, S)
+//    cleanLeTransients(transients, S)
+
     while (!recursive) {
       // clean out transient states as well?
       recursive = true
@@ -136,7 +142,60 @@ object CSSR {
         }
       }
     }
+
+    val transI = findLeTransitions(parseTree, S)
+    val transientsI = findLeTransientsAndOrphans(transI, S)
+//    cleanLeTransients(transientsI, S)
+
     logger.debug("States found at the end of Recursion: " + S.size.toString)
+    new AllStates(S, transI)
+  }
+
+
+  def destroyShortHistories(S:ListBuffer[EquivalenceClass], lMax:Double): Unit = {
+    S.foreach{ s => s.histories --= s.histories.filter(_.observed.length < lMax - 1 )}
+    S --= S.filter(_.histories.isEmpty)
+  }
+
+  type Transitions = Map[EquivalenceClass, Map[Char, Option[EquivalenceClass]]]
+
+  def findLeTransitions(tree: Tree, states:ListBuffer[EquivalenceClass]):Transitions = {
+    tree.getDepth(tree.maxLength - 1)
+      //      .filter{ _.currentEquivalenceClass }
+      .groupBy{ _.currentEquivalenceClass }
+      .mapValues{
+        _.flatMap{ _.children }
+          .groupBy{ _.observation }
+          .mapValues{ histories => {
+            val endStates = histories.flatMap{ h => Option(h.currentEquivalenceClass) }.filter{ states.contains(_) }.toSet
+            if (endStates.size > 1) {
+              logger.warn(s"Transition forks")
+            }
+            endStates.headOption
+          } } }
+  }
+
+  type Transients = Map[EquivalenceClass, Boolean]
+
+  def findLeTransientsAndOrphans(transitions:Transitions, S:ListBuffer[EquivalenceClass]):Transients = {
+
+    val transients = mutable.Map() ++ transitions.map {
+      case (start, charToTransitions) =>
+        val endStates = charToTransitions.values
+        val isTransient = endStates.forall { _.isEmpty }
+        val isOrphaned = endStates.flatten.forall { _ eq start }
+        (start, isOrphaned || isTransient)
+    }
+
+    S.foreach{ s => {
+      if (!transients.keySet.contains(s)) transients += (s -> true)
+    } }
+
+    transients.toMap
+  }
+
+  def cleanLeTransients(transients: Transients, S:ListBuffer[EquivalenceClass]):Unit = {
+    S --= S.filter(transients(_))
   }
 }
 

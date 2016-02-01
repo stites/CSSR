@@ -2,7 +2,7 @@ package com.typeclassified.hmm.cssr.measure
 
 import com.typeclassified.hmm.cssr.parse.Tree.NewToOldDirection
 import com.typeclassified.hmm.cssr.parse.{Tree, Alphabet, Leaf}
-import com.typeclassified.hmm.cssr.state.Machine
+import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
@@ -13,12 +13,12 @@ object InferProbabilities {
   type InferredDistribution = Array[(Leaf, Double)]
 
   /**
-    * calculates the probability of all the histories up to length/depth indicated, based on a given machine
+    * calculates the probability of all the histories up to length/depth indicated, based on a given allStates
     */
-  def inferredDistribution(tree: Tree, depth:Int, machine: Machine):InferredDistribution = {
+  def inferredDistribution(tree: Tree, depth:Int, allStates: AllStates):InferredDistribution = {
     val inferred = tree
       .getDepth(depth)
-      .map { h => (h , inferredHistory(h.observed, tree, machine) ) }
+      .map { h => (h , inferredHistory(h.observed, tree, allStates) ) }
 
     logger.debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
     logger.debug(s"inferred distribution size: ${inferred.length}")
@@ -28,18 +28,18 @@ object InferProbabilities {
   }
 
   /**
-    * calculates the probability of a single, raw history (in string form) based on a given machine and alphabet
+    * calculates the probability of a single, raw history (in string form) based on a given allStates and alphabet
     */
-  def inferredHistory(history:String, tree: Tree, machine: Machine): Double = {
+  def inferredHistory(history:String, tree: Tree, allStates: AllStates): Double = {
     // FIXME: this would be perfect to replace with a state monad
     //    logger.info("Generating Inferred probabilities from State Machine")
 
-    val totalPerString = machine.states
+    val totalPerString = allStates.states
       .view
       .zipWithIndex
       .map {
         case (state, i) =>
-          // logger.debug(s"${history} - STATE ${i.toString} {frequency:${machine.distribution(i)}}")
+          // logger.debug(s"${history} - STATE ${i.toString} {frequency:${allStates.distribution(i)}}")
           var currentStateIdx = i
           var isNullState = false
           val string = if (tree.direction == NewToOldDirection.LeftToRight) history else history.reverse
@@ -47,14 +47,14 @@ object InferProbabilities {
           val historyTotalPerState = string
             .foldLeft[Double](1d){
             (characterTotalPerState, c) => {
-              val currentState = machine.states(currentStateIdx)
-              val transitionStateIdx = machine.transitionsByStateIdx(currentStateIdx)(c)
-              isNullState = isNullState || transitionStateIdx.isEmpty
+              val currentState = allStates.states(currentStateIdx)
+              val transitionState = allStates.transitions(currentStateIdx)(c)
+              isNullState = isNullState || transitionState.isEmpty
 
               if (isNullState) {
                 0d
               } else {
-                currentStateIdx = transitionStateIdx.get
+                currentStateIdx  = allStates.states.zipWithIndex.find(_._1 == transitionState.get).get._2
                 val totalPerStateCached = characterTotalPerState * currentState.distribution(tree.alphabet.map(c))
 
                 /*
@@ -72,7 +72,7 @@ object InferProbabilities {
             }
           }
           //        logger.debug(s"final historyTotalPerState: $historyTotalPerState")
-          machine.distribution(i) * historyTotalPerState
+          allStates.distribution(i) * historyTotalPerState
       }.sum[Double]
 
     logger.debug(s"Final Probability for History: $totalPerString")
@@ -86,12 +86,12 @@ object InferProbabilities {
 
         val currentState = current.get.currentEquivalenceClass
         val next = current.get.findChildWithAdditionalHistory(c)
-        val nextEqClassIdx = machine.states.indexOf(next.get.currentEquivalenceClass)
+        val nextEqClassIdx = allStates.states.indexOf(next.get.currentEquivalenceClass)
 
         println(totalPerState, c, current.get.observed, next.get.observed, leaf.observed, nextEqClassIdx)
 
         current = next
-        if (!machine.states.contains(next.get.currentEquivalenceClass)) {
+        if (!allStates.states.contains(next.get.currentEquivalenceClass)) {
           0d // we let this 0-probability eliminate null states.
         } else {
           totalPerState * currentState.distribution(alphabet.map(c))

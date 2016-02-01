@@ -1,16 +1,16 @@
 package com.typeclassified.hmm.cssr.measure
 
-import com.typeclassified.hmm.cssr.state.Machine
+import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
 
 object EntropyRate extends MathUtils {
 
-  def entropyRate(machine:Machine):Double = {
-    (-1) * machine.states
+  def entropyRate(allStates: AllStates):Double = {
+    (-1) * allStates.states
       .view
       .zipWithIndex
       .map {
         case (state, i) =>
-          val freq = machine.distribution(i)
+          val freq = allStates.distribution(i)
 
           state.distribution.foldLeft(0d) {
             // technically, we can remove branching, but I don't know what scala will do, given log(0)
