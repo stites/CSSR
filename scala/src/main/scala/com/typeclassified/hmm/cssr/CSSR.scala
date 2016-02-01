@@ -30,9 +30,9 @@ object CSSR {
     val machine = new Machine(finalStates, parseTree)
 
     Results.metadata(config).split("\n").foreach{logger.info(_)}
-    Results.stateDetails(machine, AlphabetHolder.alphabet).split("\n").foreach{logger.info(_)}
-    Results.dotInfo(config, AlphabetHolder.alphabet, allStates).split("\n").foreach{logger.info(_)}
-    Results.measurements(AlphabetHolder.alphabet, parseTree, machine).split("\n").foreach{logger.info(_)}
+    Results.stateDetails(finalStates, AlphabetHolder.alphabet).split("\n").foreach{logger.info(_)}
+    Results.dotInfo(config, AlphabetHolder.alphabet, finalStates).split("\n").foreach{logger.info(_)}
+    Results.measurements(AlphabetHolder.alphabet, parseTree, machine, finalStates).split("\n").foreach{logger.info(_)}
 
     logger.info("CSSR completed successfully!")
   }
@@ -145,7 +145,7 @@ object CSSR {
 
     val transI = findLeTransitions(parseTree, S)
     val transientsI = findLeTransientsAndOrphans(transI, S)
-//    cleanLeTransients(transientsI, S)
+    cleanLeTransients(transientsI, S)
 
     logger.debug("States found at the end of Recursion: " + S.size.toString)
     new AllStates(S, transI)
@@ -173,6 +173,7 @@ object CSSR {
             }
             endStates.headOption
           } } }
+      .mapValues{ charMap => tree.alphabet.raw.map{c => c -> charMap.getOrElse(c, None) }.toMap }
   }
 
   type Transients = Map[EquivalenceClass, Boolean]
