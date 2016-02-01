@@ -18,7 +18,7 @@ class TestTests extends FlatSpec with Matchers {
 
     leaf.currentEquivalenceClass should be (from)
 
-    Test.move(leaf, from, to)
+    Test.move(leaf, from, null, to)
 
     leaf.currentEquivalenceClass should be (to)
   }

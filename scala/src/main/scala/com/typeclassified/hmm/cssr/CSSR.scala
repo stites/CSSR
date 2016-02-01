@@ -79,9 +79,12 @@ object CSSR {
     for (l <- 1 to lMax) {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
-        val s = xt.parent.get.currentEquivalenceClass
-        s.normalizeAcrossHistories()
-        Test.test(S, xt, s, sig)
+        val parent = parseTree.navigateHistoryRev(xt.observed.tail.toList) // FIXME: another atrocity. It's almost as if we are reading history in the _other direction_
+        if (parent.nonEmpty) {
+          val s = parent.get.currentEquivalenceClass
+          s.normalizeAcrossHistories()
+          Test.test(S, xt, parent.get, s, sig)
+        }
       }
     }
     logger.debug("States found at the end of Sufficiency: " + S.size.toString)
@@ -135,7 +138,7 @@ object CSSR {
                   val sNew = EquivalenceClass()
                   S += sNew
                   logger.debug("moving from Recursion")
-                  Test.move(y, s, sNew)
+                  Test.move(y, s, null, sNew)
                 }
               }
             }

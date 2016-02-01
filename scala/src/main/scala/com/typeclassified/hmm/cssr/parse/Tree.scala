@@ -137,8 +137,20 @@ class Tree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) 
   }
 
   // ABC, ABB => [{C->B->A},{B->C->A}]
+  def navigateHistoryRev(history: List[Char], active:Leaf = root): Option[Leaf] = {
+    if (history.isEmpty) Option(active) else {
+      val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.head)
+      if (history.tail.isEmpty || maybeNext.isEmpty) {
+        maybeNext
+      } else {
+        navigateHistoryRev(history.tail, maybeNext.get)
+      }
+    }
+  }
+
+  // ABC, ABB => [{C->B->A},{B->C->A}]
   def navigateHistory(history: List[Char], active:Leaf = root): Option[Leaf] = {
-    if (history.isEmpty) None else {
+    if (history.isEmpty) Option(active) else {
       val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
       if (history.init.isEmpty || maybeNext.isEmpty) {
         maybeNext
