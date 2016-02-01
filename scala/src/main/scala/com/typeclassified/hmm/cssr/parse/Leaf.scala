@@ -26,7 +26,7 @@ class Leaf(observedSequence:String,
 
   val observed:String = observedSequence
 
-  val observation: Char = if ("".equals(observed)) 0.toChar else observed.head
+  val observation: Char = if ("".equals(observed)) 0.toChar else observed.last
 
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 
@@ -71,7 +71,7 @@ class Leaf(observedSequence:String,
     val maybeNext = findChildWithAdditionalHistory(xNext)
     var next:Leaf = null
     if (maybeNext.isEmpty) {
-      next = new Leaf(xNext+:observed, parseTree, currentEquivalenceClass, Option(this))
+      next = new Leaf(xNext +: observed, parseTree, currentEquivalenceClass, Option(this))
       children += next
     } else {
       next = maybeNext.get
