@@ -28,8 +28,13 @@ object CSSR {
 
     destroyOrphanStates(allStates, parseTree)
 
-    val finalStates = recursion(parseTree, allStates, config.sig, config.lMax)
+    recursion(parseTree, allStates, config.sig, config.lMax)
+
     logger.debug("Recursion complete...")
+
+    destroyOrphanStates(allStates, parseTree)
+
+    val finalStates = new AllStates(allStates, findLeTransitions(parseTree, allStates))
 
     val machine = new Machine(finalStates, parseTree)
 
@@ -146,12 +151,7 @@ object CSSR {
       }
     }
 
-    val transI = findLeTransitions(parseTree, S)
-    val transientsI = findLeTransientsAndOrphans(transI, S)
-    cleanLeTransients(transientsI, S)
-
     logger.debug("States found at the end of Recursion: " + S.size.toString)
-    new AllStates(S, transI)
   }
 
 
