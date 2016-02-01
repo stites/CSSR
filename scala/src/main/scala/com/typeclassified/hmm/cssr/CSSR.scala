@@ -24,6 +24,10 @@ object CSSR {
     sufficiency(parseTree, allStates, config.lMax, config.sig)
     logger.debug("Sufficiency complete...")
 
+    destroyShortHistories(allStates, config.lMax)
+
+    destroyOrphanStates(allStates, parseTree)
+
     val finalStates = recursion(parseTree, allStates, config.sig, config.lMax)
     logger.debug("Recursion complete...")
 
@@ -110,11 +114,6 @@ object CSSR {
   def recursion (parseTree: Tree, S: ListBuffer[EquivalenceClass], sig:Double, lMax:Double) = {
     var recursive = false
 
-    destroyShortHistories(S, lMax)
-    val trans = findLeTransitions(parseTree, S)
-    val transients = findLeTransientsAndOrphans(trans, S)
-//    cleanLeTransients(transients, S)
-
     while (!recursive) {
       // clean out transient states as well?
       recursive = true
@@ -161,11 +160,18 @@ object CSSR {
     S --= S.filter(_.histories.isEmpty)
   }
 
+  def destroyOrphanStates(S:ListBuffer[EquivalenceClass], tree: Tree): Unit = {
+    val trans = findLeTransitions(tree, S)
+    val transients = findLeTransientsAndOrphans(trans, S)
+    cleanLeTransients(transients, S)
+  }
+
   type Transitions = Map[EquivalenceClass, Map[Char, Option[EquivalenceClass]]]
+
+  type Transients = Map[EquivalenceClass, Boolean]
 
   def findLeTransitions(tree: Tree, states:ListBuffer[EquivalenceClass]):Transitions = {
     tree.getDepth(tree.maxLength - 1)
-      //      .filter{ _.currentEquivalenceClass }
       .groupBy{ _.currentEquivalenceClass }
       .mapValues{
         _.flatMap{ _.children }
@@ -180,10 +186,7 @@ object CSSR {
       .mapValues{ charMap => tree.alphabet.raw.map{c => c -> charMap.getOrElse(c, None) }.toMap }
   }
 
-  type Transients = Map[EquivalenceClass, Boolean]
-
   def findLeTransientsAndOrphans(transitions:Transitions, S:ListBuffer[EquivalenceClass]):Transients = {
-
     val transients = mutable.Map() ++ transitions.map {
       case (start, charToTransitions) =>
         val endStates = charToTransitions.values
@@ -192,9 +195,7 @@ object CSSR {
         (start, isOrphaned || isTransient)
     }
 
-    S.foreach{ s => {
-      if (!transients.keySet.contains(s)) transients += (s -> true)
-    } }
+    S.foreach{ s => if (!transients.keySet.contains(s)) transients += (s -> true) }
 
     transients.toMap
   }
