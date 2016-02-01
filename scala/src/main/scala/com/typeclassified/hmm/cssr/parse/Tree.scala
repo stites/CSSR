@@ -1,21 +1,24 @@
 package com.typeclassified.hmm.cssr.parse
 
-import com.typeclassified.hmm.cssr.parse.Tree.NewToOldDirection.NewToOldDirection
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
+
+/*
+We encounter the history say "110"
+We go to the parse tree at the root
+We take the 0 child of the root
+We then take the 1 child of 0 (= 10)
+We then take the 1 child of 10 (=110)
+*/
+
 object Tree {
   protected val logger = Logger(LoggerFactory.getLogger(Tree.getClass))
   def apply(alphabet: Alphabet, equivalenceClass: EquivalenceClass) = new Tree(alphabet, equivalenceClass)
   def apply(alphabet: Alphabet) = new Tree(alphabet)
-
-  object NewToOldDirection  extends Enumeration {
-    type NewToOldDirection = Value
-    val RightToLeft, LeftToRight = Value
-  }
 
   def loadData(tree:Tree, xs: Array[Char], n: Int): Tree = {
     //  Yield successive n-sized windows from the x's. Does not work with a length of 0.
@@ -25,7 +28,6 @@ object Tree {
     tree.maxLength = n
     tree.dataSize = xs.length - filteredCharacters
     tree.adjustedDataSize =  xs.length - (n - 1) - filteredCharacters
-    tree.direction = NewToOldDirection.LeftToRight
 
     for (size <- 1 to n+1) {
       logger.debug(s"loading data windows of size $size.")
@@ -41,46 +43,29 @@ object Tree {
       }
     }
     tree.getDepth(n).foreach{ _.children = ListBuffer() }
-    return tree
+    tree
   }
 
   def loadHistory(tree: Tree, observed: Seq[Char], idx:Option[Int] = None): Unit = {
-
-    def goRightNewToLeftOld(history: List[Char], active:Leaf, tree: Tree, fullHistory:String, depth:Int=0): Option[Leaf] = {
-      if (history.isEmpty) return Option.empty
-      val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
-      val histIdx:Int = depth+1
+    // 102       oldest -> newest
+    // NULL -> 2 -> 0 -> 1
+    def go(history: List[Char] /*102*/ , active: Leaf, tree: Tree, fullHistory: String, depth: Int = 0): Option[Leaf] = {
+      if (history.isEmpty) return None
+      val maybeNext: Option[Leaf] = active.findChildWithAdditionalHistory(history.last) /*2*/
+      val histIdx: Int = depth + 1
+      var next:Leaf = null
 
       if (maybeNext.nonEmpty) {
         if (history.init.isEmpty) active.updateDistribution(history.last, idx)
-
-        return goRightNewToLeftOld(history.init, maybeNext.get, tree, fullHistory, histIdx)
+        next = maybeNext.get
       } else {
-        val next = active.addChild(fullHistory(fullHistory.length - histIdx), idx)
-        return goRightNewToLeftOld(history.init, next, tree, fullHistory, histIdx)
+        /*102     => fullHistory(3-1) => FH(2)*/
+        next = active.addChild(fullHistory(fullHistory.length - histIdx) /*2*/ , idx /*102*/)
       }
+      go(history.init /*10*/ , next, tree, fullHistory /*102*/ , histIdx)
     }
 
-
-    def goLeftNewToRightOld(history: List[Char], active:Leaf, tree: Tree, fullHistory:String, depth:Int=0): Option[Leaf] = {
-      if (history.isEmpty) return Option.empty
-      val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.head)
-      val histIdx:Int = depth+1
-
-      if (maybeNext.nonEmpty) {
-        if (history.tail.isEmpty) active.updateDistribution(history.head, idx)
-        return goLeftNewToRightOld(history.tail, maybeNext.get, tree, fullHistory, histIdx)
-      } else {
-        val next = active.addChild(fullHistory(histIdx - 1), idx)
-        return goLeftNewToRightOld(history.tail, next, tree, fullHistory, histIdx)
-      }
-    }
-
-    if (tree.direction == NewToOldDirection.LeftToRight) {
-      goLeftNewToRightOld(observed.toList, tree.root, tree, observed.mkString)
-    } else if (tree.direction == NewToOldDirection.RightToLeft) {
-      goRightNewToLeftOld(observed.toList, tree.root, tree, observed.mkString)
-    }
+    go(observed.toList, tree.root, tree, observed.mkString)
   }
 }
 
@@ -92,8 +77,6 @@ class Tree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) 
   var dataSize:Double = _
 
   var adjustedDataSize:Double = _
-
-  var direction:NewToOldDirection = _
 
   /**
     * navigate from root to x_hist leaf and update the distribution with x0
@@ -112,9 +95,9 @@ class Tree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) 
     if (history.isEmpty) Option.empty else {
       val maybeNext:Option[Leaf] = active.findChildWithAdditionalHistory(history.last)
       if (history.init.isEmpty || maybeNext.isEmpty) {
-        return maybeNext
+        maybeNext
       } else {
-        return navigateHistory(history.init, maybeNext.get)
+        navigateHistory(history.init, maybeNext.get)
       }
     }
   }

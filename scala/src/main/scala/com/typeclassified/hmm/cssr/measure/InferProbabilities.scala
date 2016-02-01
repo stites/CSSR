@@ -1,6 +1,5 @@
 package com.typeclassified.hmm.cssr.measure
 
-import com.typeclassified.hmm.cssr.parse.Tree.NewToOldDirection
 import com.typeclassified.hmm.cssr.parse.{Tree, Alphabet, Leaf}
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
 import com.typesafe.scalalogging.Logger
@@ -42,7 +41,7 @@ object InferProbabilities {
           // logger.debug(s"${history} - STATE ${i.toString} {frequency:${allStates.distribution(i)}}")
           var currentStateIdx = i
           var isNullState = false
-          val string = if (tree.direction == NewToOldDirection.LeftToRight) history else history.reverse
+          val string = history // if (tree.direction == NewToOldDirection.LeftToRight) history else history.reverse
 
           val historyTotalPerState = string
             .foldLeft[Double](1d){

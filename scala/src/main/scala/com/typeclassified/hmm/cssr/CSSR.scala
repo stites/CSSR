@@ -72,6 +72,9 @@ object CSSR {
     * @param S
     * @param lMax
     */
+
+  // determinzing is further along than just 1 step.
+  // sufficiency is only good for 1 step
   def sufficiency(parseTree: Tree, S: ListBuffer[EquivalenceClass], lMax: Int, sig:Double):Unit = {
     for (l <- 0 to lMax) {
       logger.debug(s"Starting Sufficiency at L = $l")
