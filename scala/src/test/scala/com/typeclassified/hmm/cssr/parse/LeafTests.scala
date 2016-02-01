@@ -16,16 +16,16 @@ class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with Lea
 
   "updateDistribution" should "update distributions for observing the _next_ values in history" in {
     val leaf = new Leaf("a", tree, EquivalenceClass())
-    leaf.updateDistribution('b')
+    leaf.incrementDistribution('b')
     assertProbabalisticDetails(leaf, Array(0,1,0))
 
-    leaf.updateDistribution('b')
+    leaf.incrementDistribution('b')
     assertProbabalisticDetails(leaf, Array(0,2,0))
 
-    leaf.updateDistribution('c')
+    leaf.incrementDistribution('c')
     assertProbabalisticDetails(leaf, Array(0,2,1))
 
-    leaf.updateDistribution('a')
+    leaf.incrementDistribution('a')
     assertProbabalisticDetails(leaf, Array(1,2,1))
   }
 

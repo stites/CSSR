@@ -73,17 +73,15 @@ object CSSR {
     * @param lMax
     */
 
-  // determinzing is further along than just 1 step.
   // sufficiency is only good for 1 step
+  // determinizing is further along than just 1 step.
   def sufficiency(parseTree: Tree, S: ListBuffer[EquivalenceClass], lMax: Int, sig:Double):Unit = {
-    for (l <- 0 to lMax) {
+    for (l <- 1 to lMax) {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
-        val s = xt.currentEquivalenceClass
-        for (aXt <- xt.children) {
-          s.normalizeAcrossHistories()
-          Test.test(S, aXt, s, sig)
-        }
+        val s = xt.parent.get.currentEquivalenceClass
+        s.normalizeAcrossHistories()
+        Test.test(S, xt, s, sig)
       }
     }
     logger.debug("States found at the end of Sufficiency: " + S.size.toString)

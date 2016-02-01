@@ -1,6 +1,6 @@
 package com.typeclassified.hmm.cssr.parse
 
-import breeze.linalg.sum
+import breeze.linalg.{DenseVector, sum}
 import com.typeclassified.hmm.cssr.shared.Probablistic
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 
@@ -17,28 +17,26 @@ import scala.collection.mutable.ListBuffer
   * @param parseTree
   * @param initialEquivClass
   **/
-class Leaf(observedSequence:String,
-           parseTree: Tree,
-           initialEquivClass: EquivalenceClass,
-           var parent: Option[Leaf] = None
-          ) extends Probablistic {
+class Leaf(observedSequence:String, parseTree: Tree, initialEquivClass: EquivalenceClass, var parent: Option[Leaf] = None ) extends Probablistic {
+  var obsCount:Double = 1
+
   val alphabet:Alphabet = parseTree.alphabet
 
   val observed:String = observedSequence
 
-  val observation: Char = if ("".equals(observed)) 0.toChar else observed.last
+  val observation: Char = if ("".equals(observed)) 0.toChar else observed.last // FIXME: REALLY?? THIS IS CORRECT?!?!?!
 
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 
   val locations:mutable.HashMap[Int, Int] = mutable.HashMap[Int, Int]()
 
-  var children: ListBuffer[Leaf] = ListBuffer()
+  var children:ListBuffer[Leaf] = ListBuffer()
 
   def printParent (x:Option[Leaf] = Option(this), acc:String = "") :String = {
     if (x.isEmpty) acc else printParent(x.get.parent, acc + x.get.observation)
   }
 
-  def updateDistribution(xNext: Char, dataIdx:Option[Int] = None):Unit = {
+  def incrementDistribution(xNext: Char, dataIdx:Option[Int] = None):Unit = {
     val idx: Int = parseTree.alphabet.map(xNext)
 
     frequency(idx) += 1
@@ -49,6 +47,18 @@ class Leaf(observedSequence:String,
       val indexCount = if (locations.keySet.contains(dataIdx.get)) locations(dataIdx.get) else 0
       locations += (dataIdx.get -> (indexCount + 1))
     }
+  }
+
+  def calcNextStepProbabilities():Unit = {
+    val nextCounts:Array[Double] = alphabet.raw
+      .map {
+        c => findChildWithAdditionalHistory(c)
+          .flatMap{ l => Option(l.obsCount)}
+          .getOrElse(0d) }
+
+    frequency = new DenseVector[Double](nextCounts)
+    totalCounts = sum(frequency)
+    distribution = frequency / totalCounts
   }
 
   /**
@@ -67,15 +77,10 @@ class Leaf(observedSequence:String,
     * @return
     */
   def addChild (xNext:Char, dataIdx:Option[Int] = None): Leaf = {
-    updateDistribution(xNext, dataIdx)
     val maybeNext = findChildWithAdditionalHistory(xNext)
-    var next:Leaf = null
-    if (maybeNext.isEmpty) {
-      next = new Leaf(xNext +: observed, parseTree, currentEquivalenceClass, Option(this))
-      children += next
-    } else {
-      next = maybeNext.get
-    }
+    // FIXME: _TECHNICALLY_ `observed:+xNext` must be reversed if we want this to be correct
+    val next:Leaf = if (maybeNext.isEmpty) new Leaf(observed:+xNext, parseTree, currentEquivalenceClass, Option(this)) else maybeNext.get
+    if (maybeNext.isEmpty) children += next
     next
   }
 
@@ -109,11 +114,10 @@ class Leaf(observedSequence:String,
   override def toString: String = {
     val vec = frequency.toArray.mkString("(", ", ", ")")
     val id = s"${getClass.getSimpleName}@${hashCode()}"
-    val observedStr = if (observed.length == 0) observation.toString else observed.reverse
-    val nTabs = if (observedStr.length < 4) 3 else 2
+    val nTabs = if (observed.length < 4) 3 else 2
 
-    val props = s"{observed=$observedStr, \tobservation=${observation.toString},\tfrequency=$vec,\ttotal=${sum(frequency)}}"
-    observedStr + "\t" * nTabs + id + "\t" + props
+    val props = s"{observed=$observed, \tobservation=${observation.toString},\tfrequency=$vec,\ttotal=${sum(frequency)}}"
+    observed + "\t" * nTabs + id + "\t" + props
   }
 }
 

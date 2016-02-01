@@ -13,7 +13,7 @@ object Test {
 
   def test(S: ListBuffer[EquivalenceClass], aXt: Leaf, s: EquivalenceClass, sig: Double): Unit= {
     logger.debug(s"Total number of states: ${S.length}")
-    if (nullHypothesis(s, aXt, sig)) {
+    if (nullHypothesis(s, aXt, sig) >= sig) {
       if (!s.histories.contains(aXt)) {
         aXt.changeEquivalenceClass(s)
         s.addHistory(aXt)
@@ -33,7 +33,7 @@ object Test {
     S --= S.filter(_.histories.isEmpty)
   }
 
-  def nullHypothesis(s: EquivalenceClass, aXt: Leaf, sig:Double): Boolean = {
+  def nullHypothesis(s: EquivalenceClass, aXt: Leaf, sig:Double): Double = {
     logger.debug("Testing: " + aXt.toString)
     logger.debug(s"Have state information:")
     logger.debug("======================================")
@@ -42,14 +42,14 @@ object Test {
     logger.debug(s"Running test -- Count1: ${s.totalCounts} Count2: ${aXt.totalCounts}")
     logger.debug(s"state: ${s.distribution.toString}\t\tfreq1: ${s.frequency.toString()}")
     logger.debug(s" leaf: ${aXt.distribution.toString}\t\tfreq2: ${aXt.frequency.toString()}")
-    KS.kstwo(s.distribution, s.totalCounts, aXt.distribution, aXt.totalCounts) > sig
+    KS.kstwo(s.distribution, s.totalCounts, aXt.distribution, aXt.totalCounts)
   }
 
   def restrictedHypothesesTesting( S: List[EquivalenceClass], s: EquivalenceClass, ax: Leaf, sig: Double )
   :Option[EquivalenceClass] = {
     val SStar = S.filter(_ ne s)
     for (sStar <- SStar) {
-      if (nullHypothesis(sStar, ax, sig)) {
+      if (nullHypothesis(sStar, ax, sig) >= sig) {
         return Option(sStar)
       }
     }
