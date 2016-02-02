@@ -122,27 +122,32 @@ object CSSR {
     while (!recursive) {
       // clean out transient states as well?
       recursive = true
-      for (s <- S; (b, alphabetIdx) <- parseTree.alphabet.map) {
+      for (s <- S) {
         // TODO: investigate partitioning the equivalence class like so
         // val stateGroupedByTransition:Map[Option[EquivalenceClass], ArrayBuffer[Leaf]] = s.histories
         //     .groupBy(_.getStateOnTransitionTo(b))
+        for ((b, alphabetIdx) <- parseTree.alphabet.map) {
 
-        val x0 = s.histories.headOption
-        val optionalTsb = x0.flatMap{ l => l.getStateOnTransitionTo(b) }
+          val x0 = s.histories.headOption
+          val optionalTsb = x0.flatMap { l => l.getRevLoopingStateOnTransitionTo(parseTree, S, b) }
 
-        if (x0.nonEmpty && optionalTsb.nonEmpty) {
-          for (x <- s.histories.tail) {
-            val optionalExb = x.getLoopingStateOnTransitionTo(parseTree, b)
-            if (optionalExb.nonEmpty && optionalTsb.get.ne(optionalExb.get)) {
-              logger.debug("recursive set to false")
-              recursive = false
-              for (y <- s.histories) {
-                val optionalEyb = y.getLoopingStateOnTransitionTo(parseTree, b)
-                if (optionalEyb.nonEmpty && optionalEyb.get.eq(optionalExb.get)) {
-                  val sNew = EquivalenceClass()
-                  S += sNew
-                  logger.debug("moving from Recursion")
-                  Test.move(y, s, null, sNew)
+          if (x0.nonEmpty && optionalTsb.nonEmpty) {
+
+            val nextRevLoopingStates = s.histories.tail.groupBy(_.getRevLoopingStateOnTransitionTo(parseTree, S, b))
+
+            for (x <- s.histories.tail) {
+              val optionalExb = x.getRevLoopingStateOnTransitionTo(parseTree, S, b)
+              if (optionalExb.nonEmpty && optionalTsb.get.ne(optionalExb.get)) {
+                logger.debug("recursive set to false")
+                recursive = false
+                for (y <- s.histories) {
+                  val optionalEyb = y.getRevLoopingStateOnTransitionTo(parseTree, S, b)
+                  if (optionalEyb.nonEmpty && optionalEyb.get.eq(optionalExb.get)) {
+                    val sNew = EquivalenceClass()
+                    S += sNew
+                    logger.debug("moving from Recursion")
+                    Test.move(y, s, null, sNew)
+                  }
                 }
               }
             }
