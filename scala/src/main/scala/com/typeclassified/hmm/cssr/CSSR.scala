@@ -146,7 +146,7 @@ object CSSR {
                     val sNew = EquivalenceClass()
                     S += sNew
                     logger.debug("moving from Recursion")
-                    Test.move(y, s, null, sNew)
+                    Test.move(y, s, null, sNew, false)
                   }
                 }
               }

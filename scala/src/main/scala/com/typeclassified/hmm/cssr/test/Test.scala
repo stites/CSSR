@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
 object Test {
   val logger = Logger(LoggerFactory.getLogger(Test.getClass))
 
-  def test(S: ListBuffer[EquivalenceClass], aXt: Leaf, parent:Leaf, s: EquivalenceClass, sig: Double): Unit= {
+  def test(S: ListBuffer[EquivalenceClass], aXt: Leaf, parent:Leaf, s: EquivalenceClass, sig: Double): Unit = {
     logger.debug(s"Total number of states: ${S.length}")
     if (nullHypothesis(s, aXt, sig) >= sig) {
       if (!s.histories.contains(aXt)) {
@@ -22,12 +22,12 @@ object Test {
       logger.debug("Rejecting null hypothesis")
       val sStar: Option[EquivalenceClass] = restrictedHypothesesTesting(S.toList, s, aXt, sig)
       if (sStar.nonEmpty) {
-        move(aXt, s, parent, sStar.get)
+        move(aXt, s, parent, sStar.get, false)
       } else {
         logger.info(s"Generating a new equivalence class with: ${aXt.observation}")
         var sNew = EquivalenceClass()
         S += sNew
-        move(aXt, s, parent, sNew)
+        move(aXt, s, parent, sNew, true)
       }
     }
     S --= S.filter(_.histories.isEmpty)
@@ -56,10 +56,10 @@ object Test {
     None
   }
 
-  def move(x: Leaf, from: EquivalenceClass, parent:Leaf, to: EquivalenceClass): Unit = {
+  def move(x: Leaf, from: EquivalenceClass, parent:Leaf, to: EquivalenceClass, rmParent:Boolean=true): Unit = {
     x.changeEquivalenceClass(to)
     to.addHistory(x)
     from.rmHistory(x) // remove history as we have moved to "painting" the parse tree
-    if (parent != null) from.rmHistory(parent)// remove ancestors as we need to disambiguate if progeny
+    if (parent != null && rmParent) from.rmHistory(parent)// remove ancestors as we need to disambiguate if progeny
   }
 }
