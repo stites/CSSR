@@ -73,11 +73,17 @@ public:
     void decrementNumber() { m_number--; }
 
     double getFrequency() { return m_frequency; }
+
+    std::string toString();
 };
 
 class StringElem {
 public:
     char *m_string;
+
+    std::string getString(){
+      return std::string (m_string);
+    }
 
     StringElem *m_nextPtr;
 

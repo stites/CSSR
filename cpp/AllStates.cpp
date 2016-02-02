@@ -126,6 +126,18 @@ void AllStates::Insert(ArrayElem *elem, State *state) {
   state->Insert(elem, m_table);
 }
 
+std::string AllStates::toString() {
+  std::string str = "";
+  int tempCount = m_arraySize;
+  for (int i = 0; i < m_arraySize; i++) {
+    str += "\n\t" + m_StateArray[i]->toString();
+  }
+  if (str.length() > 0L) {
+    return "AllStates {\n\tsize: "+ std::to_string(m_arraySize) + str + "\n}\n";
+  } else {
+    return "AllStates { size: "+ std::to_string(m_arraySize) + " }\n";
+  }
+}
 
 ///////////////////////////////////////////////////////////////////////////
 // Function: AllStates::Insert

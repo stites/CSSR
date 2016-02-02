@@ -324,6 +324,16 @@ void State::RemoveString(StringElem *element) {
   }
 }
 
+std::string State::toString() {
+  StringElem* temp = m_StringList;
+  std::string tempStr;
+  while (temp != NULL) {
+    std::string delim =  (temp->m_nextPtr == NULL) ? "" : ", ";
+    tempStr += (temp->getString()) + delim;
+    temp = temp->m_nextPtr;
+  }
+  return "State { size: "+ std::to_string(m_listSize) + " ["+ tempStr +"] }";
+}
 
 ///////////////////////////////////////////////////////////////////////////
 // Function: StringElem

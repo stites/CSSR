@@ -133,6 +133,7 @@ public:
 
     bool CheckSynchError(int index, int state, char *&synchsString0,
                          ParseTree &parsetree, bool isMulti, int diff);
+    std::string toString();
 
 private:
     State **m_StateArray; //collection of pointers to all the states in a
