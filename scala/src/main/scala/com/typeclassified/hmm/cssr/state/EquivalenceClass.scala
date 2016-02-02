@@ -4,6 +4,9 @@ import breeze.linalg._
 import com.typeclassified.hmm.cssr.parse.Leaf
 import com.typeclassified.hmm.cssr.shared.Probablistic
 
+import scala.collection.immutable.TreeSet
+import scala.collection.mutable
+
 object EquivalenceClass {
   def apply() = new EquivalenceClass()
 
@@ -20,7 +23,7 @@ object EquivalenceClass {
 }
 
 class EquivalenceClass extends Probablistic {
-  var histories: Set[Leaf] = Set()
+  var histories: mutable.LinkedHashSet[Leaf] = mutable.LinkedHashSet[Leaf]()
 
   def addHistory(h: Leaf): Unit = {
     histories += h
@@ -38,6 +41,10 @@ class EquivalenceClass extends Probablistic {
     totalCounts = frequency.foldRight(0d)(_+_).toInt
 
     distribution = if (totalCounts == 0) DenseVector.zeros(frequency.length) else frequency / totalCounts
+  }
+
+  override def toString: String = {
+    s"${getClass.getSimpleName}@${hashCode()} {size:${histories.size}, ${histories.map(_.observed).mkString("[",", ","]")}}"
   }
 }
 
