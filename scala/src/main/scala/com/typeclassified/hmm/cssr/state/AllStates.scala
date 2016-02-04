@@ -1,12 +1,12 @@
 package com.typeclassified.hmm.cssr.state
 
 import breeze.linalg.{sum, DenseVector}
-import com.typeclassified.hmm.cssr.CSSR.AllStateTransitions
+import com.typeclassified.hmm.cssr.CSSR.StateToStateTransitions
 import com.typeclassified.hmm.cssr.parse.Leaf
 
 import scala.collection.mutable.ListBuffer
 
-class AllStates (eqClasses:ListBuffer[EquivalenceClass], transitionMap:AllStateTransitions) {
+class AllStates (eqClasses:ListBuffer[EquivalenceClass], transitionMap:StateToStateTransitions) {
   val states      = eqClasses.toArray
   val transitions = states.map{ state => transitionMap(state) }
 

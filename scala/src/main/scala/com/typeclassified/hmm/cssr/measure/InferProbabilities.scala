@@ -31,22 +31,20 @@ object InferProbabilities {
     */
   def inferredHistory(history:String, tree: Tree, allStates: AllStates): Double = {
     // FIXME: this would be perfect to replace with a state monad
-    //    logger.info("Generating Inferred probabilities from State Machine")
+    val pedantic = false
+    if (pedantic) logger.info("Generating Inferred probabilities from State Machine")
 
-    val totalPerString = 0d
-    /*
     val totalPerString = allStates.states
       .view
       .zipWithIndex
       .map {
         case (state, i) =>
-          // logger.debug(s"${history} - STATE ${i.toString} {frequency:${allStates.distribution(i)}}")
+          if (pedantic) logger.debug(s"${history} - STATE ${i.toString} {frequency:${allStates.distribution(i)}}")
           var currentStateIdx = i
           var isNullState = false
-          val string = history // if (tree.direction == NewToOldDirection.LeftToRight) history else history.reverse
 
-          val historyTotalPerState = string
-            .foldLeft[Double](1d){
+          val historyTotalPerState = history
+            .foldLeft(1d) {
             (characterTotalPerState, c) => {
               val currentState = allStates.states(currentStateIdx)
               val transitionState = allStates.transitions(currentStateIdx)(c)
@@ -57,25 +55,21 @@ object InferProbabilities {
               } else {
                 currentStateIdx  = allStates.states.zipWithIndex.find(_._1 == transitionState.get).get._2
                 val totalPerStateCached = characterTotalPerState * currentState.distribution(tree.alphabet.map(c))
-
-                /*
-                logger.debug(s"""{
-                                 |freq at current state: ${currentState.distribution(alphabetIdx)},
-                                 |j: $i, symbol: $c,
-                                 |historyTotalPerState: characterTotalPerState,
-                                 |totalPerStateCached: $totalPerStateCached,
-                                 |transitioning to: ${transitionStateIdx.get},
-                                 |}""".stripMargin.replace('\n', ' '))
-                */
-
+                if (pedantic) {
+                  logger.debug(s"""{
+                    |freq at current state: ${currentState.distribution(c)}
+                    |j: $i, symbol: $c
+                    |historyTotalPerState: characterTotalPerState,
+                    |totalPerStateCached: $totalPerStateCached
+                    |}""".stripMargin.replace('\n', ' '))
+                  }
                 totalPerStateCached
               }
             }
           }
-          //        logger.debug(s"final historyTotalPerState: $historyTotalPerState")
+          if (pedantic) logger.debug(s"final historyTotalPerState: $historyTotalPerState")
           allStates.distribution(i) * historyTotalPerState
       }.sum[Double]
-    */
 
     logger.debug(s"Final Probability for History: $totalPerString")
     totalPerString

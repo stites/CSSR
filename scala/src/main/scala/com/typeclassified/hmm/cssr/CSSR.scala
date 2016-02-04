@@ -36,7 +36,7 @@ object CSSR {
 
     destroyOrphanStates(allStates, parseTree)
 
-    val finalStates = new AllStates(allStates, getAllStateTransitions(allStates.toList, parseTree))
+    val finalStates = new AllStates(allStates, getStateToStateTransitions(allStates.toList, parseTree))
 
     val machine = new Machine(finalStates, parseTree)
 
@@ -164,6 +164,7 @@ object CSSR {
   type HistoryTransitions = Map[Leaf, Option[State]]
   type StateTransitions = Map[Char, HistoryTransitions]
   type AllStateTransitions = Map[State, StateTransitions]
+  type StateToStateTransitions = Map[State, Map[Char, Option[State]]]
 
   def getHistoryTransitions(histories:Iterable[Leaf], transitionSymbol:Char, S:States, tree: Tree): HistoryTransitions = {
     histories.map { h => h -> h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], transitionSymbol) }.toMap
@@ -175,6 +176,19 @@ object CSSR {
 
   def getAllStateTransitions(S:States, tree: Tree): AllStateTransitions = {
     S.map{ state => state -> getStateTransitions(state, S, tree) }.toMap
+  }
+
+  def getStateToStateTransitions(S:States, tree: Tree) :StateToStateTransitions = {
+    S.map{ state => {
+       state -> tree.alphabet.raw.map { c => {
+         val transitions = state.histories.map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet
+         if (transitions.size > 1) {
+           throw new RuntimeException("This method should only be called once transitions has been determinized")
+         } else {
+           c -> (if (transitions.size == 1) transitions.head else None)
+         }
+       } }.toMap
+    } }.toMap
   }
 
   type State = EquivalenceClass
