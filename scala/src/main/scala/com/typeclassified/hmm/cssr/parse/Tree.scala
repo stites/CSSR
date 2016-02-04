@@ -24,18 +24,22 @@ object Tree {
   def loadData(tree:Tree, xs: Array[Char], n: Int): Tree = {
     val banned = "\r\n".toSet
 
-    for (obs:Seq[Char] <- xs.view
+    for (seq <- xs.view
       .iterator
       .filterNot(banned.contains)
+      .zipWithIndex
       .sliding(n+1)
       .withPartial(true)) {
-      insertTo(tree, obs)
+      val obs = seq.map(_._1).mkString
+      val idxs = seq.map(_._2)
+      insertTo(tree, obs, idxs)
     }
 
     val lastIdx = xs.length - (n + 1)
     for (i <- 0 until n) {
-      val qs = xs.slice(lastIdx + i, xs.length).filterNot(banned.contains)
-      insertTo(tree, qs)
+      val idx = lastIdx + i
+      val qs = xs.slice(idx, xs.length).filterNot(banned.contains)
+      insertTo(tree, qs, idx to xs.length)
     }
 
     // gross, but alas, on a deadline:
@@ -58,19 +62,19 @@ object Tree {
   }
 
   // FIXME: sketchy?
-  def insertTo(tree: Tree, observed: Seq[Char], idx:Option[Int] = None): Unit = {
-    def go(history: List[Char] /*102*/ , active: Leaf, tree: Tree, fullHistory: String, depth: Int = 0): Unit = {
+  def insertTo(tree: Tree, observed: Seq[Char], idx:Seq[Int]): Unit = {
+
+    def go(history: List[Char], active: Leaf, tree: Tree, fullHistory: String, idx:Seq[Int]): Unit = {
       if (history.nonEmpty) {
-        // FIXME: sketchy?
-        // Note: This is the reverse of expected!!!
-        val maybeNext: Option[Leaf] = active.findChildWithAdditionalHistory(history.head)
-        val next =  if (maybeNext.isEmpty) active.addChild(history.head) else maybeNext.get
+        val maybeNext: Option[Leaf] = active.findChildWithAdditionalHistory(history.head)   // FIXME: sketchy? Note: This is the reverse of expected!!!
+        val next = if (maybeNext.isEmpty) active.addChild(history.head) else maybeNext.get
         if (maybeNext.nonEmpty) next.obsCount += 1
-        go(history.tail, next, tree, fullHistory)
+        next.addLocation(idx.head)
+        go(history.tail, next, tree, fullHistory, idx.tail)
       }
     }
 
-    go(observed.toList, tree.root, tree, observed.mkString)
+    go(observed.toList, tree.root, tree, observed.mkString, idx)
   }
 
   @Deprecated
@@ -82,7 +86,7 @@ object Tree {
         val maybeNext: Option[Leaf] = active.findChildWithAdditionalHistory(history.last) /*2*/
         val histIdx: Int = depth + 1
         val next = if (maybeNext.nonEmpty) maybeNext.get else active.addChild(fullHistory(fullHistory.length - histIdx) /* 102 => fullHistory(3-1) => FH(2)*/ , idx /*102*/)
-        active.incrementDistribution(next.observation, idx)
+//        active.incrementDistribution(next.observation, idx)
         go(history.init /*10*/ , next, tree, fullHistory /*102*/ , histIdx)
       }
     }
@@ -101,7 +105,7 @@ object Tree {
       var next:Leaf = null
 
       if (maybeNext.nonEmpty) {
-        if (history.init.isEmpty) active.incrementDistribution(history.last, idx)
+//        if (history.init.isEmpty) active.incrementDistribution(history.last, idx)
         next = maybeNext.get
       } else {
         /*102     => fullHistory(3-1) => FH(2)*/

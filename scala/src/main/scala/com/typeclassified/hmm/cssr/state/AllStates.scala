@@ -6,12 +6,11 @@ import com.typeclassified.hmm.cssr.parse.Leaf
 
 import scala.collection.mutable.ListBuffer
 
-class AllStates (eqClasses:ListBuffer[EquivalenceClass], transitionMap:StateToStateTransitions) {
+class AllStates (eqClasses:ListBuffer[EquivalenceClass], val transitionMap:StateToStateTransitions) {
   val states      = eqClasses.toArray
   val transitions = states.map{ state => transitionMap(state) }
 
-  val stateIndexes:Array[Set[Int]] = states.map{_.histories.toSet[Leaf].flatMap{_.locations.keySet}}
-  val statePaths:Array[Array[String]]     = states.map{_.histories.map{_.observed}.toArray}
+  val stateIndexes:Array[Set[Int]]    = states.map{_.histories.flatMap{_.locations.keySet}.toSet}
 
   val frequency:DenseVector[Double]    = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
   val distribution:DenseVector[Double] = frequency :/ sum(frequency)

@@ -36,17 +36,17 @@ class Leaf(observedSequence:String, parseTree: Tree, initialEquivClass: Equivale
     if (x.isEmpty) acc else printParent(x.get.parent, acc + x.get.observation)
   }
 
-  def incrementDistribution(xNext: Char, dataIdx:Option[Int] = None):Unit = {
+  @Deprecated
+  def incrementDistribution(xNext: Char):Unit = {
     val idx: Int = parseTree.alphabet.map(xNext)
-
     frequency(idx) += 1
     totalCounts += 1
     distribution = frequency / totalCounts
+  }
 
-    if (dataIdx.nonEmpty) {
-      val indexCount = if (locations.keySet.contains(dataIdx.get)) locations(dataIdx.get) else 0
-      locations += (dataIdx.get -> (indexCount + 1))
-    }
+  def addLocation(idx:Int):Unit = {
+    val indexCount = if (locations.keySet.contains(idx)) locations(idx) else 0
+    locations += (idx -> (indexCount + 1))
   }
 
   def calcNextStepProbabilities():Unit = {
