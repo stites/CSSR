@@ -1,5 +1,7 @@
 package com.typeclassified.hmm.cssr
 
+import java.util
+
 import com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
@@ -34,14 +36,14 @@ object CSSR {
 
     destroyOrphanStates(allStates, parseTree)
 
-    val finalStates = new AllStates(allStates, findLeTransitions(parseTree, allStates))
+    val finalStates = new AllStates(allStates, getAllStateTransitions(allStates.toList, parseTree))
 
     val machine = new Machine(finalStates, parseTree)
 
-    Results.metadata(config).split("\n").foreach{logger.info(_)}
-    Results.stateDetails(finalStates, AlphabetHolder.alphabet).split("\n").foreach{logger.info(_)}
-    Results.dotInfo(config, AlphabetHolder.alphabet, finalStates).split("\n").foreach{logger.info(_)}
-    Results.measurements(AlphabetHolder.alphabet, parseTree, machine, finalStates).split("\n").foreach{logger.info(_)}
+    Results.metadata(config).split("\n").foreach(logger.info(_))
+    Results.stateDetails(finalStates, AlphabetHolder.alphabet).split("\n").foreach(logger.info(_))
+    Results.dotInfo(config, AlphabetHolder.alphabet, finalStates).split("\n").foreach(logger.info(_))
+    Results.measurements(AlphabetHolder.alphabet, parseTree, machine, finalStates).split("\n").foreach(logger.info(_))
 
     logger.info("CSSR completed successfully!")
   }
@@ -146,7 +148,7 @@ object CSSR {
                     val sNew = EquivalenceClass()
                     S += sNew
                     logger.debug("moving from Recursion")
-                    Test.move(y, s, null, sNew, false)
+                    Test.move(y, s, null, sNew, true)
                   }
                 }
               }
@@ -159,54 +161,74 @@ object CSSR {
     logger.debug("States found at the end of Recursion: " + S.size.toString)
   }
 
-
   def destroyShortHistories(S:ListBuffer[EquivalenceClass], lMax:Double): Unit = {
     S.foreach{ s => s.histories --= s.histories.filter(_.observed.length < lMax - 1 )}
     S --= S.filter(_.histories.isEmpty)
   }
 
-  def destroyOrphanStates(S:ListBuffer[EquivalenceClass], tree: Tree): Unit = {
-    val trans = findLeTransitions(tree, S)
-    val transients = findLeTransientsAndOrphans(trans, S)
-    cleanLeTransients(transients, S)
+  type HistoryTransitions = Map[Leaf, Option[State]]
+  type StateTransitions = Map[Char, HistoryTransitions]
+  type AllStateTransitions = Map[State, StateTransitions]
+
+  def getHistoryTransitions(histories:Iterable[Leaf], transitionSymbol:Char, S:States, tree: Tree): HistoryTransitions = {
+    histories.map { h => h -> h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], transitionSymbol) }.toMap
   }
 
-  type Transitions = Map[EquivalenceClass, Map[Char, Option[EquivalenceClass]]]
-
-  type Transients = Map[EquivalenceClass, Boolean]
-
-  def findLeTransitions(tree: Tree, states:ListBuffer[EquivalenceClass]):Transitions = {
-    tree.getDepth(tree.maxLength - 1)
-      .groupBy{ _.currentEquivalenceClass }
-      .mapValues{
-        _.flatMap{ _.children }
-          .groupBy{ _.observation }
-          .mapValues{ histories => {
-            val endStates = histories.flatMap{ h => Option(h.currentEquivalenceClass) }.filter{ states.contains(_) }.toSet
-            if (endStates.size > 1) {
-              logger.warn(s"Transition forks")
-            }
-            endStates.headOption
-          } } }
-      .mapValues{ charMap => tree.alphabet.raw.map{c => c -> charMap.getOrElse(c, None) }.toMap }
+  def getStateTransitions(state:State, S:States, tree: Tree): StateTransitions = {
+    tree.alphabet.raw.map { c => { c -> getHistoryTransitions(state.histories, c, S, tree) } }.toMap
   }
 
-  def findLeTransientsAndOrphans(transitions:Transitions, S:ListBuffer[EquivalenceClass]):Transients = {
-    val transients = mutable.Map() ++ transitions.map {
-      case (start, charToTransitions) =>
-        val endStates = charToTransitions.values
-        val isTransient = endStates.forall { _.isEmpty }
-        val isOrphaned = endStates.flatten.forall { _ eq start }
-        (start, isOrphaned || isTransient)
+  def getAllStateTransitions(S:States, tree: Tree): AllStateTransitions = {
+    S.map{ state => state -> getStateTransitions(state, S, tree) }.toMap
+  }
+
+  type State = EquivalenceClass
+  type ParentState = EquivalenceClass
+  type TransitionState = EquivalenceClass
+  type Count = Int
+  type States = List[State]
+
+  def destroyOrphanStates(S:ListBuffer[State], tree: Tree): Unit = {
+    // transition table only records transitions from LONGEST HISTORIES
+
+    // stateArray only records transitions from SHORT HISTORIES:
+    // only checks to see if the transition exists.
+    val finalTransitionSet:Set[EquivalenceClass] = getAllStateTransitions(S.toList, tree)
+      .foldLeft(Set[EquivalenceClass]()){
+        case (memo, (_, charMap)) => memo ++ charMap.values.toList.flatMap(ks => ks.values.toList).flatten.toSet
+      }
+
+    /*
+      // AllStates.cpp#RemoveTransientStates, ln.966
+      //check longest histories for uniqueness
+      //of transitions, if unique, don't delete
+      transTemp = transTable->WhichStrings(z - removeAdjust);
+      while (transTemp && isUnique == false) {
+        //go to state of transitioning, max length history and check it against other histories
+        isUnique = CheckUniqueTrans(transTemp->stringPtr, z - removeAdjust, transTemp->state - removeAdjust, alpha);
+        transTemp = transTemp->nextPtr;
+      }
+
+      //remove state only if state doesn't have a max length history with unique characteristics transitioning to it
+      if (isUnique == false) {
+        transTable->RemoveStringsAndState(z - removeAdjust, removeAdjust, lowest); //reset transition table
+        tempString = m_StateArray[z - removeAdjust]->getStringList();              //remove strings in state
+        while (tempString) {
+          tempString2 = tempString;
+          tempString = tempString->m_nextPtr;
+          m_table->RemoveString(tempString2->m_string);
+        }
+        RemoveState(z - removeAdjust);               //remove state itself (also removes from hash table)
+        if (removeAdjust == 0) {
+          lowest = z;
+        }
+        removeAdjust++;                              //restructure the state numbers after removal
+        done = false;
+      }
     }
+     */
 
-    S.foreach{ s => if (!transients.keySet.contains(s)) transients += (s -> true) }
-
-    transients.toMap
-  }
-
-  def cleanLeTransients(transients: Transients, S:ListBuffer[EquivalenceClass]):Unit = {
-    S --= S.filter(transients(_))
+    S --= S.filterNot(finalTransitionSet.contains)
   }
 }
 

@@ -33,6 +33,8 @@ object InferProbabilities {
     // FIXME: this would be perfect to replace with a state monad
     //    logger.info("Generating Inferred probabilities from State Machine")
 
+    val totalPerString = 0d
+    /*
     val totalPerString = allStates.states
       .view
       .zipWithIndex
@@ -73,6 +75,7 @@ object InferProbabilities {
           //        logger.debug(s"final historyTotalPerState: $historyTotalPerState")
           allStates.distribution(i) * historyTotalPerState
       }.sum[Double]
+    */
 
     logger.debug(s"Final Probability for History: $totalPerString")
     totalPerString
