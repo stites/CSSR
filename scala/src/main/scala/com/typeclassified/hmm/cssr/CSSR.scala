@@ -187,6 +187,34 @@ object CSSR {
     } }.toMap
   }
 
+  def getStateToStateTransitionsShort(S:States, tree: Tree) :StateToStateTransitions = {
+    S.map{ state => {
+      state -> tree.alphabet.raw.map { c => {
+        val transitions = state.histories
+          .filter(_.observed.length < tree.maxLength)
+          .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet
+        if (transitions.size > 1) {
+          // FIXME: check out what this means.
+          throw new RuntimeException("This is an unknown scenario. Please email the maintainers.")
+        } else {
+          c -> (if (transitions.size == 1) transitions.head else None)
+        }
+      } }.toMap
+    } }.toMap
+  }
+
+
+  def getStateToStateTransitionsLong(S:States, tree: Tree) :StateToStateTransitions = {
+    S.map{ state => {
+      state -> tree.alphabet.raw.map { c => {
+        val transitions = state.histories
+          .filter(_.observed.length == tree.maxLength)
+          .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet
+        c -> (if (transitions.size == 1) transitions.head else None)
+      } }.toMap
+    } }.toMap
+  }
+
   type State = EquivalenceClass
   type ParentState = EquivalenceClass
   type TransitionState = EquivalenceClass
@@ -249,7 +277,7 @@ object CSSR {
     }
      */
 
-    S --= S.filterNot(finalTransitionSet.contains)
+    S --= transients
   }
 }
 
