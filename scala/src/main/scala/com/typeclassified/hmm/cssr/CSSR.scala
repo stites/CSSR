@@ -9,7 +9,7 @@ import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
 import scala.io.{BufferedSource, Source}
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object CSSR {
   protected val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
@@ -177,11 +177,11 @@ object CSSR {
   def getStateToStateTransitions(S:States, tree: Tree) :StateToStateTransitions = {
     S.map{ state => {
        state -> tree.alphabet.raw.map { c => {
-         val transitions = state.histories.map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet
+         val transitions = state.histories.map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet.flatten
          if (transitions.size > 1) {
            throw new RuntimeException("This method should only be called once transitions has been determinized")
          } else {
-           c -> (if (transitions.size == 1) transitions.head else None)
+           c -> (if (transitions.size == 1) Option(transitions.head) else None)
          }
        } }.toMap
     } }.toMap
@@ -192,12 +192,12 @@ object CSSR {
       state -> tree.alphabet.raw.map { c => {
         val transitions = state.histories
           .filter(_.observed.length < tree.maxLength)
-          .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet
+          .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet.flatten
         if (transitions.size > 1) {
           // FIXME: check out what this means.
           throw new RuntimeException("This is an unknown scenario. Please email the maintainers.")
         } else {
-          c -> (if (transitions.size == 1) transitions.head else None)
+          c -> (if (transitions.size == 1) Option(transitions.head) else None)
         }
       } }.toMap
     } }.toMap
@@ -209,8 +209,8 @@ object CSSR {
       state -> tree.alphabet.raw.map { c => {
         val transitions = state.histories
           .filter(_.observed.length == tree.maxLength)
-          .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet
-        c -> (if (transitions.size == 1) transitions.head else None)
+          .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet.flatten
+        c -> (if (transitions.size == 1) Option(transitions.head) else None)
       } }.toMap
     } }.toMap
   }
@@ -226,26 +226,24 @@ object CSSR {
 
     // stateArray only records transitions from SHORT HISTORIES:
     // only checks to see if the transition exists.
-    //val finalTransitionSet:Set[EquivalenceClass] = getAllStateTransitions(S.toList, tree)
-    //  .foldLeft(Set[EquivalenceClass]()){
-    //    case (memo, (_, charMap)) => memo ++ charMap.values.toList.flatMap(ks => ks.values.toList).flatten.toSet
-    //  }
+
     val shortTransitions = getStateToStateTransitionsShort(S.toList, tree)
     val longTransitions = getStateToStateTransitionsLong(S.toList, tree)
     val finalTransitionSet:Set[EquivalenceClass] = shortTransitions.foldLeft(Set[EquivalenceClass]()){
       case (memo, (_, charMap)) => memo ++ charMap.values.flatten.toSet
     }
 
-    val possibleTransients = S.filterNot(finalTransitionSet.contains)
+    val foundRecurrStateArray = findRecurrStateArray(tree, S.toList)
+    val possibleTransients = S.filterNot(foundRecurrStateArray._1.contains)
 
     // remove state only if state doesn't have a max length history with "unique characteristics"
     val transients = possibleTransients
       .filter { state => {
         // remove state only if a max length history loops in on itself
-        val cycles = longTransitions(state).exists{ case (_, transition) => transition.nonEmpty && transition.get.ne(state)}
-        // something to prove uniqueness (see below)
-        val notUnique = false
-        cycles || notUnique
+        lazy val noLongHistories = !state.histories.foldRight(false){ (h, hasLong) =>  hasLong || h.length == tree.maxLength }
+        lazy val cycles = longTransitions(state).exists{ case (_, transition) => transition.nonEmpty && transition.get.ne(state)}
+        lazy val notUnique = false                       // something to prove uniqueness (see below)
+        noLongHistories || cycles || notUnique
       } }
 
     /*
@@ -279,5 +277,57 @@ object CSSR {
 
     S --= transients
   }
+
+  def findRecurrStateArray(tree:Tree, S:States):(States, TransitionMemo) = {
+    S.foldRight[(States, TransitionMemo)]((List(), Array())) {
+      case (state, (recurrentStateMemo, transTableMemo)) => {
+        fillRecurrStateArray(state, tree, S, recurrentStateMemo, transTableMemo)
+      }
+    }
+  }
+
+
+  // Function: AllStates::FillRecurrStateArray
+  // Purpose: fills an array with the states which are recurrent from
+  //          particular state which is examined
+  // In Params: alphabet, maximum length of history, index of specific
+  //            state to be examined
+  // Out Params: none
+  // In/Out Params: array of recurrent states, number of states which are
+  //                recurrent, table of transitons from max length strings
+  // Pre- Cond: Memory has been allocated for the array of recurrent states
+  // Post-Cond: The array of recurrent state indices has been set for the
+  //            specific state (array of 'childstates' of given state)
+  //////////////////////////////////////////////////////////////////////////
+  type TransitionMemo = Array[(ParentState, Leaf, Option[State])]
+  def fillRecurrStateArray(state:State, tree:Tree, S:States, recurrentStateArray:States, transitionMemo: TransitionMemo) = {
+    val histories = state.histories
+    var found = false
+    val stateArray = recurrentStateArray.to[ListBuffer]
+    val transitionTable = transitionMemo.to[ArrayBuffer]
+
+    histories.foreach {
+      h => {
+        val length = h.observed.length
+        for (c <- tree.alphabet.raw) {
+          val tState = h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c)
+
+          if (tState.nonEmpty) {
+            val ts = tState.get
+            if (ts.ne(state) && (length <= tree.maxLength - 1 || h.eq(histories.head))) {
+              if (!stateArray.contains(ts)) {
+                stateArray += ts
+              }
+            }
+          }
+          if (length == tree.maxLength) {
+            transitionTable += ((state, h, tState))
+          }
+        }
+      }
+    }
+    (stateArray.toList, transitionTable.toArray)
+  }
+
 }
 

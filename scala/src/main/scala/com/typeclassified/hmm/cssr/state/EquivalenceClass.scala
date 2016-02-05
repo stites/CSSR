@@ -43,8 +43,12 @@ class EquivalenceClass extends Probablistic {
     distribution = if (totalCounts == 0) DenseVector.zeros(frequency.length) else frequency / totalCounts
   }
 
-  override def toString: String = {
+  def shortString: String = {
+    s"${getClass.getSimpleName}@${hashCode()} {size:${histories.size}}"
+  }
+  def fullString: String = {
     s"${getClass.getSimpleName}@${hashCode()} {size:${histories.size}, ${histories.map(_.observed).mkString("[",", ","]")}}"
   }
+  override def toString: String = fullString
 }
 

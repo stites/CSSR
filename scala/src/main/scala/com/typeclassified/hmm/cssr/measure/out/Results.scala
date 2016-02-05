@@ -62,14 +62,18 @@ object Results {
       .zipWithIndex
       .map {
         case (eqClass, i) =>
-          s"""State $i:
-              |        P(state): ${allStates.distribution(i)}
-              |        Alphabet: ${alphabet.toString}
-              |Probability Dist: ${eqClass.distribution.toString()}
-              |  Frequency Dist: ${eqClass.frequency.toString()}
-              |     transitions: ${allStates.transitions(i)}
-              |""".stripMargin +
-            eqClass.histories.toArray.sortBy(_.observed).map{_.toString}.mkString("\n")
+          val transitions = allStates.transitions(i)
+            .map{ case (c, s) => c -> s.flatMap{ s=> Option("State " + allStates.stateMap(s))} }
+
+          s"State $i:\n" +
+            eqClass.histories.toArray.sortBy(_.observed).map{_.toString}.mkString("\n") +
+            s"""
+               |Probability Dist: ${eqClass.distribution.toString()}
+               |  Frequency Dist: ${eqClass.frequency.toString()}
+               |        Alphabet: ${alphabet.toString}
+               |     transitions: $transitions
+               |        P(state): ${allStates.distribution(i)}
+               |""".stripMargin
       }
       .mkString("\n")
   }

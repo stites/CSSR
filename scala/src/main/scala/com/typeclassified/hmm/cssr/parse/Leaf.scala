@@ -26,6 +26,8 @@ class Leaf(observedSequence:String, parseTree: Tree, initialEquivClass: Equivale
 
   val observation: Char = if ("".equals(observed)) 0.toChar else observed.last // FIXME: REALLY?? THIS IS CORRECT?!?!?!
 
+  val length: Int = observedSequence.length
+
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 
   val locations:mutable.HashMap[Int, Int] = mutable.HashMap[Int, Int]()

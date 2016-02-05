@@ -9,7 +9,8 @@ class AllStates (eqClasses:ListBuffer[EquivalenceClass], val transitionMap:State
   val states      = eqClasses.toArray
   val transitions = states.map{ state => transitionMap(state) }
 
-  val stateIndexes:Array[Set[Int]]    = states.map{_.histories.flatMap{_.locations.keySet}.toSet}
+  val stateIndexes:Array[Set[Int]]        = states.map{_.histories.flatMap{_.locations.keySet}.toSet}
+  val stateMap:Map[EquivalenceClass, Int] = states.zipWithIndex.toMap
 
   val frequency:DenseVector[Double]    = new DenseVector[Double](stateIndexes.map{_.size.toDouble})
   val distribution:DenseVector[Double] = frequency :/ sum(frequency)
