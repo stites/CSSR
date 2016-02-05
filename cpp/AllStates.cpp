@@ -742,8 +742,7 @@ void AllStates::FindNSetTransitions(int state, int maxLength, char *alpha) {
       //determine state of child string
       childState = m_table->WhichStateNumber(childString);
       if (childState != NULL_STATE) {
-        m_StateArray[state]->setTransitions
-            (k, childState);
+        m_StateArray[state]->setTransitions(k, childState);
 
         isNull = false;
       }

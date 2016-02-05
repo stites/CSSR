@@ -44,7 +44,7 @@ class EquivalenceClass extends Probablistic {
   }
 
   def shortString: String = {
-    s"${getClass.getSimpleName}@${hashCode()} {size:${histories.size}}"
+    s"State ${hashCode()} {size:${histories.size}}"
   }
   def fullString: String = {
     s"${getClass.getSimpleName}@${hashCode()} {size:${histories.size}, ${histories.map(_.observed).mkString("[",", ","]")}}"

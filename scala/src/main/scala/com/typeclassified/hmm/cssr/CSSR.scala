@@ -17,30 +17,47 @@ object CSSR {
   def run(config: Config) = {
     logger.info("CSSR starting.")
 
-    val (parseTree: Tree, allStates: ListBuffer[EquivalenceClass]) = initialization(config)
+    val (tree: Tree, allStates: ListBuffer[EquivalenceClass]) = initialization(config)
     logger.debug("Initialization complete...")
 
-    sufficiency(parseTree, allStates, config.lMax, config.sig)
+    sufficiency(tree, allStates, config.lMax, config.sig)
     logger.debug("Sufficiency complete...")
 
     destroyShortHistories(allStates, config.lMax)
 
-    destroyOrphanStates(allStates, parseTree)
+    destroyOrphanStates(allStates, tree)
 
-    recursion(parseTree, allStates, config.sig, config.lMax)
+    recursion(tree, allStates, config.sig, config.lMax)
 
     logger.debug("Recursion complete...")
 
-    destroyOrphanStates(allStates, parseTree)
+    destroyOrphanStates(allStates, tree)
 
-    val finalStates = new AllStates(allStates, getStateToStateTransitions(allStates.toList, parseTree))
+    // TODO: This is very interesting:
+    val sloop = allStates.map {
+      s => s.histories.toList.map{
+        h => h -> tree.alphabet.raw.map{
+          c => c -> h.getRevLoopingStateOnTransitionTo(tree, allStates, c).flatMap{ e => Option(e.shortString) }
+        }.toMap
+      }
+    }
 
-    val machine = new Machine(finalStates, parseTree)
+    val transitions = allStates.map {
+      s => s -> s.histories.map {
+        h => tree.alphabet.raw.map {
+          c => c -> h.getRevLoopingStateOnTransitionTo(tree, allStates, c)
+        }.toMap
+      }.head
+    }.toMap
+
+    val finalStates = new AllStates(allStates, transitions)
+
+    val machine = new Machine(finalStates, tree)
 
     Results.metadata(config).split("\n").foreach(logger.info(_))
     Results.stateDetails(finalStates, AlphabetHolder.alphabet).split("\n").foreach(logger.info(_))
     Results.dotInfo(config, AlphabetHolder.alphabet, finalStates).split("\n").foreach(logger.info(_))
-    Results.measurements(AlphabetHolder.alphabet, parseTree, machine, finalStates).split("\n").foreach(logger.info(_))
+    Results.measurements(AlphabetHolder.alphabet, tree, machine, finalStates).split("\n").foreach(logger.info(_))
 
     logger.info("CSSR completed successfully!")
   }
@@ -153,7 +170,7 @@ object CSSR {
   }
 
   def destroyShortHistories(S:ListBuffer[EquivalenceClass], lMax:Double): Unit = {
-    S.foreach{ s => s.histories --= s.histories.filter(_.observed.length < lMax - 1 )}
+    S.foreach{ s => s.histories --= s.histories.filter(_.length < lMax - 1 )}
     S --= S.filter(_.histories.isEmpty)
   }
 
@@ -191,7 +208,7 @@ object CSSR {
     S.map{ state => {
       state -> tree.alphabet.raw.map { c => {
         val transitions = state.histories
-          .filter(_.observed.length < tree.maxLength)
+          .filter(_.length < tree.maxLength)
           .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet.flatten
         if (transitions.size > 1) {
           // FIXME: check out what this means.
@@ -208,7 +225,7 @@ object CSSR {
     S.map{ state => {
       state -> tree.alphabet.raw.map { c => {
         val transitions = state.histories
-          .filter(_.observed.length == tree.maxLength)
+          .filter(_.length == tree.maxLength)
           .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet.flatten
         c -> (if (transitions.size == 1) Option(transitions.head) else None)
       } }.toMap
@@ -279,10 +296,9 @@ object CSSR {
   }
 
   def findRecurrStateArray(tree:Tree, S:States):(States, TransitionMemo) = {
-    S.foldRight[(States, TransitionMemo)]((List(), Array())) {
-      case (state, (recurrentStateMemo, transTableMemo)) => {
+    S.foldRight[(States, TransitionMemo)]((List(), Map())) {
+      case (state, (recurrentStateMemo, transTableMemo)) =>
         fillRecurrStateArray(state, tree, S, recurrentStateMemo, transTableMemo)
-      }
     }
   }
 
@@ -299,7 +315,7 @@ object CSSR {
   // Post-Cond: The array of recurrent state indices has been set for the
   //            specific state (array of 'childstates' of given state)
   //////////////////////////////////////////////////////////////////////////
-  type TransitionMemo = Array[(ParentState, Leaf, Option[State])]
+  type TransitionMemo = Map[String, (ParentState, Option[State])]
   def fillRecurrStateArray(state:State, tree:Tree, S:States, recurrentStateArray:States, transitionMemo: TransitionMemo) = {
     val histories = state.histories
     var found = false
@@ -308,7 +324,7 @@ object CSSR {
 
     histories.foreach {
       h => {
-        val length = h.observed.length
+        val length = h.length
         for (c <- tree.alphabet.raw) {
           val tState = h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c)
 
@@ -321,12 +337,12 @@ object CSSR {
             }
           }
           if (length == tree.maxLength) {
-            transitionTable += ((state, h, tState))
+            transitionTable += (h.observed + c -> (state, tState))
           }
         }
       }
     }
-    (stateArray.toList, transitionTable.toArray)
+    (stateArray.toList, transitionTable.toMap)
   }
 
 }

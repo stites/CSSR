@@ -123,7 +123,7 @@ class Leaf(observedSequence:String, parseTree: Tree, initialEquivClass: Equivale
     if (optionalLeaf.nonEmpty) Option(optionalLeaf.get.currentEquivalenceClass) else None
   }
 
-  override def toString: String = {
+  def fullString: String = {
     val vec = frequency.toArray.mkString("(", ", ", ")")
     val id = s"${getClass.getSimpleName}@${hashCode()}"
     val nTabs = if (observed.length < 4) 3 else 2
@@ -131,5 +131,11 @@ class Leaf(observedSequence:String, parseTree: Tree, initialEquivClass: Equivale
     val props = s"{observed=$observed, \tobservation=${observation.toString},\tfrequency=$vec,\ttotal=${sum(frequency)}}"
     observed + "\t" * nTabs + id + "\t" + props
   }
+
+  def shortString: String = {
+    s"History $observed  {obs:${observation.toString}, hashCode:${hashCode()}}"
+  }
+
+  override def toString: String = shortString
 }
 
