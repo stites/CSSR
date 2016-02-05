@@ -1,7 +1,5 @@
 package com.typeclassified.hmm.cssr
 
-import java.util
-
 import com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
@@ -10,7 +8,6 @@ import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
@@ -83,7 +80,6 @@ object CSSR {
     * @param S
     * @param lMax
     */
-
   // sufficiency is only good for 1 step
   // determinizing is further along than just 1 step.
   def sufficiency(parseTree: Tree, S: ListBuffer[EquivalenceClass], lMax: Int, sig:Double):Unit = {
@@ -202,15 +198,31 @@ object CSSR {
 
     // stateArray only records transitions from SHORT HISTORIES:
     // only checks to see if the transition exists.
-    val finalTransitionSet:Set[EquivalenceClass] = getAllStateTransitions(S.toList, tree)
-      .foldLeft(Set[EquivalenceClass]()){
-        case (memo, (_, charMap)) => memo ++ charMap.values.toList.flatMap(ks => ks.values.toList).flatten.toSet
-      }
+    //val finalTransitionSet:Set[EquivalenceClass] = getAllStateTransitions(S.toList, tree)
+    //  .foldLeft(Set[EquivalenceClass]()){
+    //    case (memo, (_, charMap)) => memo ++ charMap.values.toList.flatMap(ks => ks.values.toList).flatten.toSet
+    //  }
+    val shortTransitions = getStateToStateTransitionsShort(S.toList, tree)
+    val longTransitions = getStateToStateTransitionsLong(S.toList, tree)
+    val finalTransitionSet:Set[EquivalenceClass] = shortTransitions.foldLeft(Set[EquivalenceClass]()){
+      case (memo, (_, charMap)) => memo ++ charMap.values.flatten.toSet
+    }
+
+    val possibleTransients = S.filterNot(finalTransitionSet.contains)
+
+    // remove state only if state doesn't have a max length history with "unique characteristics"
+    val transients = possibleTransients
+      .filter { state => {
+        // remove state only if a max length history loops in on itself
+        val cycles = longTransitions(state).exists{ case (_, transition) => transition.nonEmpty && transition.get.ne(state)}
+        // something to prove uniqueness (see below)
+        val notUnique = false
+        cycles || notUnique
+      } }
 
     /*
       // AllStates.cpp#RemoveTransientStates, ln.966
-      //check longest histories for uniqueness
-      //of transitions, if unique, don't delete
+      //check longest histories for uniqueness of transitions, if unique, don't delete
       transTemp = transTable->WhichStrings(z - removeAdjust);
       while (transTemp && isUnique == false) {
         //go to state of transitioning, max length history and check it against other histories

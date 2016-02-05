@@ -51,12 +51,7 @@ object RelativeEntropyRate extends MathUtils {
     if (relEntRateHistTotal < 0) 0 else relEntRateHistTotal * histProbability
   }
 
-  protected def relEntropyRateByNextAlphabet(history:String,
-                                             inferredProb:Double,
-                                             tree:Tree,
-                                             allStates: AllStates,
-                                             histFreqByAlpha:Double,
-                                             alpha:Char)
+  protected def relEntropyRateByNextAlphabet(history:String, inferredProb:Double, tree:Tree, allStates: AllStates, histFreqByAlpha:Double, alpha:Char)
   :(Double, Double) = {
     val isValid:Boolean = histFreqByAlpha > 0 && inferredProb > 0
     val isADisaster:Boolean = histFreqByAlpha > 0 && inferredProb <= 0

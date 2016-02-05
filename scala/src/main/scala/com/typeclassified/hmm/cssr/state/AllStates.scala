@@ -2,7 +2,6 @@ package com.typeclassified.hmm.cssr.state
 
 import breeze.linalg.{sum, DenseVector}
 import com.typeclassified.hmm.cssr.CSSR.StateToStateTransitions
-import com.typeclassified.hmm.cssr.parse.Leaf
 
 import scala.collection.mutable.ListBuffer
 

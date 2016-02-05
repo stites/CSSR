@@ -39,7 +39,7 @@ object InferProbabilities {
       .zipWithIndex
       .map {
         case (state, i) =>
-          if (pedantic) logger.debug(s"${history} - STATE ${i.toString} {frequency:${allStates.distribution(i)}}")
+          if (pedantic) logger.debug(s"$history - STATE ${i.toString} {frequency:${allStates.distribution(i)}}")
           var currentStateIdx = i
           var isNullState = false
 
