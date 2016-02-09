@@ -67,7 +67,8 @@ object CSSR {
 
     val machine = new Machine(finalStates, tree)
 
-    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates).out()
+    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates)
+      .out(if (config.out) null else config.dataFile)
 
     logger.info("CSSR completed successfully!")
   }

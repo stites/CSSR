@@ -16,6 +16,10 @@ object Parser {
   val sig         = "sig"
   val sigDefault  = 0.02
 
+  // Output
+  val out         = "out"
+  val outDefault  = false
+
   val file = "[file]"
   val value = "[value]"
 
@@ -45,5 +49,13 @@ object Parser {
       .action { (x,c) => c.copy(sig = x) }
       .validate { x => if (x > 0 && x < 1) success else failure(s"Value <$sig> must be > 0 && < 1") }
       .text(s"$sig is the significance level used for hypothesis testing. Defaults to $sigDefault")
+
+    opt[Unit](Parser.out.head, Parser.out)
+      .action { (_,c) => c.copy(out = true) }
+      .text(s"$out is used to indicate whether results should be output to stdout. Defaults to $outDefault")
+
+    opt[Unit]("debug")
+      .hidden()
+      .action { (_, c) => c.copy(debug = true) }
   }
 }

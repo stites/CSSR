@@ -5,7 +5,9 @@ import java.io.File
 case class Config (alphabetFile: File = new File("."),
                    dataFile: File = new File("."),
                    lMax: Int = Parser.lMaxDefault,
-                   sig: Double = Parser.sigDefault
+                   sig: Double = Parser.sigDefault,
+                   out: Boolean = Parser.outDefault,
+                   debug: Boolean = false
                   ) {
   override def toString: String = {
     s"""Current Working Directory: ${System.getProperty("user.dir")}
