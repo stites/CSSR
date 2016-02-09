@@ -67,10 +67,7 @@ object CSSR {
 
     val machine = new Machine(finalStates, tree)
 
-    Results.metadata(config).split("\n").foreach(logger.info(_))
-    Results.stateDetails(finalStates, AlphabetHolder.alphabet).split("\n").foreach(logger.info(_))
-    Results.dotInfo(config, AlphabetHolder.alphabet, finalStates).split("\n").foreach(logger.info(_))
-    Results.measurements(AlphabetHolder.alphabet, tree, machine, finalStates).split("\n").foreach(logger.info(_))
+    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates).out()
 
     logger.info("CSSR completed successfully!")
   }
