@@ -1,13 +1,10 @@
 package com.typeclassified.hmm.cssr.measure
 
-import com.typeclassified.hmm.cssr.parse.{Tree, Alphabet, Leaf}
-import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
+import com.typeclassified.hmm.cssr.parse.{Tree, Leaf}
+import com.typeclassified.hmm.cssr.state.AllStates
+import com.typesafe.scalalogging.LazyLogging
 
-object InferProbabilities {
-
-  protected val logger = Logger(LoggerFactory.getLogger(RelativeEntropy.getClass))
+object InferProbabilities extends LazyLogging {
 
   type InferredDistribution = Array[(Leaf, Double)]
 

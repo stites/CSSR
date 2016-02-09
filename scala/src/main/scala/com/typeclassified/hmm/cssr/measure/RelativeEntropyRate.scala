@@ -1,15 +1,11 @@
 package com.typeclassified.hmm.cssr.measure
 
 import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistribution
-import com.typeclassified.hmm.cssr.measure.{RelativeEntropy => RE}
-import com.typeclassified.hmm.cssr.parse.{Tree, Leaf}
-import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
+import com.typeclassified.hmm.cssr.parse.{Leaf, Tree}
+import com.typeclassified.hmm.cssr.state.AllStates
+import com.typesafe.scalalogging.LazyLogging
 
-object RelativeEntropyRate extends MathUtils {
-  protected val logger = Logger(LoggerFactory.getLogger(RelativeEntropyRate.getClass))
-
+object RelativeEntropyRate extends MathUtils with LazyLogging {
   def relativeEntropyRate(maxLengthDist:InferredDistribution, tree: Tree, allStates: AllStates):Double = {
     logger.debug("Relative Entropy Rate")
     logger.debug("===========================")

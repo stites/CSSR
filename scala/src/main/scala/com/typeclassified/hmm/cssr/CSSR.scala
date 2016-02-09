@@ -5,15 +5,12 @@ import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
 import com.typeclassified.hmm.cssr.test.Test
 import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-object CSSR {
-  protected val logger = Logger(LoggerFactory.getLogger(CSSR.getClass))
-
+object CSSR extends LazyLogging {
   // type aliases:
   type State = EquivalenceClass
   type ParentState = EquivalenceClass

@@ -1,6 +1,6 @@
 package com.typeclassified.hmm.cssr.measure
 
-import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
+import com.typeclassified.hmm.cssr.state.AllStates
 
 object EntropyRate extends MathUtils {
 

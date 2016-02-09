@@ -1,12 +1,9 @@
 package com.typeclassified.hmm.cssr.measure
 
 import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistribution
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.LazyLogging
 
-object RelativeEntropy extends MathUtils {
-  protected val logger = Logger(LoggerFactory.getLogger(RelativeEntropy.getClass))
-
+object RelativeEntropy extends MathUtils with LazyLogging {
   /**
     * calculates the probability of all the max length strings in the
     * data based on the inferred machine:

@@ -5,12 +5,6 @@ import java.io._
 import _root_.com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.parse.{Alphabet, Tree}
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
-
-object Results {
-  protected val logger = Logger(LoggerFactory.getLogger(Results.getClass))
-}
 
 class Results (config:Config, alphabet: Alphabet, tree:Tree, machine: Machine, allStates: AllStates) {
   val metadata:String = "Metadata\n=======================\n" + config.toString + "\n"

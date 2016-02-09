@@ -2,7 +2,7 @@ package com.typeclassified.hmm.cssr.parse
 
 import breeze.linalg.DenseVector
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
-import com.typesafe.scalalogging.Logger
+import com.typesafe.scalalogging.{LazyLogging, Logger}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -16,8 +16,7 @@ We then take the 1 child of 0 (= 10)
 We then take the 1 child of 10 (=110)
 */
 
-object Tree {
-  protected val logger = Logger(LoggerFactory.getLogger(Tree.getClass))
+object Tree extends LazyLogging {
   def apply(alphabet: Alphabet, equivalenceClass: EquivalenceClass) = new Tree(alphabet, equivalenceClass)
   def apply(alphabet: Alphabet) = new Tree(alphabet)
 
