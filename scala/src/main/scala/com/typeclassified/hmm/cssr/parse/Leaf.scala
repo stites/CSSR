@@ -132,9 +132,7 @@ class Leaf(observedSequence:String, parseTree: Tree, initialEquivClass: Equivale
     observed + "\t" * nTabs + id + "\t" + props
   }
 
-  def shortString: String = {
-    s"History $observed  {obs:${observation.toString}, hashCode:${hashCode()}}"
-  }
+  def shortString: String = observed
 
   override def toString: String = shortString
 }
