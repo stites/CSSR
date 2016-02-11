@@ -7,6 +7,7 @@ import com.typeclassified.hmm.cssr.test.Test
 import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -15,6 +16,7 @@ object CSSR extends LazyLogging {
   type State = EquivalenceClass
   type ParentState = EquivalenceClass
   type TransitionState = Option[EquivalenceClass]
+  type OrderedHistorySet = mutable.LinkedHashSet[Leaf]
   type States = List[State]
   type MutableStates = ListBuffer[State]
 
@@ -47,7 +49,7 @@ object CSSR extends LazyLogging {
     val sloop = allStates.map {
       s => s.histories.toList.map{
         h => h -> tree.alphabet.raw.map{
-          c => c -> h.getRevLoopingStateOnTransitionTo(tree, allStates, c).flatMap{ e => Option(e.shortString) }
+          c => c -> h.getTransitionState(tree, allStates, c).flatMap{ e => Option(e.shortString) }
         }.toMap
       }
     }
@@ -55,7 +57,7 @@ object CSSR extends LazyLogging {
     val transitions = allStates.map {
       s => s -> s.histories.map {
         h => tree.alphabet.raw.map {
-          c => c -> h.getRevLoopingStateOnTransitionTo(tree, allStates, c)
+          c => c -> h.getTransitionState(tree, allStates, c)
         }.toMap
       }.head
     }.toMap
@@ -141,35 +143,28 @@ object CSSR extends LazyLogging {
     * @param sig
     */
   def recursion (parseTree: Tree, S: MutableStates, sig:Double, lMax:Double) = {
-    var recursive = false
+    var isDeterminized = false
 
-    while (!recursive) {
-      recursive = true
+    while (!isDeterminized) {
+      isDeterminized = true
       for (s <- S) {
-        for ((b, alphabetIdx) <- parseTree.alphabet.map) {
+        for (b <- parseTree.alphabet.raw) {
           val x0 = s.histories.headOption
-          val optionalTsb = x0.flatMap { l => l.getRevLoopingStateOnTransitionTo(parseTree, S, b) }
+          val initialTransition = x0.flatMap { l => l.getTransitionState(parseTree, S, b) }
 
-          if (x0.nonEmpty && optionalTsb.nonEmpty) {
-            // TODO: investigate partitioning the equivalence class like so:
-            // val nextRevLoopingStates:Map[Option[State], mutable.LinkedHashSet[Leaf]] = s.histories.tail
-            //     .groupBy(_.getRevLoopingStateOnTransitionTo(parseTree, S, b))
-            // val transitionStates = nextRevLoopingStates.keySet.flatten.filterNot(_.ne(s))
-
-            for (x <- s.histories.tail) {
-              val optionalExb = x.getRevLoopingStateOnTransitionTo(parseTree, S, b)
-              if (optionalExb.nonEmpty && optionalTsb.get.ne(optionalExb.get)) {
-                recursive = false
-                for (y <- s.histories) {
-                  val optionalEyb = y.getRevLoopingStateOnTransitionTo(parseTree, S, b)
-                  if (optionalEyb.nonEmpty && optionalEyb.get.eq(optionalExb.get)) {
-                    val sNew = EquivalenceClass()
-                    S += sNew
-                    Test.move(y, s, null, sNew, rmParent = true)
-                  }
-                }
+          if (x0.nonEmpty && initialTransition.nonEmpty) {
+            s.histories
+              .tail
+              .groupBy(_.getTransitionState(parseTree, S, b))
+              .filterKeys(_.get.ne(initialTransition.get))
+              .foreach {
+                case (_, histories) =>
+                  isDeterminized = false
+                  val sNew = EquivalenceClass()
+                  S += sNew
+                  // TODO: fix the signature for "when parent removal happens"
+                  histories.foreach { h => Test.move(h, s, null, sNew, rmParent = true) }
               }
-            }
           }
         }
       }
@@ -184,7 +179,7 @@ object CSSR extends LazyLogging {
   }
 
   def getHistoryTransitions(histories:Iterable[Leaf], transitionSymbol:Char, S:States, tree: Tree): HistoryTransitions = {
-    histories.map { h => h -> h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], transitionSymbol) }.toMap
+    histories.map { h => h -> h.getTransitionState(tree, S.to[ListBuffer], transitionSymbol) }.toMap
   }
 
   def getStateTransitions(state:State, S:States, tree: Tree): StateTransitions = {
@@ -198,7 +193,7 @@ object CSSR extends LazyLogging {
   def getStateToStateTransitions(S:States, tree: Tree) :StateToStateTransitions = {
     S.map{ state => {
        state -> tree.alphabet.raw.map { c => {
-         val transitions = state.histories.map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet.flatten
+         val transitions = state.histories.map { h => h.getTransitionState(tree, S.to[ListBuffer], c) }.toSet.flatten
          if (transitions.size > 1) {
            throw new RuntimeException("This method should only be called once transitions has been determinized")
          } else {
@@ -213,7 +208,7 @@ object CSSR extends LazyLogging {
       state -> tree.alphabet.raw.map { c => {
         val transitions = state.histories
           .filter(_.length < tree.maxLength)
-          .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet.flatten
+          .map { h => h.getTransitionState(tree, S.to[ListBuffer], c) }.toSet.flatten
         if (transitions.size > 1) {
           // FIXME: check out what this means.
           throw new RuntimeException("This is an unknown scenario. Please email the maintainers.")
@@ -230,7 +225,7 @@ object CSSR extends LazyLogging {
       state -> tree.alphabet.raw.map { c => {
         val transitions = state.histories
           .filter(_.length == tree.maxLength)
-          .map { h => h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c) }.toSet.flatten
+          .map { h => h.getTransitionState(tree, S.to[ListBuffer], c) }.toSet.flatten
         c -> (if (transitions.size == 1) Option(transitions.head) else None)
       } }.toMap
     } }.toMap
@@ -285,7 +280,7 @@ object CSSR extends LazyLogging {
     // only checks to see if the transition exists.
     histories.foreach { h =>
       tree.alphabet.raw.foreach { c =>
-        val tState = h.getRevLoopingStateOnTransitionTo(tree, S.to[ListBuffer], c)
+        val tState = h.getTransitionState(tree, S.to[ListBuffer], c)
 
         if (tState.nonEmpty) {
           val ts = tState.get

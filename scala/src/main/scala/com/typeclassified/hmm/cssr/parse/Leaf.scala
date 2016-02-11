@@ -98,7 +98,7 @@ class Leaf(observedSequence:String, parseTree: Tree, initialEquivClass: Equivale
     children.find(_.observation == xNext)
   }
 
-  def getRevLoopingStateOnTransitionTo(tree:Tree, S:ListBuffer[EquivalenceClass], b:Char):Option[EquivalenceClass] = {
+  def getTransitionState(tree:Tree, S:ListBuffer[EquivalenceClass], b:Char):Option[EquivalenceClass] = {
     val navigatableHistory = if (observed.length == tree.maxLength) (observed + b).tail else observed + b
 
     tree
