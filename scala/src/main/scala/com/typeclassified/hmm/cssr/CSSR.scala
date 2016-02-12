@@ -156,14 +156,17 @@ object CSSR extends LazyLogging {
             s.histories
               .tail
               .groupBy(_.getTransitionState(parseTree, S, b))
-              .filterKeys(_.get.ne(initialTransition.get))
+              .filterKeys {
+                case Some(eqClass) => eqClass.ne(initialTransition.get)
+                case None => false
+              }
               .foreach {
                 case (_, histories) =>
                   isDeterminized = false
                   val sNew = EquivalenceClass()
                   S += sNew
                   // TODO: fix the signature for "when parent removal happens"
-                  histories.foreach { h => Test.move(h, s, null, sNew, rmParent = true) }
+                  histories.foreach { h => Test.move(h, s, null, sNew, rmParent = true, paint = false) }
               }
           }
         }

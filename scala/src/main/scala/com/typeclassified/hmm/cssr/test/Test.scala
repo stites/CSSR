@@ -55,8 +55,8 @@ object Test extends LazyLogging {
     None
   }
 
-  def move(x: Leaf, from: EquivalenceClass, parent:Leaf, to: EquivalenceClass, rmParent:Boolean=true): Unit = {
-    x.changeEquivalenceClass(to)
+  def move(x: Leaf, from: EquivalenceClass, parent:Leaf, to: EquivalenceClass, rmParent:Boolean=true, paint:Boolean = true): Unit = {
+    x.changeEquivalenceClass(to, paint)
     to.addHistory(x)
     from.rmHistory(x) // remove history as we have moved to "painting" the parse tree
     if (parent != null && rmParent) from.rmHistory(parent)// remove ancestors as we need to disambiguate if progeny

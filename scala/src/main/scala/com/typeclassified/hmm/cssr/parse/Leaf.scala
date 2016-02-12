@@ -86,10 +86,10 @@ class Leaf(observedSequence:String, parseTree: Tree, initialEquivClass: Equivale
     next
   }
 
-  def changeEquivalenceClass(s: EquivalenceClass): Unit = {
+  def changeEquivalenceClass(s: EquivalenceClass, paint:Boolean = true): Unit = {
     this.currentEquivalenceClass = s
     // we ought to update transitions here (but for phase II it's not terribly important)
-    this.children.foreach(_.changeEquivalenceClass(s))
+    if (paint) this.children.foreach(_.changeEquivalenceClass(s))
   }
 
   def findChildWithAdditionalHistory(xNext: Char):Option[Leaf] = {
