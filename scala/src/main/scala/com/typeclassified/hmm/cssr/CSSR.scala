@@ -267,8 +267,8 @@ object CSSR extends LazyLogging {
     * @return array of recurrent states and a table of transitions from max length strings
     */
   def fillRecurrStateArray(tree:Tree, S:States):(States, TransitionMemo) = {
-    S.foldRight[(States, TransitionMemo)]((List(), Map())) {
-      case (state, (recurStateMemo, transTableMemo)) =>
+    S.foldLeft[(States, TransitionMemo)]((List(), Map())) {
+      case ((recurStateMemo, transTableMemo), state) =>
         fillRecurrStateArray(state, tree, S, recurStateMemo, transTableMemo)
     }
   }
@@ -287,7 +287,7 @@ object CSSR extends LazyLogging {
 
         if (tState.nonEmpty) {
           val ts = tState.get
-          if (ts.ne(state) && (h.length <= tree.maxLength - 1 || h.eq(histories.head))) {
+          if (ts.ne(state) && h.length <= tree.maxLength - 1) {
             if (!stateArray.contains(ts)) {
               stateArray += ts
             }
