@@ -283,16 +283,14 @@ object CSSR extends LazyLogging {
     // only checks to see if the transition exists.
     histories.foreach { h =>
       tree.alphabet.raw.foreach { c =>
-        val tState = h.getTransitionState(tree, S.to[ListBuffer], c)
+        val tState = h.getTransitionState(tree, S.to[ListBuffer], c).find(_.ne(state))
+        val recordTransition = h.length <= tree.maxLength - 1 || histories.head.eq(h)
 
-        if (tState.nonEmpty) {
-          val ts = tState.get
-          if (ts.ne(state) && h.length <= tree.maxLength - 1) {
-            if (!stateArray.contains(ts)) {
-              stateArray += ts
-            }
-          }
+        if (tState.nonEmpty && recordTransition && !stateArray.contains(tState.get)) {
+          stateArray += tState.get
         }
+
+        // TODO: I'm pretty sure this is just to update transitions and isn't needed for this implementation.
         if (h.length == tree.maxLength) {
           transitionTable += (h.observed + c -> (state, tState))
         }
