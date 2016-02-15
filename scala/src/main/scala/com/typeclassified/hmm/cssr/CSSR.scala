@@ -9,7 +9,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 
 object CSSR extends LazyLogging {
   // type aliases:
@@ -236,7 +236,7 @@ object CSSR extends LazyLogging {
 
   def destroyOrphanStates(S:MutableStates, tree: Tree): Unit = {
     lazy val longTransitions = getStateToStateTransitionsLong(S.toList, tree)
-    val recurStateArray = fillRecurrStateArray(tree, S.toList)._1
+    val recurStateArray = fillRecurrStateArray(tree, S.toList)
     val possibleTransients = S.filterNot(recurStateArray.contains)
 
     // remove state only if state doesn't have a max length history with "unique characteristics"
@@ -266,21 +266,19 @@ object CSSR extends LazyLogging {
     *
     * @return array of recurrent states and a table of transitions from max length strings
     */
-  def fillRecurrStateArray(tree:Tree, S:States):(States, TransitionMemo) = {
-    S.foldLeft[(States, TransitionMemo)]((List(), Map())) {
-      case ((recurStateMemo, transTableMemo), state) =>
-        fillRecurrStateArray(state, tree, S, recurStateMemo, transTableMemo)
+  def fillRecurrStateArray(tree:Tree, S:States):States = {
+    S.foldLeft[States](List()) {
+      case (recurStateMemo, state) =>
+        fillRecurrStateArray(state, tree, S, recurStateMemo)
     }
   }
 
-  def fillRecurrStateArray(state:State, tree:Tree, S:States, recurrentStateArray:States, transitionMemo: TransitionMemo) = {
+  def fillRecurrStateArray(state:State, tree:Tree, S:States, recurrentStateArray:States) = {
     val histories = state.histories
     val stateArray = recurrentStateArray.to[ListBuffer]
-    val transitionTable = transitionMemo.to[ArrayBuffer]
 
-    // transition table only records transitions from LONGEST HISTORIES
-    // stateArray only records transitions from SHORT HISTORIES:
-    // only checks to see if the transition exists.
+    // stateArray only records transitions from short histories, there are none, in
+    // which case use the first history
     histories.foreach { h =>
       tree.alphabet.raw.foreach { c =>
         val tState = h.getTransitionState(tree, S.to[ListBuffer], c).find(_.ne(state))
@@ -289,14 +287,9 @@ object CSSR extends LazyLogging {
         if (tState.nonEmpty && recordTransition && !stateArray.contains(tState.get)) {
           stateArray += tState.get
         }
-
-        // TODO: I'm pretty sure this is just to update transitions and isn't needed for this implementation.
-        if (h.length == tree.maxLength) {
-          transitionTable += (h.observed + c -> (state, tState))
-        }
       }
     }
-    (stateArray.toList, transitionTable.toMap)
+    stateArray.toList
   }
 
 }
