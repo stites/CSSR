@@ -1,17 +1,18 @@
 package com.typeclassified.hmm.cssr.measure
 
-import com.typeclassified.hmm.cssr.parse.{Tree, Leaf}
+import com.typeclassified.hmm.cssr.parse.ParseLeaf
 import com.typeclassified.hmm.cssr.state.AllStates
+import com.typeclassified.hmm.cssr.trees.{ParseLeaf, ParseTree}
 import com.typesafe.scalalogging.LazyLogging
 
 object InferProbabilities extends LazyLogging {
 
-  type InferredDistribution = Array[(Leaf, Double)]
+  type InferredDistribution = Array[(ParseLeaf, Double)]
 
   /**
     * calculates the probability of all the histories up to length/depth indicated, based on a given allStates
     */
-  def inferredDistribution(tree: Tree, depth:Int, allStates: AllStates):InferredDistribution = {
+  def inferredDistribution(tree: ParseTree, depth:Int, allStates: AllStates):InferredDistribution = {
     val inferred = tree
       .getDepth(depth)
       .map { h => (h , inferredHistory(h.observed, tree, allStates) ) }
@@ -26,7 +27,7 @@ object InferProbabilities extends LazyLogging {
   /**
     * calculates the probability of a single, raw history (in string form) based on a given allStates and alphabet
     */
-  def inferredHistory(history:String, tree: Tree, allStates: AllStates): Double = {
+  def inferredHistory(history:String, tree: ParseTree, allStates: AllStates): Double = {
     // FIXME: this would be perfect to replace with a state monad
     val pedantic = false
     if (pedantic) logger.info("Generating Inferred probabilities from State Machine")

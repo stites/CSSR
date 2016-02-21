@@ -3,10 +3,11 @@ package com.typeclassified.hmm.cssr.measure.out
 import java.io._
 
 import _root_.com.typeclassified.hmm.cssr.cli.Config
-import com.typeclassified.hmm.cssr.parse.{Alphabet, Tree}
+import com.typeclassified.hmm.cssr.parse.Alphabet
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
+import com.typeclassified.hmm.cssr.trees.ParseTree
 
-class Results (config:Config, alphabet: Alphabet, tree:Tree, machine: Machine, allStates: AllStates) {
+class Results (config:Config, alphabet: Alphabet, tree:ParseTree, machine: Machine, allStates: AllStates) {
   val metadata:String = "Metadata\n=======================\n" + config.toString + "\n"
 
   protected val dotMeta:String = s"""digraph ${config.dataFile.getCanonicalPath} {

@@ -2,20 +2,21 @@ package com.typeclassified.hmm.cssr.parse
 
 import com.typeclassified.hmm.cssr.shared.ProbablisticAsserts
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
+import com.typeclassified.hmm.cssr.trees.{ParseLeaf, ParseTree}
 import org.scalatest.{FlatSpec, Matchers, BeforeAndAfter}
 
 import scala.collection.mutable.ListBuffer
 
 class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with LeafAsserts with BeforeAndAfter {
-  var tree:Tree = null
+  var tree:ParseTree = null
 
   before {
     AlphabetHolder.alphabet = Alphabet("abc".toCharArray)
-    tree = Tree(AlphabetHolder.alphabet)
+    tree = ParseTree(AlphabetHolder.alphabet)
   }
 
   "updateDistribution" should "update distributions for observing the _next_ values in history" in {
-    val leaf = new Leaf("a", tree, EquivalenceClass())
+    val leaf = new ParseLeaf("a", tree, EquivalenceClass())
     leaf.incrementDistribution('b')
     assertProbabalisticDetails(leaf, Array(0,1,0))
 
@@ -84,8 +85,8 @@ class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with Lea
   behavior of "changeEquivalenceClass"
 
   it should "change the equivalence class of a given leaf's branch" in {
-    Tree.loadHistory(tree, "abc".toCharArray)
-    Tree.loadHistory(tree, "bca".toCharArray)
+    ParseTree.loadHistory(tree, "abc".toCharArray)
+    ParseTree.loadHistory(tree, "bca".toCharArray)
     val originalClass = tree.root.currentEquivalenceClass
     val originalClassLeaves = tree.collectLeaves()
     for (leaf <- originalClassLeaves) {

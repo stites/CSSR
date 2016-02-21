@@ -1,8 +1,8 @@
 package com.typeclassified.hmm.cssr.test
 
-import com.typeclassified.hmm.cssr.parse.Leaf
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typeclassified.hmm.cssr.test.hypothesis.{KolmogorovSmirnov=>KS}
+import com.typeclassified.hmm.cssr.trees.ParseLeaf
 import com.typesafe.scalalogging.{LazyLogging, Logger}
 import org.slf4j.LoggerFactory
 
@@ -10,7 +10,7 @@ import scala.collection.mutable.ListBuffer
 
 object Test extends LazyLogging {
 
-  def test(S: ListBuffer[EquivalenceClass], aXt: Leaf, parent:Leaf, s: EquivalenceClass, sig: Double): Unit = {
+  def test(S: ListBuffer[EquivalenceClass], aXt: ParseLeaf, parent:ParseLeaf, s: EquivalenceClass, sig: Double): Unit = {
     logger.debug(s"Total number of states: ${S.length}")
     if (nullHypothesis(s, aXt, sig) >= sig) {
       if (!s.histories.contains(aXt)) {
@@ -32,7 +32,7 @@ object Test extends LazyLogging {
     S --= S.filter(_.histories.isEmpty)
   }
 
-  def nullHypothesis(s: EquivalenceClass, aXt: Leaf, sig:Double): Double = {
+  def nullHypothesis(s: EquivalenceClass, aXt: ParseLeaf, sig:Double): Double = {
     logger.debug("Testing: " + aXt.toString)
     logger.debug(s"Have state information:")
     logger.debug("======================================")
@@ -44,7 +44,7 @@ object Test extends LazyLogging {
     KS.kstwo(s.distribution, s.totalCounts, aXt.distribution, aXt.totalCounts)
   }
 
-  def restrictedHypothesesTesting( S: List[EquivalenceClass], s: EquivalenceClass, ax: Leaf, sig: Double )
+  def restrictedHypothesesTesting(S: List[EquivalenceClass], s: EquivalenceClass, ax: ParseLeaf, sig: Double )
   :Option[EquivalenceClass] = {
     val SStar = S.filter(_ ne s)
     for (sStar <- SStar) {
@@ -55,7 +55,7 @@ object Test extends LazyLogging {
     None
   }
 
-  def move(x: Leaf, from: EquivalenceClass, parent:Leaf, to: EquivalenceClass, rmParent:Boolean=true, paint:Boolean = true): Unit = {
+  def move(x: ParseLeaf, from: EquivalenceClass, parent:ParseLeaf, to: EquivalenceClass, rmParent:Boolean=true, paint:Boolean = true): Unit = {
     x.changeEquivalenceClass(to, paint)
     to.addHistory(x)
     from.rmHistory(x) // remove history as we have moved to "painting" the parse tree

@@ -4,7 +4,8 @@ import com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
 import com.typeclassified.hmm.cssr.test.Test
-import com.typeclassified.hmm.cssr.parse.{Leaf, AlphabetHolder, Alphabet, Tree}
+import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
+import com.typeclassified.hmm.cssr.trees.{ParseLeaf, ParseTree}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable
@@ -16,11 +17,11 @@ object CSSR extends LazyLogging {
   type State = EquivalenceClass
   type ParentState = EquivalenceClass
   type TransitionState = Option[EquivalenceClass]
-  type OrderedHistorySet = mutable.LinkedHashSet[Leaf]
+  type OrderedHistorySet = mutable.LinkedHashSet[ParseLeaf]
   type States = List[State]
   type MutableStates = ListBuffer[State]
 
-  type HistoryTransitions = Map[Leaf, TransitionState]
+  type HistoryTransitions = Map[ParseLeaf, TransitionState]
   type StateTransitions = Map[Char, HistoryTransitions]
   type AllStateTransitions = Map[ParentState, StateTransitions]
   type StateToStateTransitions = Map[ParentState, Map[Char, TransitionState]]
@@ -29,7 +30,7 @@ object CSSR extends LazyLogging {
   def run(config: Config) = {
     logger.info("CSSR starting.")
 
-    val (tree: Tree, allStates: MutableStates) = initialization(config)
+    val (tree: ParseTree, allStates: MutableStates) = initialization(config)
     logger.debug("Initialization complete...")
 
     sufficiency(tree, allStates, config.lMax, config.sig)
@@ -78,7 +79,7 @@ object CSSR extends LazyLogging {
     * causal states which each contain a next-step probability
     * distribution.
     */
-  def initialization(config: Config): (Tree, MutableStates) = {
+  def initialization(config: Config): (ParseTree, MutableStates) = {
     val alphabetSrc: BufferedSource = Source.fromFile(config.alphabetFile)
     val alphabetSeq: Array[Char] = try alphabetSrc.mkString.toCharArray finally alphabetSrc.close()
 
@@ -88,7 +89,7 @@ object CSSR extends LazyLogging {
     val alphabet = Alphabet(alphabetSeq)
     AlphabetHolder.alphabet = alphabet
     val rootClass = EquivalenceClass()
-    val parseTree = Tree.loadData(Tree(alphabet, rootClass), dataSeq, config.lMax)
+    val parseTree = ParseTree.loadData(ParseTree(alphabet, rootClass), dataSeq, config.lMax)
     rootClass.addHistory(parseTree.root)
     val allStates = ListBuffer(rootClass)
 
@@ -109,7 +110,7 @@ object CSSR extends LazyLogging {
     */
   // sufficiency is only good for 1 step
   // determinizing is further along than just 1 step.
-  def sufficiency(parseTree: Tree, S: MutableStates, lMax: Int, sig:Double):Unit = {
+  def sufficiency(parseTree: ParseTree, S: MutableStates, lMax: Int, sig:Double):Unit = {
     for (l <- 1 to lMax) {
       logger.debug(s"Starting Sufficiency at L = $l")
       for (xt <- parseTree.getDepth(l)) {
@@ -142,7 +143,7 @@ object CSSR extends LazyLogging {
     * @param S
     * @param sig
     */
-  def recursion (parseTree: Tree, S: MutableStates, sig:Double, lMax:Double) = {
+  def recursion (parseTree: ParseTree, S: MutableStates, sig:Double, lMax:Double) = {
     var isDeterminized = false
 
     while (!isDeterminized) {
@@ -181,19 +182,19 @@ object CSSR extends LazyLogging {
     S --= S.filter(_.histories.isEmpty)
   }
 
-  def getHistoryTransitions(histories:Iterable[Leaf], transitionSymbol:Char, S:States, tree: Tree): HistoryTransitions = {
+  def getHistoryTransitions(histories:Iterable[ParseLeaf], transitionSymbol:Char, S:States, tree: ParseTree): HistoryTransitions = {
     histories.map { h => h -> h.getTransitionState(tree, S.to[ListBuffer], transitionSymbol) }.toMap
   }
 
-  def getStateTransitions(state:State, S:States, tree: Tree): StateTransitions = {
+  def getStateTransitions(state:State, S:States, tree: ParseTree): StateTransitions = {
     tree.alphabet.raw.map { c => { c -> getHistoryTransitions(state.histories, c, S, tree) } }.toMap
   }
 
-  def getAllStateTransitions(S:States, tree: Tree): AllStateTransitions = {
+  def getAllStateTransitions(S:States, tree: ParseTree): AllStateTransitions = {
     S.map{ state => state -> getStateTransitions(state, S, tree) }.toMap
   }
 
-  def getStateToStateTransitions(S:States, tree: Tree) :StateToStateTransitions = {
+  def getStateToStateTransitions(S:States, tree: ParseTree) :StateToStateTransitions = {
     S.map{ state => {
        state -> tree.alphabet.raw.map { c => {
          val transitions = state.histories.map { h => h.getTransitionState(tree, S.to[ListBuffer], c) }.toSet.flatten
@@ -206,7 +207,7 @@ object CSSR extends LazyLogging {
     } }.toMap
   }
 
-  def getStateToStateTransitionsShort(S:States, tree: Tree) :StateToStateTransitions = {
+  def getStateToStateTransitionsShort(S:States, tree: ParseTree) :StateToStateTransitions = {
     S.map{ state => {
       state -> tree.alphabet.raw.map { c => {
         val transitions = state.histories
@@ -223,7 +224,7 @@ object CSSR extends LazyLogging {
   }
 
 
-  def getStateToStateTransitionsLong(S:States, tree: Tree) :StateToStateTransitions = {
+  def getStateToStateTransitionsLong(S:States, tree: ParseTree) :StateToStateTransitions = {
     S.map{ state => {
       state -> tree.alphabet.raw.map { c => {
         val transitions = state.histories
@@ -234,7 +235,7 @@ object CSSR extends LazyLogging {
     } }.toMap
   }
 
-  def destroyOrphanStates(S:MutableStates, tree: Tree): Unit = {
+  def destroyOrphanStates(S:MutableStates, tree: ParseTree): Unit = {
     lazy val longTransitions = getStateToStateTransitionsLong(S.toList, tree)
     val recurStateArray = fillRecurrStateArray(tree, S.toList)
     val possibleTransients = S.filterNot(recurStateArray.contains)
@@ -266,14 +267,14 @@ object CSSR extends LazyLogging {
     *
     * @return array of recurrent states and a table of transitions from max length strings
     */
-  def fillRecurrStateArray(tree:Tree, S:States):States = {
+  def fillRecurrStateArray(tree:ParseTree, S:States):States = {
     S.foldLeft[States](List()) {
       case (recurStateMemo, state) =>
         fillRecurrStateArray(state, tree, S, recurStateMemo)
     }
   }
 
-  def fillRecurrStateArray(state:State, tree:Tree, S:States, recurrentStateArray:States) = {
+  def fillRecurrStateArray(state:State, tree:ParseTree, S:States, recurrentStateArray:States) = {
     val histories = state.histories
     val stateArray = recurrentStateArray.to[ListBuffer]
 

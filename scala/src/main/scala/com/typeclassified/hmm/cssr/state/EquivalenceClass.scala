@@ -1,8 +1,8 @@
 package com.typeclassified.hmm.cssr.state
 
 import breeze.linalg._
-import com.typeclassified.hmm.cssr.parse.Leaf
 import com.typeclassified.hmm.cssr.shared.Probablistic
+import com.typeclassified.hmm.cssr.trees.ParseLeaf
 
 import scala.collection.immutable.TreeSet
 import scala.collection.mutable
@@ -23,14 +23,14 @@ object EquivalenceClass {
 }
 
 class EquivalenceClass extends Probablistic {
-  var histories: mutable.LinkedHashSet[Leaf] = mutable.LinkedHashSet[Leaf]()
+  var histories: mutable.LinkedHashSet[ParseLeaf] = mutable.LinkedHashSet[ParseLeaf]()
 
-  def addHistory(h: Leaf): Unit = {
+  def addHistory(h: ParseLeaf): Unit = {
     histories += h
     normalizeAcrossHistories()
   }
 
-  def rmHistory(x: Leaf): Unit = {
+  def rmHistory(x: ParseLeaf): Unit = {
     histories = histories.filter(y => y.observed != x.observed)
     normalizeAcrossHistories()
   }
