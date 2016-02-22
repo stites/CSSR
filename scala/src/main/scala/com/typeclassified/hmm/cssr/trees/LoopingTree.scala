@@ -59,10 +59,12 @@ object LoopingTree {
 
   def homogeneous(allHistories:ListBuffer[ParseLeaf], w:ParseLeaf): Boolean = allHistories.forall { pw => matches(pw, w) }
 
-  def homogeneous(tree: ParseTree, w:ParseLeaf): Boolean = homogeneous(prefixes(tree)(w), w)
+  def homogeneous(tree: ParseTree, w:ParseLeaf): Boolean = homogeneous(prefixes(tree, w), w)
 
-  def excisable(tree:ParseTree)(uews: ListBuffer[ParseLeaf])(w:ParseLeaf, e:String):Boolean = {
-    excise(tree)(uews)(w, e)
+  def excisable(tree:ParseTree)(w:ParseLeaf, e:String):Boolean = excisable(tree, prefixes(tree, w))(w, e)
+
+  def excisable(tree:ParseTree, uews: ListBuffer[ParseLeaf])(w:ParseLeaf, e:String):Boolean = {
+    excise(tree, uews)(w, e)
       .map {
         case (uew, Some(uw)) => LoopingTree.matches(uew, uw)
         case (uew, None)     => true
@@ -71,7 +73,8 @@ object LoopingTree {
       .forall(isExcisable => isExcisable)
   }
 
-  def excise(tree:ParseTree)(uews: ListBuffer[ParseLeaf])(w:ParseLeaf, e:String):ListBuffer[(ParseLeaf, Option[ParseLeaf])] = {
+  def excise(tree:ParseTree, uews: ListBuffer[ParseLeaf])(w:ParseLeaf, e:String)
+  :ListBuffer[(ParseLeaf, Option[ParseLeaf])] = {
     val exciseStr:(String)=>String = excise(w.observed, e)
 
     uews
@@ -81,11 +84,20 @@ object LoopingTree {
 
   def excise(w:String, e:String)(uew: String):String = uew.take(uew.length - e.length - w.length) + w
 
-  def prefixes(tree: ParseTree)(w:ParseLeaf):ListBuffer[ParseLeaf] = {
-    (w.length to tree.maxLength)
+  def prefixes(tree: ParseTree, w:ParseLeaf):ListBuffer[ParseLeaf] = prefixes(tree, w.observed)
+
+  def prefixes(tree: ParseTree, w:String):ListBuffer[ParseLeaf] = {
+    val histories = (w.length to tree.maxLength)
       .flatMap { n => tree.getDepth(n) }
-      .filter { _.observed.takeRight(w.length) == w.observed }
       .to[ListBuffer]
+
+    prefixes(histories, w)
+  }
+
+  def prefixes(histories: ListBuffer[ParseLeaf], w:ParseLeaf):ListBuffer[ParseLeaf] = prefixes(histories, w.observed)
+
+  def prefixes(histories: ListBuffer[ParseLeaf], w:String):ListBuffer[ParseLeaf] = {
+    histories.filter { _.observed.takeRight(w.length) == w }
   }
 }
 
