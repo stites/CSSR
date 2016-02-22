@@ -1,7 +1,6 @@
 package com.typeclassified.hmm.cssr.measure
 
 import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistribution
-import com.typeclassified.hmm.cssr.parse.ParseLeaf
 import com.typeclassified.hmm.cssr.state.AllStates
 import com.typeclassified.hmm.cssr.trees.{ParseLeaf, ParseTree}
 import com.typesafe.scalalogging.LazyLogging

@@ -140,6 +140,8 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
     }
   }
 
+  def navigateHistoryRev(history: String): Option[ParseLeaf] = navigateHistoryRev(history.toList)
+
   // ABC, ABB => [{C->B->A},{B->C->A}]
   def navigateHistoryRev(history: List[Char], active:ParseLeaf = root): Option[ParseLeaf] = {
     if (history.isEmpty) Option(active) else {
@@ -218,10 +220,6 @@ class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass
   val locations:mutable.HashMap[Int, Int] = mutable.HashMap[Int, Int]()
 
   var children:ListBuffer[ParseLeaf] = ListBuffer()
-
-  def printParent (x:Option[ParseLeaf] = Option(this), acc:String = "") :String = {
-    if (x.isEmpty) acc else printParent(x.get.parent, acc + x.get.observation)
-  }
 
   @Deprecated
   def incrementDistribution(xNext: Char):Unit = {
