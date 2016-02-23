@@ -55,6 +55,10 @@ object LoopingTree {
     ltree
   }
 
+  // a lot of this needs to be abstracted away
+
+  def matches(u:LoopingLeaf, w:ParseLeaf): Boolean = u.distribution == w.distribution
+
   def matches(u:ParseLeaf, w:ParseLeaf): Boolean = u.distribution == w.distribution
 
   def homogeneous(allHistories:ListBuffer[ParseLeaf], w:ParseLeaf): Boolean = allHistories.forall { pw => matches(pw, w) }
@@ -108,7 +112,7 @@ class LoopingTree (
   def this(ptree: ParseTree) = this(ptree.alphabet, new LoopingLeaf(ptree.root))
 
   def getDepth(depth: Int, nodes:ListBuffer[LoopingLeaf] = ListBuffer(root)): Array[LoopingLeaf] = {
-    if (depth <= 0) nodes.toArray else getDepth(depth-1, nodes.flatMap(_.children))
+    if (depth <= 0) nodes.toArray else getDepth(depth-1, nodes.flatMap(_.children.values.to[ListBuffer]))
   }
 
   def collectLeaves(
@@ -117,7 +121,7 @@ class LoopingTree (
   ):Array[LoopingLeaf] = {
     if (layer.isEmpty) collected.toArray else {
       val nextLayer = layer.partition(_.children.isEmpty)._2
-      collectLeaves(nextLayer.flatMap(_.children), collected ++ layer)
+      collectLeaves(nextLayer.flatMap(_.children.values.to[ListBuffer]), collected ++ layer)
     }
   }
 }
@@ -125,39 +129,58 @@ class LoopingTree (
 
 class LoopingLeaf ( val observation:Char,
                     val histories:ListBuffer[ParseLeaf] = ListBuffer(),
-                    var children:ListBuffer[LoopingLeaf] = ListBuffer(),
                     val parent:Option[LoopingLeaf] = None,
-                    override val distribution:DenseVector[Double] = DenseVector.zeros(AlphabetHolder.alphabet.length)
+                    override var distribution:DenseVector[Double] = DenseVector.zeros(AlphabetHolder.alphabet.length)
 ) extends Probablistic {
+  var children:Map[Char, LoopingLeaf] = Map()
 
-  def this() = this('\0', ListBuffer(), ListBuffer(), None)
+  def this() = this('\0')
 
-  def this(char: Char) = this(char, ListBuffer(), ListBuffer(), None)
+  def this(char: Char) = this(char)
 
-  def this(p: ParseLeaf) = this(p.observation, ListBuffer(p), ListBuffer(), None, p.distribution)
+  def this(p: ParseLeaf) = this(p.observation, ListBuffer(p), None, p.distribution)
 
-  def this(ps: ListBuffer[ParseLeaf]) = this('\0', ps, ListBuffer(), None, ps.head.distribution)
+  def this(ps: ListBuffer[ParseLeaf]) = this('\0', ps, None, ps.head.distribution)
 
-  def this(ps: ListBuffer[ParseLeaf], parent:Option[LoopingLeaf]) = this('\0', ps, ListBuffer(), parent, ps.head.distribution)
+  def this(ps: ListBuffer[ParseLeaf], parent:Option[LoopingLeaf]) = this('\0', ps, parent, ps.head.distribution)
 
-  def add(histories: Array[ParseLeaf]) = {
-    val next:Option[ListBuffer[LoopingLeaf]] = this
-      .histories
-      .headOption
-      .flatMap{ firstHist => this.split(firstHist.distribution, histories) }
+  def this(char: Char, ps: ListBuffer[ParseLeaf]) = this(char, ps, None, ps.head.distribution)
 
-//    if (next.isDefined) children ++= next.get else histories ++= histories.to[ListBuffer]
+  def add(history: ParseLeaf) = {
+    if (histories.isEmpty) distribution = history.distribution
+    if (LoopingTree.matches(this, history)) histories += history
   }
 
-  def split(dist:DenseVector[Double], histories:Array[ParseLeaf]):Option[ListBuffer[LoopingLeaf]] = {
-    if (dist != histories.head.distribution) None else {
-      val grouped = histories
-        .groupBy { _.distribution }
-        .mapValues { observations => new LoopingLeaf(observations.to[ListBuffer], Option(this)) }
-        .values
-        .to[ListBuffer]
-      if (grouped.isEmpty) None else Option(grouped)
+  def add(histories: Array[ParseLeaf]) = {
+    if (this.histories.isEmpty) distribution = histories.head.distribution
+    splitAndAddChildren(distribution, histories)
+  }
+
+  def splitAndAddChildren(dist:DenseVector[Double], histories:Array[ParseLeaf]):Unit = {
+    val grouped = histories.to[ListBuffer].groupBy { _.distribution }
+
+    if (grouped.keySet.contains(distribution)) {
+      this.histories ++= grouped(distribution)
     }
+
+    val nextActiveNodes:Map[Char, LoopingLeaf] = grouped
+      .filterKeys{ _ != distribution }
+      .flatMap {
+        case (groupedDist, histsByDist) => {
+          // FIXME: handle differences in strings of >1 step of history:
+          // eg: lnode has ["", a, b, ab, aa, bb, ba]. We encounter "abb"... what if we encounter "abbb"?
+          // answer — I don't think this error will ever happen, but in the case of "abb" followed by "abbb" we will see:
+          // ["", a, b, ab, aa, bb, ba] =b=> [abb] =b=> [abbb]
+
+          // FIXME: handle childern that have the same observed, but different distributions:
+          // eg: lnode has ["", a, b]. We encounter "ab" now {hs=["", a, b], dist=[0.5,0.5]} =b=> {hs=[ab], dist=[0.2,0.8]}
+          //     next we come across an abb... this will never happen
+          histsByDist
+            .groupBy(_.observation)
+            .map { case (c, hs) => c -> new LoopingLeaf(c, hs, Some(this), hs.head.distribution)}
+        } }
+
+    children ++= nextActiveNodes
   }
 }
 
