@@ -55,11 +55,7 @@ object LoopingTree {
     ltree
   }
 
-  // a lot of this needs to be abstracted away
-
-  def matches(u:LoopingLeaf, w:ParseLeaf): Boolean = u.distribution == w.distribution
-
-  def matches(u:ParseLeaf, w:ParseLeaf): Boolean = u.distribution == w.distribution
+  def matches(u:Probablistic, w:Probablistic): Boolean = u.distribution == w.distribution
 
   def homogeneous(allHistories:ListBuffer[ParseLeaf], w:ParseLeaf): Boolean = allHistories.forall { pw => matches(pw, w) }
 
@@ -88,7 +84,8 @@ object LoopingTree {
 
   def excise(w:String, e:String)(uew: String):String = uew.take(uew.length - e.length - w.length) + w
 
-  def prefixes(tree: ParseTree, w:ParseLeaf):ListBuffer[ParseLeaf] = prefixes(tree, w.observed)
+  def prefixes(histories: ListBuffer[ParseLeaf], w:String):ListBuffer[ParseLeaf] = histories
+    .filter { _.observed.takeRight(w.length) == w }
 
   def prefixes(tree: ParseTree, w:String):ListBuffer[ParseLeaf] = {
     val histories = (w.length to tree.maxLength)
@@ -100,9 +97,7 @@ object LoopingTree {
 
   def prefixes(histories: ListBuffer[ParseLeaf], w:ParseLeaf):ListBuffer[ParseLeaf] = prefixes(histories, w.observed)
 
-  def prefixes(histories: ListBuffer[ParseLeaf], w:String):ListBuffer[ParseLeaf] = {
-    histories.filter { _.observed.takeRight(w.length) == w }
-  }
+  def prefixes(tree: ParseTree, w:ParseLeaf):ListBuffer[ParseLeaf] = prefixes(tree, w.observed)
 }
 
 class LoopingTree (
