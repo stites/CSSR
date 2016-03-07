@@ -2,7 +2,6 @@ package com.typeclassified.hmm.cssr.trees
 
 import breeze.linalg.{DenseVector, sum}
 import com.typeclassified.hmm.cssr.parse.Alphabet
-import com.typeclassified.hmm.cssr.shared.Probablistic
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typesafe.scalalogging.LazyLogging
 
@@ -118,7 +117,7 @@ object ParseTree extends LazyLogging {
   }
 }
 
-class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) {
+class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) extends Tree {
   var root:ParseLeaf = new ParseLeaf("", this, rootEC)
 
   var maxLength:Int = _
@@ -204,7 +203,7 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
   * @param parseTree
   * @param initialEquivClass
   **/
-class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass: EquivalenceClass, var parent: Option[ParseLeaf] = None ) extends Probablistic {
+class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass: EquivalenceClass, parent: Option[ParseLeaf] = None) extends Leaf (parent) {
   var obsCount:Double = 1
 
   val alphabet:Alphabet = parseTree.alphabet
@@ -307,16 +306,16 @@ class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass
   }
 
   def fullString: String = {
-    val vec = frequency.toArray.mkString("(", ", ", ")")
+    val vec = distribution.toArray.mkString("(", ", ", ")")
     val id = s"${getClass.getSimpleName}@${hashCode()}"
     val nTabs = if (observed.length < 4) 3 else 2
 
-    val props = s"{observed=$observed, \tobservation=${observation.toString},\tfrequency=$vec,\ttotal=${sum(frequency)}}"
+    val props = s"{dist=$vec,\tobserved=$observed, \tobservation=${observation.toString},\ttotal=${sum(frequency)}}"
     observed + "\t" * nTabs + id + "\t" + props
   }
 
   def shortString: String = observed
 
-  override def toString: String = shortString
+  override def toString: String = fullString
 }
 

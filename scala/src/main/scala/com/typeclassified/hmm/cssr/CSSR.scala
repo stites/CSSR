@@ -1,9 +1,10 @@
 package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.Config
+import com.typeclassified.hmm.cssr.shared.Epsilon
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
 import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
-import com.typeclassified.hmm.cssr.trees.{LoopingTree, ParseLeaf, ParseTree}
+import com.typeclassified.hmm.cssr.trees._
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable
@@ -26,6 +27,8 @@ object CSSR extends LazyLogging {
 
   def run(config: Config) = {
     val (tree: ParseTree, allStates: MutableStates) = initialization(config)
+    val ls = tree.collectLeaves()
+    implicit val ep:Epsilon = new Epsilon(0.01)
 
     val looping = grow(tree)
 
@@ -49,8 +52,75 @@ object CSSR extends LazyLogging {
     (parseTree, allStates)
   }
 
+  /**
+    * Algorithm:
+    * - generate the root lnode. add to "active" queue
+    * - while active queue is not empty:
+    *   - remove the first lnode from the queue. With the lnode:
+    *     - check to see if it is homogeneous wrt all next-step histories belonging to collection:
+    *       | for each h in pnodes, for each c in h.children
+    *       |   if c.distribution ~/= lnode.distribution, return false for homogeneity.
+    *       | if the node makes it through the loop, return true for homogeneity.
+    *     | if the lnode is homogeneous
+    *       - do nothing
+    *     | if the lnode is not homogeneous
+    *       - create lnodes for all valid children. Add child lnodes to queue
+    *       - check all lnodes for excisability:
+    *         - get all ancestors, ordered by depth (root lnode first)
+    *         - check to see if distributions are the same (?)
+    *         | if the distributions are the same, the node is excisable
+    *           - create loop (?)
+    *         | if non are the same
+    *           - do nothing
+    * - end while
+    *
+    * @param tree
+    * @return
+    */
   def grow(tree:ParseTree):LoopingTree = {
-    LoopingTree.from(tree)
+    val ltree = new LoopingTree(tree)
+    val activeQueue = ListBuffer[LoopingLeaf](ltree.root)
+    while (activeQueue.nonEmpty) {
+      val active:LoopingLeaf = activeQueue.remove(0)
+      val isHomogeneous:Boolean = active.histories.forall{ pLeaf => LoopingTree.nextHomogeneous(tree, pLeaf) }
+
+      if (isHomogeneous) {
+        // do nothing
+      } else {
+        val nextNodes:Map[Char, LoopingLeaf] = active.histories
+          .flatMap{ _.children } // there may be overlap here. for instance [AB, ABA].children => [*ABA*, ABAB] ABA is a problem
+          .groupBy{ _.observation }
+          .map {
+            case (c, pleaves) => {
+              // bypass current adding of children for fast iteration
+              val lleaf = new LoopingLeaf(c, ltree, pleaves, Option(active))
+
+              // and perform an inspection to validate that this works
+              val allMatching = lleaf.histories
+                .map{_.distribution}
+                .forall { Tree.matches(lleaf.distribution) }
+
+              val outcome = if (allMatching) "great" else "terrible..."
+              logger.debug(s"matching went $outcome with ${lleaf.histories.length} histories")
+
+              c -> lleaf
+              }
+            }
+
+        val nextChildren = nextNodes.map {
+          case (c, lleaf) => {
+            // create Some(loop) if one exists, None if no loop exists
+            lleaf.loop = Tree.firstExcisable(lleaf)
+            lleaf
+          }
+        }
+
+        active.children ++= nextChildren
+        activeQueue ++= nextChildren.filter{ _.loop.isEmpty }
+      }
+    }
+
+    ltree
   }
 
   def recursion(tree:ParseTree,S:MutableStates,lMax:Double,sig:Double) = {
