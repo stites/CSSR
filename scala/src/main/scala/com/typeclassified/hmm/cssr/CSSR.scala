@@ -53,29 +53,32 @@ object CSSR extends LazyLogging {
   }
 
   /**
-    * Algorithm:
-    * - generate the root lnode. add to "active" queue
+    * Phase II: "Growing a Looping Tree" algorithm:
+    *
+    * - generate the root looping node. add to "active" queue
     * - while active queue is not empty:
-    *   - remove the first lnode from the queue. With the lnode:
+    *   - remove the first looping node from the queue. With the looping node:
     *     - check to see if it is homogeneous wrt all next-step histories belonging to collection:
-    *       | for each h in pnodes, for each c in h.children
-    *       |   if c.distribution ~/= lnode.distribution, return false for homogeneity.
+    *       - for each h in pnodes, for each c in h.children
+    *           if c.distribution ~/= (looping node).distribution, return false for homogeneity.
     *       | if the node makes it through the loop, return true for homogeneity.
-    *     | if the lnode is homogeneous
+    *     | if the looping node is homogeneous
     *       - do nothing
-    *     | if the lnode is not homogeneous
-    *       - create lnodes for all valid children. Add child lnodes to queue
-    *       - check all lnodes for excisability:
-    *         - get all ancestors, ordered by depth (root lnode first)
+    *     | if the looping node is not homogeneous
+    *       - create new looping nodes for all valid children.
+    *       - check all looping nodes for excisability:
+    *         - get all ancestors, ordered by depth (root looping node first)
     *         - check to see if distributions are the same (?)
     *         | if the distributions are the same, the node is excisable
-    *           - create loop (?)
+    *           - create loop
     *         | if non are the same
     *           - do nothing
+    *       -  Add all new looping nodes to children of active node, mapped by alphabet symbol
+    *       -  Add unexcisable children to queue
     * - end while
     *
-    * @param tree
-    * @return
+    * @param tree A parse tree containing the conditional probabilities of a time series
+    * @return A looping tree representing the initial growth of a looping tree
     */
   def grow(tree:ParseTree):LoopingTree = {
     val ltree = new LoopingTree(tree)
