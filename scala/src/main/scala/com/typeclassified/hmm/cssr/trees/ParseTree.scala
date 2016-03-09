@@ -52,10 +52,6 @@ object ParseTree extends LazyLogging {
       tree.getDepth(depth).foreach(_.calcNextStepProbabilities())
     }
 
-    // FIXME: sketchy?
-    tree.root.frequency = new DenseVector[Double](tree.root.frequency.toArray.reverse)
-    tree.root.distribution = tree.root.frequency / tree.root.totalCounts
-
     tree.getDepth(n).foreach{ _.children = ListBuffer() }
     tree
   }

@@ -104,7 +104,7 @@ object CSSR extends LazyLogging {
               logger.debug(s"matching went $outcome with ${lleaf.histories.length} histories")
 
               c -> lleaf
-              }
+          }
 
         val nextChildren = nextNodes.map {
           case (c, lleaf) =>
