@@ -1,11 +1,11 @@
 package com.typeclassified.hmm.cssr.trees
 
 import breeze.linalg.{sum, DenseVector}
-import breeze.numerics.{rint, round}
 import com.typeclassified.hmm.cssr.parse.Alphabet
 import com.typeclassified.hmm.cssr.shared.Epsilon
 
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 
 object LoopingTree {
   /*
@@ -102,7 +102,7 @@ class LoopingTree (val alphabet:Alphabet) extends Tree {
 
   def this(ptree: ParseTree) = {
     this(ptree.alphabet)
-    this.root = new LoopingLeaf(ptree.root.observation, this)
+    this.root = new LoopingLeaf(ptree.root.observation, this, ListBuffer(ptree.root))
   }
 
   def getDepth(depth: Int, nodes:ListBuffer[LoopingLeaf] = ListBuffer(root)): Array[LoopingLeaf] = {
@@ -140,7 +140,7 @@ class LoopingLeaf (val observation:Char,
 ) extends Leaf (parent) {
   if (histories.nonEmpty) this.distribution = histories.head.distribution
 
-  var children:Map[Char, LoopingLeaf] = Map()
+  var children:mutable.Map[Char, LoopingLeaf] = mutable.Map()
 
   var rounded:DenseVector[Double] = if (sum(distribution) > 0) Tree.round(distribution) else distribution
 

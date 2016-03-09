@@ -91,7 +91,7 @@ object CSSR extends LazyLogging {
           .flatMap{ _.children } // there may be overlap here. for instance [AB, ABA].children => [*ABA*, ABAB] ABA is a problem
           .groupBy{ _.observation }
           .map {
-            case (c, pleaves) => {
+            case (c, pleaves) =>
               // bypass current adding of children for fast iteration
               val lleaf = new LoopingLeaf(c, ltree, pleaves, Option(active))
 
@@ -105,18 +105,16 @@ object CSSR extends LazyLogging {
 
               c -> lleaf
               }
-            }
 
         val nextChildren = nextNodes.map {
-          case (c, lleaf) => {
+          case (c, lleaf) =>
             // create Some(loop) if one exists, None if no loop exists
             lleaf.loop = Tree.firstExcisable(lleaf)
-            lleaf
-          }
+            c -> lleaf
         }
 
         active.children ++= nextChildren
-        activeQueue ++= nextChildren.filter{ _.loop.isEmpty }
+        activeQueue ++= nextChildren.values.filter{ _.loop.isEmpty }
       }
     }
 
