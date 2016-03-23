@@ -8,50 +8,8 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable
 
 object LoopingTree {
-  /*
-  def from(tree: ParseTree):LoopingTree = {
-    var n:Integer = 0
-    val ltree = new LoopingTree(tree.alphabet)
-    ltree.root.add(tree.root)
-
-    ltree.walk(lleaf => {
-      val nonHomog = lleaf
-        .histories
-        .filterNot(LoopingTree.homogeneous(tree, _))
-      // what if we don't remove them and, instead, we keep them there for historical purposes
-
-      val children = nonHomog
-        .flatMap{ _.children }
-        .groupBy{ _.observation }
-        .map{ case (c, hs) => c -> new LoopingLeaf(c, ltree, hs, Option(lleaf)) }
-
-      lleaf.exhausted = nonHomog.length == lleaf.histories.length
-      lleaf.children ++= children
-    })
-
-
-    ltree.walk(lleaf => {
-      val nonHomog = lleaf
-        .histories
-        .filterNot(LoopingTree.homogeneous(tree, _))
-      // what if we don't remove them and, instead, we keep them there for historical purposes
-
-      val children = nonHomog
-        .flatMap{ _.children }
-        .groupBy{ _.observation }
-        .map{ case (c, hs) => c -> new LoopingLeaf(c, ltree, hs, Option(lleaf)) }
-
-      lleaf.exhausted = nonHomog.length == lleaf.histories.length
-      lleaf.children ++= children
-    })
-
-
-    ltree
-  }
-  */
-
   def allHomogeneous(tree: ParseTree, w:ParseLeaf): Boolean = homogeneous(allPrefixes(tree, w), w)
-  def nextHomogeneous(tree: ParseTree, w:ParseLeaf): Boolean = homogeneous(nextPrefixes(tree, w), w)
+  def nextHomogeneous(tree: ParseTree)(w:ParseLeaf): Boolean = homogeneous(nextPrefixes(tree, w), w)
 
   def homogeneous(allHistories:ListBuffer[ParseLeaf], w:ParseLeaf): Boolean = allHistories.forall { pw => Tree.matches(w)(pw) }
 

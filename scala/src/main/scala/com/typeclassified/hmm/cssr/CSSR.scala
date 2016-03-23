@@ -85,35 +85,32 @@ object CSSR extends LazyLogging {
     val activeQueue = ListBuffer[LoopingLeaf](ltree.root)
     while (activeQueue.nonEmpty) {
       val active:LoopingLeaf = activeQueue.remove(0)
-      val isHomogeneous:Boolean = active.histories.forall{ pLeaf => LoopingTree.nextHomogeneous(tree, pLeaf) }
+      val isHomogeneous:Boolean = active.histories.forall{ LoopingTree.nextHomogeneous(tree) }
 
       if (isHomogeneous) {
         // do nothing
+        logger.debug("we've hit our base case")
       } else {
         val nextNodes:Map[Char, LoopingLeaf] = active.histories
-          .flatMap{ _.children } // there may be overlap here. for instance [AB, ABA].children => [*ABA*, ABAB] ABA is a problem
+          .flatMap{ _.children }
           .groupBy{ _.observation }
           .map {
             case (c, pleaves) =>
-              // bypass current adding of children for fast iteration
+              // TODO: do not add children with constructor for debugging
               val lleaf = new LoopingLeaf(c, ltree, pleaves, Option(active))
 
-              // and perform an inspection to validate that this works
               val allMatching = lleaf.histories
                 .map{_.distribution}
                 .forall { Tree.matches(lleaf.distribution) }
 
-              val outcome = if (allMatching) "great" else "terrible..."
-              logger.debug(s"matching went $outcome with ${lleaf.histories.length} histories")
-
               c -> lleaf
           }
 
-        val nextChildren = nextNodes.map {
-          case (c, lleaf) =>
+        val nextChildren = nextNodes.mapValues {
+          case lleaf =>
             // create Some(loop) if one exists, None if no loop exists
             lleaf.loop = Tree.firstExcisable(lleaf)
-            c -> lleaf
+            lleaf
         }
 
         active.children ++= nextChildren
