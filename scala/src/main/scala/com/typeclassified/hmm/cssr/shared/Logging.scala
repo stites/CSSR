@@ -7,7 +7,7 @@ import org.slf4j.{Marker, LoggerFactory}
 
 object Level extends Enumeration {
   type Level = Value
-  val OFF, DEBUG, INFO, ERROR, WARN = Value
+  val OFF, ERROR, WARN, INFO, DEBUG = Value
 }
 
 trait Logging extends LazyLogging {
@@ -15,7 +15,7 @@ trait Logging extends LazyLogging {
 
   implicit var loglevel: Level = Level.INFO
 
-  def guard(level: Level) = loglevel > level
+  def guard(level: Level) = loglevel >= level
 
   def guardDebug() = guard(Level.DEBUG)
   def guardInfo() = guard(Level.INFO)
