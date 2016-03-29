@@ -15,7 +15,7 @@ object RelativeEntropyRate extends MathUtils with LazyLogging {
     val relativeEntropyRate:Double = nextLastHistoryDist.foldLeft(0d) {
       case (partialRelEntRate, (leaf, inferredProb)) =>
         val totalRelEntRate = partialRelEntRate + relEntropyRateForHistory(leaf, inferredProb, tree, allStates)
-        logger.debug(s"totalRelEntRate: $totalRelEntRate")
+//        logger.debug(s"totalRelEntRate: $totalRelEntRate")
         totalRelEntRate
     }
 
