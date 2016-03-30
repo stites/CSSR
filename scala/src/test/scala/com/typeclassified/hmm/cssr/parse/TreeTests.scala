@@ -36,47 +36,41 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
     tree = ParseTree(AlphabetHolder.alphabet)
   }
 
-  "loadHistory" should {
+  "loadData" should {
 
-    /*
-    "generating a single branch for an empty tree" in {
-      var children:ListBuffer[ParseLeaf] = null
-      var leaf:ParseLeaf = null
-      ParseTree.loadHistory(tree, abc)
+    "generating a single node for an single char array" in {
+      var children:ListBuffer[Leaf] = null
+      var leaf:Leaf = null
+      tree = Tree.loadData(tree, "a".toCharArray, 4)
 
       children = tree.root.children
       children should have size 1
 
       leaf = children.head
-      assertLeafProperties(leaf, "c")
+      assertLeafProperties(leaf, "a")
 
       children = children.head.children
-      children should have size 1
+      children should have size 0
 
-      leaf = children.head
-      assertLeafProperties(leaf, "bc")
-
-      children = children.head.children
-      children should have size 1
-
-      leaf = children.head
-      assertLeafProperties(leaf, abc)
-
-      leaf.observed    should equal (abc)
-      leaf.observation should equal (abc.head)
+      assertLeafProperties(leaf, "a")
     }
 
-    "generating a long single branch for an empty tree" in {
-      ParseTree.loadHistory(tree, "abcabc")
-      var leaf:ParseLeaf = tree.root
+    "generating a full tree, given a short string" in {
+      tree = Tree.loadData(tree, abc.toCharArray, 4)
+      var inspect:ListBuffer[Leaf] = tree.root.children
+      assertChildrenByExactBatch(inspect, testMap(abc)(0))
 
-      while (leaf.children.nonEmpty) {
-        leaf = leaf.children.head
-      }
+      inspect = inspect.flatMap(_.children)
+      assertChildrenByExactBatch(inspect, testMap(abc)(1))
 
-      assertLeafProperties(leaf, "abcabc")
+      inspect = inspect.flatMap(_.children)
+      assertChildrenByExactBatch(inspect, testMap(abc)(2))
+
+      inspect = inspect.flatMap(_.children)
+      inspect should have size 0
     }
 
+    /*
     "generating multiple root branches if they do not exist" in {
       ParseTree.loadHistory(tree, "bc")
       ParseTree.loadHistory(tree, "aa")
