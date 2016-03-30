@@ -15,6 +15,7 @@ class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with Lea
     tree = ParseTree(AlphabetHolder.alphabet)
   }
 
+  /*
   "updateDistribution" should "update distributions for observing the _next_ values in history" in {
     val leaf = new ParseLeaf("a", tree, EquivalenceClass())
     leaf.incrementDistribution('b')
@@ -109,4 +110,5 @@ class LeafTests extends FlatSpec with Matchers with ProbablisticAsserts with Lea
       leaf.currentEquivalenceClass should equal(newEC_C)
     }
   }
+  */
 }

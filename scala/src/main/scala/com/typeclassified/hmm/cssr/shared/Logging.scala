@@ -13,9 +13,10 @@ object Level extends Enumeration {
 trait Logging extends LazyLogging {
   protected lazy val _log: Logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
-  implicit var loglevel: Level = Level.INFO
+  // Stupid hack to get unstuck on this. I think we can clean this up with implicits later
+  def loglevel() = Level.INFO
 
-  def guard(level: Level) = loglevel >= level
+  def guard(level: Level):Boolean = loglevel() >= level
 
   def guardDebug() = guard(Level.DEBUG)
   def guardInfo() = guard(Level.INFO)

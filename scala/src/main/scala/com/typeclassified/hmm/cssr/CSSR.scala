@@ -2,6 +2,8 @@ package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.shared.Epsilon
+import com.typeclassified.hmm.cssr.measure.out.Results
+import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
 import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
 import com.typeclassified.hmm.cssr.trees._
@@ -11,7 +13,10 @@ import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
-object CSSR extends LazyLogging {
+object CSSR extends Logging {
+  override def loglevel() = Level.OFF
+
+  // type aliases:
   type State = EquivalenceClass
   type ParentState = EquivalenceClass
   type TransitionState = Option[EquivalenceClass]

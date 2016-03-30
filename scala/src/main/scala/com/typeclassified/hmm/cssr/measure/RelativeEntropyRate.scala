@@ -2,13 +2,16 @@ package com.typeclassified.hmm.cssr.measure
 
 import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistribution
 import com.typeclassified.hmm.cssr.state.AllStates
+import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 import com.typeclassified.hmm.cssr.trees.{ParseLeaf, ParseTree}
 import com.typesafe.scalalogging.LazyLogging
 
-object RelativeEntropyRate extends MathUtils with LazyLogging {
+object RelativeEntropyRate extends MathUtils with Logging {
+  override def loglevel() = Level.OFF
+
   def relativeEntropyRate(maxLengthDist:InferredDistribution, tree: ParseTree, allStates: AllStates):Double = {
-    logger.debug("Relative Entropy Rate")
-    logger.debug("===========================")
+    debug("Relative Entropy Rate")
+    debug("===========================")
 
     val nextLastHistoryDist = InferProbabilities.inferredDistribution(tree, tree.maxLength-1, allStates)
 
@@ -24,7 +27,7 @@ object RelativeEntropyRate extends MathUtils with LazyLogging {
 
   // the frequency of occurrence of the history with that particular alpha symbol
   protected def relEntropyRateForHistory(history: ParseLeaf, inferredProb:Double, tree: ParseTree, allStates: AllStates):Double = {
-    logger.debug(s"stringProb: $inferredProb, for history: ${history.toString}")
+    debug(s"stringProb: $inferredProb, for history: ${history.toString}")
 
     val relEntRateHistTotal:Double = tree.alphabet
       .raw
@@ -33,8 +36,8 @@ object RelativeEntropyRate extends MathUtils with LazyLogging {
           val histFreqByAlpha = history.frequency(tree.alphabet.map(alpha)) / history.totalCounts
           val (inferredRatio, relEntRateAlpha) = relEntropyRateByNextAlphabet(history.observed, inferredProb, tree, allStates, histFreqByAlpha, alpha)
 
-          logger.debug(s"relEntRateAlpha: $relEntRateAlpha")
-          logger.debug(s"relEntRateHist: ${relEntRateHist + relEntRateAlpha}")
+          debug(s"relEntRateAlpha: $relEntRateAlpha")
+          debug(s"relEntRateHist: ${relEntRateHist + relEntRateAlpha}")
 
           relEntRateHist + relEntRateAlpha
         }
@@ -42,7 +45,7 @@ object RelativeEntropyRate extends MathUtils with LazyLogging {
 
     val histProbability:Double = history.totalCounts / tree.adjustedDataSize
 
-    logger.debug(s"histFrequency: $histProbability")
+    debug(s"histFrequency: $histProbability")
 
     if (relEntRateHistTotal < 0) 0 else relEntRateHistTotal * histProbability
   }
@@ -54,7 +57,7 @@ object RelativeEntropyRate extends MathUtils with LazyLogging {
 
     if (isADisaster) {
       // TODO: fill this out formally, later
-      logger.error("Something disastrous just happened")
+      error("Something disastrous just happened")
     }
 
     val childStringProb = InferProbabilities.inferredHistory(alpha + history, tree, allStates)
@@ -62,12 +65,12 @@ object RelativeEntropyRate extends MathUtils with LazyLogging {
     val inferredRatio:Double = if (isValid) childStringProb / inferredProb else 0
     val relEntRateAlpha:Double = if (isValid) discreteEntropy(histFreqByAlpha, inferredRatio) else 0
 
-    logger.debug(s"string: $history, plus alpha: $alpha")
-    logger.debug(s"childStringProb: $childStringProb")
-    logger.debug(s"stringProb: $inferredProb")
-    logger.debug(s"inferredRatio: $inferredRatio")
-    logger.debug(s"dataDist: $histFreqByAlpha")
-    logger.debug(s"logRatio: $inferredRatio")
+    debug(s"""string: $history, plus alpha: $alpha
+              |childStringProb: $childStringProb
+              |stringProb: $inferredProb
+              |inferredRatio: $inferredRatio
+              |dataDist: $histFreqByAlpha
+              |logRatio: $inferredRatio""".stripMargin)
 
     (inferredRatio, relEntRateAlpha)
   }

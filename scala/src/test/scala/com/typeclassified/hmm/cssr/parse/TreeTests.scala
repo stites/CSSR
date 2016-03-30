@@ -38,6 +38,7 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
 
   "loadHistory" should {
 
+    /*
     "generating a single branch for an empty tree" in {
       var children:ListBuffer[ParseLeaf] = null
       var leaf:ParseLeaf = null
@@ -287,5 +288,6 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
 
       tree.getDepth(4) should have size 0
     }
+    */
   }
 }

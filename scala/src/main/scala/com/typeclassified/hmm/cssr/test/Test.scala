@@ -1,5 +1,7 @@
 package com.typeclassified.hmm.cssr.test
 
+import com.typeclassified.hmm.cssr.parse.Leaf
+import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typeclassified.hmm.cssr.test.hypothesis.{KolmogorovSmirnov=>KS}
 import com.typeclassified.hmm.cssr.trees.ParseLeaf
@@ -8,22 +10,23 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
-object Test extends LazyLogging {
+object Test extends Logging {
+  override def loglevel() = Level.OFF
 
   def test(S: ListBuffer[EquivalenceClass], aXt: ParseLeaf, parent:ParseLeaf, s: EquivalenceClass, sig: Double): Unit = {
-    logger.debug(s"Total number of states: ${S.length}")
+    debug(s"Total number of states: ${S.length}")
     if (nullHypothesis(s, aXt, sig) >= sig) {
       if (!s.histories.contains(aXt)) {
         aXt.changeEquivalenceClass(s)
         s.addHistory(aXt)
       }
     } else {
-      logger.debug("Rejecting null hypothesis")
+      debug("Rejecting null hypothesis")
       val sStar: Option[EquivalenceClass] = restrictedHypothesesTesting(S.toList, s, aXt, sig)
       if (sStar.nonEmpty) {
         move(aXt, s, parent, sStar.get, false)
       } else {
-        logger.info(s"Generating a new equivalence class with: ${aXt.observation}")
+        info(s"Generating a new equivalence class with: ${aXt.observation}")
         var sNew = EquivalenceClass()
         S += sNew
         move(aXt, s, parent, sNew, true)
@@ -33,14 +36,14 @@ object Test extends LazyLogging {
   }
 
   def nullHypothesis(s: EquivalenceClass, aXt: ParseLeaf, sig:Double): Double = {
-    logger.debug("Testing: " + aXt.toString)
-    logger.debug(s"Have state information:")
-    logger.debug("======================================")
-    s.histories.foreach{ h => logger.debug(h.toString) }
-    logger.debug("======================================")
-    logger.debug(s"Running test -- Count1: ${s.totalCounts} Count2: ${aXt.totalCounts}")
-    logger.debug(s"state: ${s.distribution.toString}\t\tfreq1: ${s.frequency.toString()}")
-    logger.debug(s" leaf: ${aXt.distribution.toString}\t\tfreq2: ${aXt.frequency.toString()}")
+    debug("Testing: " + aXt.toString)
+    debug(s"Have state information:")
+    debug("======================================")
+    s.histories.foreach{ h => debug(h.toString) }
+    debug("======================================")
+    debug(s"Running test -- Count1: ${s.totalCounts} Count2: ${aXt.totalCounts}")
+    debug(s"state: ${s.distribution.toString}\t\tfreq1: ${s.frequency.toString()}")
+    debug(s" leaf: ${aXt.distribution.toString}\t\tfreq2: ${aXt.frequency.toString()}")
     KS.kstwo(s.distribution, s.totalCounts, aXt.distribution, aXt.totalCounts)
   }
 

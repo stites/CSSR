@@ -1,9 +1,11 @@
 package com.typeclassified.hmm.cssr.measure
 
 import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistribution
-import com.typesafe.scalalogging.LazyLogging
+import com.typeclassified.hmm.cssr.shared.Level.Level
+import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 
-object RelativeEntropy extends MathUtils with LazyLogging {
+object RelativeEntropy extends MathUtils with Logging {
+  override def loglevel() = Level.OFF
   /**
     * calculates the probability of all the max length strings in the
     * data based on the inferred machine:
@@ -19,8 +21,8 @@ object RelativeEntropy extends MathUtils with LazyLogging {
     * @return
     */
   def relativeEntropy(dist:InferredDistribution, adjustedDataSize:Double):Double = {
-    logger.debug("Relative Entropy")
-    logger.debug("===========================")
+    debug("Relative Entropy")
+    debug("===========================")
 
     // FIXME : this _should not be <0_ however calculations provide the contrary
     // when the generated, inferred probability is greater than the observed one - we find the added log-ratio is < 0
@@ -30,8 +32,8 @@ object RelativeEntropy extends MathUtils with LazyLogging {
     val relativeEntropy:Double = dist.foldLeft(0d) {
       case (incrementalRelEnt, (leaf, inferredProb)) =>
         val observedProb = leaf.totalCounts / adjustedDataSize
-        logger.debug(s"${leaf.toString}")
-        logger.debug(s"historyProb: $observedProb")
+        debug(s"${leaf.toString}")
+        debug(s"historyProb: $observedProb")
 
         // it seems to me that we should be checking if the inferred probability is > 0.
         // By virtue of this: should the conditional be flipped? Note: this makes the final rel entropy non-negative
@@ -40,13 +42,13 @@ object RelativeEntropy extends MathUtils with LazyLogging {
         //          val cacheRE = incrementalRelEnt + inferredProb * logRatio
         if (observedProb > 0){
           val cacheRE = incrementalRelEnt + discreteEntropy(observedProb, inferredProb)
-          logger.debug(s"inferredProb: $inferredProb")
-          logger.debug(s"logRatio:${math.log(observedProb / inferredProb)}")
-          logger.debug(s"incrementalRelEnt:$cacheRE")
+          debug(s"inferredProb: $inferredProb")
+          debug(s"logRatio:${math.log(observedProb / inferredProb)}")
+          debug(s"incrementalRelEnt:$cacheRE")
           cacheRE
         } else {
           //          logger.debug(s"NO AGGREGATION! dataProb: $inferredProb")
-          logger.debug(s"NO AGGREGATION! dataProb: $observedProb")
+          debug(s"NO AGGREGATION! dataProb: $observedProb")
           incrementalRelEnt
         }
     }

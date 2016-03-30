@@ -2,9 +2,11 @@ package com.typeclassified.hmm.cssr.measure
 
 import com.typeclassified.hmm.cssr.state.AllStates
 import com.typeclassified.hmm.cssr.trees.{ParseLeaf, ParseTree}
-import com.typesafe.scalalogging.LazyLogging
+import com.typeclassified.hmm.cssr.shared.Level.Level
+import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 
-object InferProbabilities extends LazyLogging {
+object InferProbabilities extends Logging {
+  override def loglevel() = Level.OFF
 
   type InferredDistribution = Array[(ParseLeaf, Double)]
 
@@ -16,8 +18,8 @@ object InferProbabilities extends LazyLogging {
       .getDepth(depth)
       .map { h => (h , inferredHistory(h.observed, tree, allStates) ) }
 
-    logger.debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
-    logger.debug(s"inferred distribution size: ${inferred.length}")
+    debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
+    debug(s"inferred distribution size: ${inferred.length}")
     inferred.map{ case (l, p) => (l.observed, p) }.foreach{ i => println(i) }
 
     inferred
@@ -28,15 +30,14 @@ object InferProbabilities extends LazyLogging {
     */
   def inferredHistory(history:String, tree: ParseTree, allStates: AllStates): Double = {
     // FIXME: this would be perfect to replace with a state monad
-    val pedantic = false
-    if (pedantic) logger.info("Generating Inferred probabilities from State Machine")
+    info("Generating Inferred probabilities from State Machine")
 
     val totalPerString = allStates.states
       .view
       .zipWithIndex
       .map {
         case (state, i) =>
-          if (pedantic) logger.debug(s"$history - STATE ${i.toString} {frequency:${allStates.distribution(i)}}")
+          debug(s"$history - STATE ${i.toString} {frequency:${allStates.distribution(i)}}")
           var currentStateIdx = i
           var isNullState = false
 
@@ -52,23 +53,15 @@ object InferProbabilities extends LazyLogging {
               } else {
                 currentStateIdx  = allStates.states.zipWithIndex.find(_._1 == transitionState.get).get._2
                 val totalPerStateCached = characterTotalPerState * currentState.distribution(tree.alphabet.map(c))
-                if (pedantic) {
-                  logger.debug(s"""{
-                    |freq at current state: ${currentState.distribution(c)}
-                    |j: $i, symbol: $c
-                    |historyTotalPerState: characterTotalPerState,
-                    |totalPerStateCached: $totalPerStateCached
-                    |}""".stripMargin.replace('\n', ' '))
-                  }
                 totalPerStateCached
               }
             }
           }
-          if (pedantic) logger.debug(s"final historyTotalPerState: $historyTotalPerState")
+          debug(s"final historyTotalPerState: $historyTotalPerState")
           allStates.distribution(i) * historyTotalPerState
       }.sum[Double]
 
-    logger.debug(s"Final Probability for History: $totalPerString")
+    debug(s"Final Probability for History: $totalPerString")
     totalPerString
 
     /*
