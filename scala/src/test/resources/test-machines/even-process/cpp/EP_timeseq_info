@@ -1,0 +1,13 @@
+Alphabet File: tmp/01alphabet
+Data File: scala/src/test/resources/test-machines/even-process/EP_timeseq
+History Length: 4
+Significance Level: 0.001
+Multiline Mode: false
+Chi-squared test used: false
+Alphabet Size: 2
+Relative Entropy: 0.000105397
+Relative Entropy Rate: 6.86369e-05
+Statistical Complexity: 0.918629
+Entropy Rate: 0.666321
+Variation: 0.0108816
+Number of Inferred States: 2
