@@ -1,0 +1,13 @@
+Alphabet File: tmp/01alphabet
+Data File: scala/src/test/resources/test-machines/misiurewicz/Misiurewicz_timeseq
+History Length: 4
+Significance Level: 0.001
+Multiline Mode: false
+Chi-squared test used: false
+Alphabet Size: 2
+Relative Entropy: 0
+Relative Entropy Rate: 5.68024e-06
+Statistical Complexity: 2.78325
+Entropy Rate: 0.828667
+Variation: 0.00127077
+Number of Inferred States: 8
