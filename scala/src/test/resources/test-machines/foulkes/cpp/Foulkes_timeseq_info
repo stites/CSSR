@@ -1,0 +1,13 @@
+Alphabet File: ./tmp/01alphabet
+Data File: ./logs/Foulkes/Foulkes_timeseq
+History Length: 4
+Significance Level: 0.01
+Multiline Mode: false
+Chi-squared test used: false
+Alphabet Size: 2
+Relative Entropy: 0
+Relative Entropy Rate: 0.000176433
+Statistical Complexity: 2.669
+Entropy Rate: 0.772877
+Variation: 0.00585747
+Number of Inferred States: 7

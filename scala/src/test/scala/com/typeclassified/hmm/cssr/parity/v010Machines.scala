@@ -49,10 +49,22 @@ class v010Machines extends FunSuite with Matchers {
     val results = CSSR.run(config)
 
     results.machine.relativeEntropy === 0d
-    results.machine.relativeEntropyRate === 1.75591e-07d
-    results.machine.statisticalComplexity === 2.78109d
-    results.machine.entropyRate === 0.828277d
-    results.machine.variation === 0.000218154d
+    results.machine.relativeEntropyRate === 5.68024e-06d
+    results.machine.statisticalComplexity === 2.78325d
+    results.machine.entropyRate === 0.828667d
+    results.machine.variation === 0.00127077d
     results.allStates.states should have size 8
+  }
+
+  test("Foulkes") {
+    val config = new Config(binaryAlphabet, dataFile("foulkes", "Foulkes"), 4, 0.01)
+    val results = CSSR.run(config)
+
+    results.machine.relativeEntropy === 0d
+    results.machine.relativeEntropyRate === 0.000176433d
+    results.machine.statisticalComplexity === 2.669d
+    results.machine.entropyRate === 0.772877d
+    results.machine.variation === 0.00585747d
+    results.allStates.states should have size 7
   }
 }
