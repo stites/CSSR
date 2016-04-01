@@ -90,16 +90,15 @@ class Results ( val config: Config,
     }
   }
 
-  def out(file:File = null):Unit = {
+  def out(file:File = null):Results = {
     saferWriteOp(outStream(file, "_info"), (measurementsOut) => {
       measurementsOut.print(metadata)
       measurementsOut.print(measurements)
     })
-
     saferWriteOp(outStream(file, "_inf.dot"), (dotOut) => dotOut.print(dotInfo) )
-
     saferWriteOp(outStream(file, "_results"), (statesOut) => statesOut.print(stateDetails) )
-
     // val statesOut = outStream(file, "_state_series")
+
+    this
   }
 }

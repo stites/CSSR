@@ -30,7 +30,7 @@ object CSSR extends Logging {
   type StateToStateTransitions = Map[ParentState, Map[Char, TransitionState]]
   type TransitionMemo = Map[String, (ParentState, TransitionState)]
 
-  def run(config: Config) = {
+  def run(config: Config):Results  = {
     val (tree: ParseTree, allStates: MutableStates) = initialization(config)
     val ls = tree.collectLeaves()
     implicit val ep:Epsilon = new Epsilon(0.01)
@@ -38,6 +38,7 @@ object CSSR extends Logging {
     val looping = grow(tree)
 
     recursion(tree, allStates, config.sig, config.lMax)
+
   }
 
   def initialization(config: Config): (ParseTree, MutableStates) = {
