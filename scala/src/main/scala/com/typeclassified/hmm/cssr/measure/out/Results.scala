@@ -7,16 +7,27 @@ import com.typeclassified.hmm.cssr.parse.Alphabet
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
 import com.typeclassified.hmm.cssr.trees.ParseTree
 
-class Results (config:Config, alphabet: Alphabet, tree:ParseTree, machine: Machine, allStates: AllStates) {
-  val metadata:String = "Metadata\n=======================\n" + config.toString + "\n"
+class Results ( val config: Config,
+                val alphabet: Alphabet,
+                val tree:Tree,
+                val machine: Machine,
+                val allStates: AllStates
+              ) {
 
-  protected val dotMeta:String = s"""digraph ${config.dataFile.getCanonicalPath} {
-                              |size = \"6,8.5\";
-                              |ratio = \"fill\";
-                              |node [shape = circle];
-                              |node [fontsize = 24];
-                              |edge [fontsize = 24];
-                              |""".stripMargin
+  val metadata:String =
+    s"""Metadata
+        |=======================
+        |${config.toString}
+        |""".stripMargin
+
+  protected val dotMeta:String =
+    s"""digraph ${config.dataFile.getCanonicalPath} {
+        |size = \"6,8.5\";
+        |ratio = \"fill\";
+        |node [shape = circle];
+        |node [fontsize = 24];
+        |edge [fontsize = 24];
+        |""".stripMargin
 
   val dotInfo: String = dotMeta + allStates.states
     .zipWithIndex
@@ -27,22 +38,24 @@ class Results (config:Config, alphabet: Alphabet, tree:ParseTree, machine: Machi
           .view.zipWithIndex
           .foldLeft[String]("") {
           case (memo, (prob, k)) if prob <= 0 => memo
-          case (memo, (prob, k)) => memo + s"""$i -> $k [label = "${alphabet.raw(k)}: ${"%.7f".format(prob)}"];\n"""
+          case (memo, (prob, k)) =>
+            memo + s"""$i -> $k [label = "${alphabet.raw(k)}: ${"%.7f".format(prob)}"];\n"""
         }
     }
     .reduceLeft(_+_) + "\n"
 
-  val measurements: String = s"""Results
-                                 |=======================
-                                 |Alphabet Size: ${alphabet.length}
-                                 |Data Size: ${tree.adjustedDataSize}
-                                 |Relative Entropy: ${machine.relativeEntropy}
-                                 |Relative Entropy Rate: ${machine.relativeEntropyRate}
-                                 |Statistical Complexity: ${machine.statisticalComplexity}
-                                 |Entropy Rate: ${machine.entropyRate}
-                                 |Variation: ${machine.variation}
-                                 |Number of Inferred States: ${allStates.states.length}\n
-                                 |""".stripMargin
+  val measurements: String =
+    s"""Results
+        |=======================
+        |Alphabet Size: ${alphabet.length}
+        |Data Size: ${tree.adjustedDataSize}
+        |Relative Entropy: ${machine.relativeEntropy}
+        |Relative Entropy Rate: ${machine.relativeEntropyRate}
+        |Statistical Complexity: ${machine.statisticalComplexity}
+        |Entropy Rate: ${machine.entropyRate}
+        |Variation: ${machine.variation}
+        |Number of Inferred States: ${allStates.states.length}\n
+        |""".stripMargin
 
   val stateDetails: String = allStates.states
     .view
@@ -64,7 +77,8 @@ class Results (config:Config, alphabet: Alphabet, tree:ParseTree, machine: Machi
     }
     .mkString("\n")
 
-  protected def outStream(dataFile:File = null, fileName:String = "_out"):OutputStream = Option(dataFile) match {
+  protected def outStream(dataFile:File = null, fileName:String = "_out")
+  :OutputStream = Option(dataFile) match {
     case Some(name) => new FileOutputStream(new File(dataFile.getAbsolutePath + fileName) )
     case None => System.out
   }
