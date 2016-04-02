@@ -72,6 +72,7 @@ class v010Machines extends FunSuite with Matchers {
   }
 
   test("alternating-biased-coins") {
+    pending
   /*
     val data = dataFile("alternating-biased-coins", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -86,6 +87,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("biased-coin") {
+    pending
     /*
     val data = dataFile("biased-coin", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -100,6 +102,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("biased-drift-on-ring") {
+    pending
     /*
     val data = dataFile("biased-drift-on-ring", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -114,6 +117,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("flip_per_holmes_isbell") {
+    pending
     /*
     val data = dataFile("flip_per_holmes_isbell", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -128,6 +132,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("hidden-drift") {
+    pending
     /*
     val data = dataFile("hidden-drift", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -142,6 +147,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("hidden-markov") {
+    pending
     /*
     val data = dataFile("hidden-markov", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -156,6 +162,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("noisy-period-two") {
+    pending
     /*
     val data = dataFile("noisy-period-two", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -170,6 +177,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("periodic-with-noise") {
+    pending
     /*
     val data = dataFile("periodic-with-noise", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -184,6 +192,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("random-hidden-markov") {
+    pending
     /*
     val data = dataFile("random-hidden-markov", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -198,6 +207,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("snd") {
+    pending
     /*
     val data = dataFile("snd", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -212,6 +222,7 @@ class v010Machines extends FunSuite with Matchers {
     */
   }
   test("state-periodic-and-synching") {
+    pending
     /*
     val data = dataFile("state-periodic-and-synching", _)
     val config = new Config(binaryAlphabet, data, _, _)
@@ -225,8 +236,8 @@ class v010Machines extends FunSuite with Matchers {
     results.allStates.states should have size _
     */
   }
-
   test("tricky-hidden-markov") {
+    pending
     /*
     val data = dataFile("tricky-hidden-markov", _)
     val config = new Config(binaryAlphabet, data, _, _)
