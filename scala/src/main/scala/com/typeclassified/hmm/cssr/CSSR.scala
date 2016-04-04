@@ -13,7 +13,7 @@ import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
 object CSSR extends Logging {
-  override def loglevel() = Level.OFF
+  override def loglevel() = Level.INFO
 
   // type aliases:
   type State = EquivalenceClass
@@ -74,22 +74,27 @@ object CSSR extends Logging {
     *
     * - generate the root looping node. add to "active" queue
     * - while active queue is not empty:
-    *   - remove the first looping node from the queue. With the looping node:
+    *   - remove the first looping node from the queue. With this looping node:
     *     - check to see if it is homogeneous wrt all next-step histories belonging to collection:
     *       - for each h in pnodes, for each c in h.children
     *           if c.distribution ~/= (looping node).distribution, return false for homogeneity.
     *       | if the node makes it through the loop, return true for homogeneity.
     *     | if the looping node is homogeneous
-    *       - do nothing
+    *       - do nothing, move to next looping node in active queue.
     *     | if the looping node is not homogeneous
-    *       - create new looping nodes for all valid children.
-    *       - check all looping nodes for excisability:
+    *       - create new looping nodes for all valid children (one for each symbol in alphabet - must have empirical observation in dataset).
+    *       - check all new looping nodes for excisability:
     *         - get all ancestors, ordered by depth (root looping node first)
     *         - check to see if distributions are the same (?)
     *         | if the distributions are the same, the node is excisable
     *           - create loop
     *         | if non are the same
     *           - do nothing
+    * TBD * - check all new looping nodes for edges:
+    * TBD *   - get all terminal nodes that are not ancestors
+    * TBD *   | if there exists terminal nodes with identical distributions
+    * TBD *     - delete new looping node (under symbol {@code a})
+    * TBD *     - and add existing terminal node as active node's {@code a} child. This is unidirectional and we call it an "edge"
     *       -  Add all new looping nodes to children of active node, mapped by alphabet symbol
     *       -  Add unexcisable children to queue
     * - end while
