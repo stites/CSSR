@@ -22,36 +22,39 @@ object ParseTree extends LazyLogging {
 
   def loadData(tree:ParseTree, xs: Array[Char], n: Int): ParseTree = {
     val banned = "\r\n".toSet
+    // terrible for something we can probably fuse into the following:
+    val filteredCharactersCount = xs.count(banned.contains)
+    tree.maxLength = n
+    tree.dataSize = xs.length - filteredCharactersCount
+    tree.adjustedDataSize =  xs.length - filteredCharactersCount
 
     for (seq <- xs.view
       .iterator
       .filterNot(banned.contains)
       .zipWithIndex
       .sliding(n+1)
-      .withPartial(true)) {
+      .withPartial(false)) {
       val obs = seq.map(_._1).mkString
       val idxs = seq.map(_._2)
-      insertTo(tree, obs, idxs)
+      cleanInsert(tree, obs, idxs)
     }
 
-    val lastIdx = xs.length - (n + 1)
-    for (i <- 0 until n) {
-      val idx = lastIdx + i
-      val qs = xs.slice(idx, xs.length).filterNot(banned.contains)
-      insertTo(tree, qs, idx to xs.length)
-    }
+    // mostly for test cases.
+    val last:Int = if (n > tree.adjustedDataSize) tree.adjustedDataSize.toInt else n
 
-    // gross, but alas, on a deadline:
-    val filteredCharactersCount = xs.count(banned.contains)
-    tree.maxLength = n
-    tree.dataSize = xs.length - filteredCharactersCount
-    tree.adjustedDataSize =  xs.length - (n - 1) - filteredCharactersCount
+    for (i <- (0 to last).reverse) {
+      val left = xs.take(i).filterNot(banned.contains)
+      val lIdxs = 0 until i
+      cleanInsert(tree, left , lIdxs )
+    }
 
     // calculate initial histories
     for (depth <- 0 to n) {
       tree.getDepth(depth).foreach(_.calcNextStepProbabilities())
     }
 
+    // remove the final depth so that we are left only with predictive distributions
+    // note that this isn't strictly necessary
     tree.getDepth(n).foreach{ _.children = ListBuffer() }
     tree
   }
@@ -71,6 +74,28 @@ object ParseTree extends LazyLogging {
 
     go(observed.toList, tree.root, tree, observed.mkString, idx)
   }
+
+  type CurrentHistory = (Char, Int)
+  type OlderHistory = (List[Char], Seq[Int])
+
+  protected def splitHistory (observed: List[Char], idx:Seq[Int]): (CurrentHistory , OlderHistory) = {
+    ((observed.last, idx.last), (observed.init, idx.init))
+  }
+
+  def cleanInsert(tree: ParseTree, observed: Seq[Char], idx:Seq[Int]): Unit = {
+    def go(history: List[Char], active: ParseLeaf, tree: ParseTree, fullHistory: String, idx:Seq[Int]): Unit = {
+      if (history.nonEmpty) {
+        val ((current, cIdx), (older, oIdx)) = splitHistory(history, idx)
+        val maybeNext: Option[ParseLeaf] = active.findChildWithAdditionalHistory(current)
+        val next = if (maybeNext.isEmpty) active.addChild(current) else maybeNext.get
+        if (maybeNext.nonEmpty) next.obsCount += 1
+        next.addLocation(cIdx)
+        go(older, next, tree, fullHistory, oIdx)
+      }
+    }
+    go(observed.toList, tree.root, tree, observed.mkString, idx)
+  }
+
 }
 
 class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) extends Tree {
@@ -82,15 +107,13 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
 
   var adjustedDataSize:Double = _
 
-  def navigateHistoryRev(history: String): Option[ParseLeaf] = navigateHistoryRev(history.toList)
+  def navigateHistoryRev(history: Iterable[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.head, _.tail)
 
-  def navigateHistoryRev(history: List[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.head, _.tail)
+  def navigateHistory(history: Iterable[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.last, _.init)
 
-  def navigateHistory(history: List[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.last, _.init)
+  def navigateHistory(history: Iterable[Char], active:ParseLeaf): Option[ParseLeaf] = navigateHistory(history, active, _.last, _.init)
 
-  def navigateHistory(history: List[Char], active:ParseLeaf): Option[ParseLeaf] = navigateHistory(history, active, _.last, _.init)
-
-  def navigateHistory(history: List[Char], active:ParseLeaf = root, current:(List[Char])=>Char, prior:(List[Char])=>List[Char])
+  def navigateHistory(history: Iterable[Char], active:ParseLeaf = root, current:(Iterable[Char])=>Char, prior:(Iterable[Char])=>Iterable[Char])
   : Option[ParseLeaf] = {
     if (history.isEmpty) Option(active) else {
       val maybeNext:Option[ParseLeaf] = active.findChildWithAdditionalHistory(current(history))
@@ -138,7 +161,7 @@ class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass
 
   val observed:String = observedSequence
 
-  val observation: Char = if ("".equals(observed)) 0.toChar else observed.last // FIXME: REALLY?? THIS IS CORRECT?!?!?!
+  val observation: Char = if ("".equals(observed)) 0.toChar else observed.head
 
   val length: Int = observedSequence.length
 
@@ -190,8 +213,7 @@ class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass
     */
   def addChild (xNext:Char, dataIdx:Option[Int] = None): ParseLeaf = {
     val maybeNext = findChildWithAdditionalHistory(xNext)
-    // FIXME: _TECHNICALLY_ `observed:+xNext` must be reversed if we want this to be correct
-    val next:ParseLeaf = if (maybeNext.isEmpty) new ParseLeaf(observed:+xNext, parseTree, currentEquivalenceClass, Option(this)) else maybeNext.get
+    val next:ParseLeaf = if (maybeNext.isEmpty) new ParseLeaf(xNext +: observed, parseTree, currentEquivalenceClass, Option(this)) else maybeNext.get
     if (maybeNext.isEmpty) children += next
     next
   }

@@ -4,33 +4,17 @@ import java.io.File
 
 import com.typeclassified.hmm.cssr.CSSR
 import com.typeclassified.hmm.cssr.cli.Config
+import com.typeclassified.hmm.cssr.shared.FileHandlers
 import org.scalatest.{FunSuite, Matchers}
 import org.scalactic.TolerantNumerics
 
 
-class v010Machines extends FunSuite with Matchers {
+class v010Machines extends FunSuite with Matchers with FileHandlers{
   val epsilon = 1e-4f
 
   implicit val doubleEq = TolerantNumerics.tolerantDoubleEquality(epsilon)
 
-  object Alphabet extends Enumeration {
-    type Alphabet = Value
-    val BINARY = Value("binary")
-  }
-
-  import Alphabet._
-
-  val binaryAlphabet = alphabetFile(BINARY)
-
   val DEFAULT_SIG = 0.001
-
-  def dataFile(folder: String, prefix: String): File = {
-    new File(getClass.getResource(s"/test-machines/$folder/${prefix}_timeseq").toURI)
-  }
-
-  def alphabetFile(alphabet: Alphabet): File = {
-    new File(getClass.getResource(s"/alphabets/${alphabet.toString}").toURI)
-  }
 
   test("the even process") {
     val data = dataFile("even-process", "EP")

@@ -1,10 +1,8 @@
 package com.typeclassified.hmm.cssr.parse
 
-import breeze.linalg
-import breeze.linalg.DenseVector
 import com.typeclassified.hmm.cssr.shared.ProbablisticAsserts
 import com.typeclassified.hmm.cssr.trees.{ParseLeaf, ParseTree}
-import org.scalatest.{WordSpec, BeforeAndAfter, Matchers, FlatSpec}
+import org.scalatest.{WordSpec, BeforeAndAfter, Matchers}
 
 import scala.collection.mutable.ListBuffer
 
