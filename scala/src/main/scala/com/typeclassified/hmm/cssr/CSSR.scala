@@ -36,21 +36,21 @@ object CSSR extends Logging {
 
     val looping = grow(tree)
 
-    val transitions = allStates.map {
-      s => s -> s.histories.map {
-        h => tree.alphabet.raw.map {
-          c => c -> h.getTransitionState(tree, allStates, c)
-        }.toMap
-      }.head
-    }.toMap
-
+    val transitions = mapTransitions(allStates, tree)
     val finalStates = new AllStates(allStates, transitions)
-
     val machine = new Machine(finalStates, tree)
 
     new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates)
       .out(if (config.out) null else config.dataFile)
   }
+
+  def mapTransitions(allStates: MutableStates, pTree: ParseTree):StateToStateTransitions = allStates.map {
+    s => s -> s.histories.map {
+      h => pTree.alphabet.raw.map {
+        c => c -> h.getTransitionState(pTree, allStates, c)
+      }.toMap
+    }.head
+  }.toMap
 
   def initialization(config: Config): (ParseTree, MutableStates) = {
     val alphabetSrc: BufferedSource = Source.fromFile(config.alphabetFile)
