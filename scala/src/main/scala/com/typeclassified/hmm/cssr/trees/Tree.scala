@@ -31,8 +31,9 @@ object Tree {
     ancestors.reverse.find{matches(w)}
   }
 }
-class Tree {
 
+class Tree {
+  // Just a marker class
 }
 
 class Leaf (val parent: Option[Leaf] = None) extends Probablistic {

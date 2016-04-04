@@ -39,9 +39,9 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
   "loadData" should {
 
     "generating a single node for an single char array" in {
-      var children:ListBuffer[Leaf] = null
-      var leaf:Leaf = null
-      tree = Tree.loadData(tree, "a".toCharArray, 4)
+      var children:ListBuffer[ParseLeaf] = null
+      var leaf:ParseLeaf = null
+      tree = ParseTree.loadData(tree, "a".toCharArray, 4)
 
       children = tree.root.children
       children should have size 1
@@ -56,8 +56,8 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
     }
 
     "generating a full tree, given a short string" in {
-      tree = Tree.loadData(tree, abc.toCharArray, 4)
-      var inspect:ListBuffer[Leaf] = tree.root.children
+      tree = ParseTree.loadData(tree, abc.toCharArray, 4)
+      var inspect:ListBuffer[ParseLeaf] = tree.root.children
       assertChildrenByExactBatch(inspect, testMap(abc)(0))
 
       inspect = inspect.flatMap(_.children)
@@ -72,8 +72,8 @@ class TreeTests extends WordSpec with Matchers with ProbablisticAsserts with Lea
 
     "generating multiple root branches if they do not exist" in {
       pending
-//      Tree.loadData(tree, "bc")
-//      Tree.loadData(tree, "aa")
+//      ParseTree.loadData(tree, "bc")
+//      ParseTree.loadData(tree, "aa")
 
       val children = tree.root.children
       children should have size 2

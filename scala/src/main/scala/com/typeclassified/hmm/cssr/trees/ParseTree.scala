@@ -71,46 +71,6 @@ object ParseTree extends LazyLogging {
 
     go(observed.toList, tree.root, tree, observed.mkString, idx)
   }
-
-  @Deprecated
-  def loadHistoryOnce(tree: ParseTree, observed: Seq[Char], idx:Option[Int] = None): Unit = {
-    // 102       oldest -> newest
-    // NULL -> 2 -> 0 -> 1
-    def go(history: List[Char] /*102*/ , active: ParseLeaf, tree: ParseTree, fullHistory: String, depth: Int = 0): Unit = {
-      if (history.nonEmpty) {
-        val maybeNext: Option[ParseLeaf] = active.findChildWithAdditionalHistory(history.last) /*2*/
-        val histIdx: Int = depth + 1
-        val next = if (maybeNext.nonEmpty) maybeNext.get else active.addChild(fullHistory(fullHistory.length - histIdx) /* 102 => fullHistory(3-1) => FH(2)*/ , idx /*102*/)
-//        active.incrementDistribution(next.observation, idx)
-        go(history.init /*10*/ , next, tree, fullHistory /*102*/ , histIdx)
-      }
-    }
-
-    go(observed.toList, tree.root, tree, observed.mkString)
-  }
-
-  @Deprecated
-  def loadHistory(tree: ParseTree, observed: Seq[Char], idx:Option[Int] = None): Unit = {
-    // 102       oldest -> newest
-    // NULL -> 2 -> 0 -> 1
-    def go(history: List[Char] /*102*/ , active: ParseLeaf, tree: ParseTree, fullHistory: String, depth: Int = 0): Option[ParseLeaf] = {
-      if (history.isEmpty) return None
-      val maybeNext: Option[ParseLeaf] = active.findChildWithAdditionalHistory(history.last) /*2*/
-      val histIdx: Int = depth + 1
-      var next:ParseLeaf = null
-
-      if (maybeNext.nonEmpty) {
-//        if (history.init.isEmpty) active.incrementDistribution(history.last, idx)
-        next = maybeNext.get
-      } else {
-        /*102     => fullHistory(3-1) => FH(2)*/
-        next = active.addChild(fullHistory(fullHistory.length - histIdx) /*2*/ , idx /*102*/)
-      }
-      go(history.init /*10*/ , next, tree, fullHistory /*102*/ , histIdx)
-    }
-
-    go(observed.toList, tree.root, tree, observed.mkString)
-  }
 }
 
 class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) extends Tree {
@@ -122,51 +82,23 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
 
   var adjustedDataSize:Double = _
 
-  /**
-    * navigate from root to x_hist leaf and update the distribution with x0
-    * => ParseTree goes deeper into the past
-    */
-  @Deprecated
-  def updatePredictiveDistribution(observed: List[Char]):Unit = {
-    val (hist, x0) = (observed.init, observed.last)
-    val maybeLeaf = navigateHistory(hist)
-    if (maybeLeaf.nonEmpty) {
-      maybeLeaf.get.incrementDistribution(x0)
-    }
-  }
-
   def navigateHistoryRev(history: String): Option[ParseLeaf] = navigateHistoryRev(history.toList)
 
-  // ABC, ABB => [{C->B->A},{B->C->A}]
-  def navigateHistoryRev(history: List[Char], active:ParseLeaf = root): Option[ParseLeaf] = {
+  def navigateHistoryRev(history: List[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.head, _.tail)
+
+  def navigateHistory(history: List[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.last, _.init)
+
+  def navigateHistory(history: List[Char], active:ParseLeaf): Option[ParseLeaf] = navigateHistory(history, active, _.last, _.init)
+
+  def navigateHistory(history: List[Char], active:ParseLeaf = root, current:(List[Char])=>Char, prior:(List[Char])=>List[Char])
+  : Option[ParseLeaf] = {
     if (history.isEmpty) Option(active) else {
-      val maybeNext:Option[ParseLeaf] = active.findChildWithAdditionalHistory(history.head)
-      if (history.tail.isEmpty || maybeNext.isEmpty) {
+      val maybeNext:Option[ParseLeaf] = active.findChildWithAdditionalHistory(current(history))
+      if (prior(history).isEmpty || maybeNext.isEmpty) {
         maybeNext
       } else {
-        navigateHistoryRev(history.tail, maybeNext.get)
+        navigateHistory(prior(history), maybeNext.get)
       }
-    }
-  }
-
-  // ABC, ABB => [{C->B->A},{B->C->A}]
-  def navigateHistory(history: List[Char], active:ParseLeaf = root): Option[ParseLeaf] = {
-    if (history.isEmpty) Option(active) else {
-      val maybeNext:Option[ParseLeaf] = active.findChildWithAdditionalHistory(history.last)
-      if (history.init.isEmpty || maybeNext.isEmpty) {
-        maybeNext
-      } else {
-        navigateHistory(history.init, maybeNext.get)
-      }
-    }
-  }
-
-  def findStrings(depth: Int, nodes:ListBuffer[ParseLeaf] = ListBuffer(root)): Array[ParseLeaf] = {
-    if (depth <= 0) {
-      nodes.toArray
-    } else {
-      // [nodes] => [children] ++ [children]
-      getDepth(depth-1, nodes.flatMap(_.children))
     }
   }
 
@@ -183,7 +115,7 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
     if (layer.isEmpty) {
       collected.toArray
     } else {
-      val (foundLeaves, nextLayer) = layer.partition(_.children.isEmpty)
+      val (_, nextLayer) = layer.partition(_.children.isEmpty)
       collectLeaves(nextLayer.flatMap(_.children), collected ++ layer)
     }
   }

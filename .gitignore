@@ -25,6 +25,10 @@ data*.tmp*
 *EP_*
 EP.dot
 
+# Vim
+# ==================
+*.orig
+
 # Notes
 # ==================
 # which may include possible citations and references

@@ -4,7 +4,6 @@ import com.typeclassified.hmm.cssr.measure.InferProbabilities.InferredDistributi
 import com.typeclassified.hmm.cssr.state.AllStates
 import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 import com.typeclassified.hmm.cssr.trees.{ParseLeaf, ParseTree}
-import com.typesafe.scalalogging.LazyLogging
 
 object RelativeEntropyRate extends MathUtils with Logging {
   override def loglevel() = Level.OFF

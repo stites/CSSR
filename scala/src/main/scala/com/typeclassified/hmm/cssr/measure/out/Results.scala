@@ -9,7 +9,7 @@ import com.typeclassified.hmm.cssr.trees.ParseTree
 
 class Results ( val config: Config,
                 val alphabet: Alphabet,
-                val tree:Tree,
+                val tree:ParseTree,
                 val machine: Machine,
                 val allStates: AllStates
               ) {

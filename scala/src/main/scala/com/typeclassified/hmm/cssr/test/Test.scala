@@ -1,12 +1,9 @@
 package com.typeclassified.hmm.cssr.test
 
-import com.typeclassified.hmm.cssr.parse.Leaf
 import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typeclassified.hmm.cssr.test.hypothesis.{KolmogorovSmirnov=>KS}
 import com.typeclassified.hmm.cssr.trees.ParseLeaf
-import com.typesafe.scalalogging.{LazyLogging, Logger}
-import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 

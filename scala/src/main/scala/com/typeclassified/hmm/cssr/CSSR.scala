@@ -7,7 +7,6 @@ import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
 import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
 import com.typeclassified.hmm.cssr.trees._
-import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
@@ -37,8 +36,20 @@ object CSSR extends Logging {
 
     val looping = grow(tree)
 
-    recursion(tree, allStates, config.sig, config.lMax)
+    val transitions = allStates.map {
+      s => s -> s.histories.map {
+        h => tree.alphabet.raw.map {
+          c => c -> h.getTransitionState(tree, allStates, c)
+        }.toMap
+      }.head
+    }.toMap
 
+    val finalStates = new AllStates(allStates, transitions)
+
+    val machine = new Machine(finalStates, tree)
+
+    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates)
+      .out(if (config.out) null else config.dataFile)
   }
 
   def initialization(config: Config): (ParseTree, MutableStates) = {
@@ -97,6 +108,7 @@ object CSSR extends Logging {
         // do nothing
         logger.debug("we've hit our base case")
       } else {
+
         val nextNodes:Map[Char, LoopingLeaf] = active.histories
           .flatMap{ _.children }
           .groupBy{ _.observation }
@@ -127,7 +139,7 @@ object CSSR extends Logging {
     ltree
   }
 
-  def recursion(tree:ParseTree,S:MutableStates,lMax:Double,sig:Double) = {
+  def refine(tree:ParseTree,S:MutableStates,lMax:Double,sig:Double) = {
   }
 }
 
