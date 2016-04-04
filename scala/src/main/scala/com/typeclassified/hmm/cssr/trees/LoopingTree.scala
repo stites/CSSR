@@ -2,7 +2,6 @@ package com.typeclassified.hmm.cssr.trees
 
 import breeze.linalg.{sum, DenseVector}
 import com.typeclassified.hmm.cssr.parse.Alphabet
-import com.typeclassified.hmm.cssr.shared.Epsilon
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable
@@ -53,63 +52,65 @@ object LoopingTree {
   def allPrefixes(tree: ParseTree, w:ParseLeaf):ListBuffer[ParseLeaf] = allPrefixes(tree, w.observed)
   def allPrefixes(tree: ParseTree, w:String):ListBuffer[ParseLeaf] = prefixes(tree, w, tree.maxLength)
 
+  def leafChildren(lleaves:Iterable[(Char, Node)]):Iterable[LLeaf] = lleaves.toMap.values.foldLeft(List[LLeaf]()){
+    case (list, Left(a)) => list :+ a
+    case (list, Right(a)) => list
+  }
+
+  type Node = Either[LLeaf, Loop]
 }
 
 class LoopingTree (val alphabet:Alphabet) extends Tree {
-  var root:LoopingLeaf = new LoopingLeaf('\0', this)
+  var root:LLeaf = new LLeaf('\0', this)
 
   def this(ptree: ParseTree) = {
     this(ptree.alphabet)
-    this.root = new LoopingLeaf(ptree.root.observation, this, ListBuffer(ptree.root))
+    this.root = new LLeaf(ptree.root.observation, this, ListBuffer(ptree.root))
   }
 
-  def getDepth(depth: Int, nodes:ListBuffer[LoopingLeaf] = ListBuffer(root)): Array[LoopingLeaf] = {
-    if (depth <= 0) nodes.toArray else getDepth(depth-1, nodes.flatMap(_.children.values.to[ListBuffer]))
+  def getDepth(depth: Int, nodes:Iterable[LLeaf] = ListBuffer(root)): Array[LLeaf] = {
+    if (depth <= 0) nodes.toArray else getDepth(depth-1, nodes.flatMap(_.leafChildren()))
   }
 
-  def collectLeaves(
-    layer:ListBuffer[LoopingLeaf] = ListBuffer(root),
-    collected:ListBuffer[LoopingLeaf]=ListBuffer()
-  ):Array[LoopingLeaf] = {
+  def collectLeaves( layer:ListBuffer[LLeaf] = ListBuffer(root), collected:Iterable[LLeaf]=ListBuffer() ):Array[LLeaf] = {
     if (layer.isEmpty) collected.toArray else {
       val nextLayer = layer.partition(_.children.isEmpty)._2
-      collectLeaves(nextLayer.flatMap(_.children.values.to[ListBuffer]), collected ++ layer)
+      collectLeaves(nextLayer.flatMap(_.leafChildren()), collected ++ layer)
     }
-  }
-
-  def walk(visitor:(LoopingLeaf)=>Unit, active:LoopingLeaf = root):Unit = {
-    if (!active.exhausted) {
-      visitor(active)
-    }
-
-    active
-      .children
-      .mapValues{ a => {
-        walk(visitor, a)
-      } }
   }
 }
 
+class Loop (val loop: LLeaf) {
+  // a simple marker class
+  override def toString: String = getClass.getSimpleName + "(" + loop.toString() + ")"
+}
 
-class LoopingLeaf (val observation:Char,
-                   val tree:LoopingTree,
-                   val histories:ListBuffer[ParseLeaf] = ListBuffer(),
-                   parent:Option[LoopingLeaf] = None
+
+class LLeaf(val observation:Char,
+            val tree:LoopingTree,
+            val histories:ListBuffer[ParseLeaf] = ListBuffer(),
+            parent:Option[LLeaf] = None
 ) extends Leaf (parent) {
   if (histories.nonEmpty) this.distribution = histories.head.distribution
 
-  var children:mutable.Map[Char, LoopingLeaf] = mutable.Map()
+  var children:mutable.Map[Char, LoopingTree.Node] = mutable.Map()
 
   var rounded:DenseVector[Double] = if (sum(distribution) > 0) Tree.round(distribution) else distribution
 
   var exhausted:Boolean = false
 
-  var loop:Option[LoopingLeaf] = None
-
   def this(p: ParseLeaf, tree:LoopingTree) = this(p.observation, tree, ListBuffer(p), None)
 
-  def ++=(lLeaf: LoopingLeaf) = {
+  def ++=(lLeaf: LLeaf) = {
     if (Tree.matches(this)(lLeaf)) this.histories ++= lLeaf.histories
+  }
+
+  def leafChildren():Iterable[LLeaf] = LoopingTree.leafChildren(children)
+
+  override def toString():String = {
+    val hists = histories.map(_.observed).mkString("[", ",", "]")
+    val dist = rounded.toArray.mkString("[", ",", "]")
+    s"{rounded:$dist, size: ${histories.size}, histories: $hists}"
   }
 }
 

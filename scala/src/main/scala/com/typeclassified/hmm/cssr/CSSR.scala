@@ -99,40 +99,40 @@ object CSSR extends Logging {
     */
   def grow(tree:ParseTree):LoopingTree = {
     val ltree = new LoopingTree(tree)
-    val activeQueue = ListBuffer[LoopingLeaf](ltree.root)
+    val activeQueue = ListBuffer[LLeaf](ltree.root)
     while (activeQueue.nonEmpty) {
-      val active:LoopingLeaf = activeQueue.remove(0)
+      val active:LLeaf = activeQueue.remove(0)
       val isHomogeneous:Boolean = active.histories.forall{ LoopingTree.nextHomogeneous(tree) }
 
       if (isHomogeneous) {
         // do nothing
-        logger.debug("we've hit our base case")
+        debug("we've hit our base case")
       } else {
 
-        val nextNodes:Map[Char, LoopingLeaf] = active.histories
-          .flatMap{ _.children }
+        val nextNodes:Map[Char, Option[LLeaf]] = active.histories
+          .flatMap { _.children }
           .groupBy{ _.observation }
           .map {
             case (c, pleaves) =>
               // TODO: do not add children with constructor for debugging
-              val lleaf = new LoopingLeaf(c, ltree, pleaves, Option(active))
+              val lleaf = new LLeaf(c, ltree, pleaves, Option(active))
 
               val allMatching = lleaf.histories
                 .map{_.distribution}
                 .forall { Tree.matches(lleaf.distribution) }
 
-              c -> lleaf
+              c -> Some(lleaf)
           }
 
-        val nextChildren = nextNodes.mapValues {
-          case lleaf =>
-            // create Some(loop) if one exists, None if no loop exists
-            lleaf.loop = Tree.firstExcisable(lleaf)
-            lleaf
+        val nextChildren:Map[Char, LoopingTree.Node] = nextNodes.mapValues {
+          case Some(lleaf) => Tree.firstExcisable(lleaf)
+            .flatMap{ l => Some(new Loop(l)) }
+            .toRight(lleaf)
+          case _ => throw new RuntimeException("Seeing as we only map Some-types for input - if you see this, email Sam.")
         }
 
         active.children ++= nextChildren
-        activeQueue ++= nextChildren.values.filter{ _.loop.isEmpty }
+        activeQueue ++= LoopingTree.leafChildren(nextChildren)
       }
     }
 
