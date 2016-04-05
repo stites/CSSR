@@ -61,11 +61,14 @@ object LoopingTree {
 }
 
 class LoopingTree (val alphabet:Alphabet) extends Tree {
-  var root:LLeaf = new LLeaf('\0', this)
+  var root:LLeaf = _
+
+  val terminals:mutable.Set[LLeaf] = mutable.HashSet()
 
   def this(ptree: ParseTree) = {
     this(ptree.alphabet)
-    this.root = new LLeaf(ptree.root.observation, this, ListBuffer(ptree.root))
+    root = new LLeaf(ptree.root.observation, this, ListBuffer(ptree.root))
+    terminals.add(root)
   }
 
   def getDepth(depth: Int, nodes:Iterable[LLeaf] = ListBuffer(root)): Array[LLeaf] = {
@@ -90,7 +93,7 @@ class LLeaf(val observation:Char,
             val tree:LoopingTree,
             val histories:ListBuffer[ParseLeaf] = ListBuffer(),
             parent:Option[LLeaf] = None
-) extends Leaf (parent) {
+) extends Leaf[LLeaf] (parent) {
   if (histories.nonEmpty) this.distribution = histories.head.distribution
 
   var children:mutable.Map[Char, LoopingTree.Node] = mutable.Map()

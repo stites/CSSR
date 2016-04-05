@@ -149,7 +149,7 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
   * @param parseTree
   * @param initialEquivClass
   **/
-class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass: EquivalenceClass, parent: Option[ParseLeaf] = None) extends Leaf (parent) {
+class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass: EquivalenceClass, parent: Option[ParseLeaf] = None) extends Leaf[ParseLeaf] (parent) {
   var obsCount:Double = 1
 
   val alphabet:Alphabet = parseTree.alphabet
