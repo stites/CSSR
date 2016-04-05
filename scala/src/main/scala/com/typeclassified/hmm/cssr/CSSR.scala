@@ -113,17 +113,20 @@ object CSSR extends Logging {
         // do nothing
         debug("we've hit our base case")
       } else {
-
-        val nextNodes:Map[Char, Option[LLeaf]] = active.histories
+        val nodes = active.histories
           .flatMap { _.children }
+
+        val nodemap = nodes
           .groupBy{ _.observation }
+
+        val nextNodes:Map[Char, Option[LLeaf]] = nodemap
           .map {
             case (c, pleaves) =>
               // TODO: do not add children with constructor for debugging
               val lleaf = new LLeaf(c, ltree, pleaves, Option(active))
 
               val allMatching = lleaf.histories
-                .map{_.distribution}
+                .map{ _.distribution }
                 .forall { Tree.matches(lleaf.distribution) }
 
               c -> Some(lleaf)
