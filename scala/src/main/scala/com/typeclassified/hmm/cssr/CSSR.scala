@@ -113,31 +113,15 @@ object CSSR extends Logging {
         // do nothing
         debug("we've hit our base case")
       } else {
-        val nodes = active.histories
+
+        val nextChildren:Map[Char, LoopingTree.Node] = active.histories
           .flatMap { _.children }
-
-        val nodemap = nodes
           .groupBy{ _.observation }
-
-        val nextNodes:Map[Char, Option[LLeaf]] = nodemap
-          .map {
-            case (c, pleaves) =>
-              // TODO: do not add children with constructor for debugging
-              val lleaf = new LLeaf(c, ltree, pleaves, Option(active))
-
-              val allMatching = lleaf.histories
-                .map{ _.distribution }
-                .forall { Tree.matches(lleaf.distribution) }
-
-              c -> Some(lleaf)
-          }
-
-        val nextChildren:Map[Char, LoopingTree.Node] = nextNodes.mapValues {
-          case Some(lleaf) => Tree.firstExcisable(lleaf)
-            .flatMap{ l => Some(new Loop(l)) }
-            .toRight(lleaf)
-          case _ => throw new RuntimeException("Seeing as we only map Some-types for input - if you see this, email Sam.")
-        }
+          .map { case (c, pleaves) => {
+            val lleaf:LLeaf = new LLeaf(c, ltree, pleaves, Option(active))
+            val loop:Option[Loop] = Tree.firstExcisable(lleaf).flatMap( l => Some(new Loop(l)) )
+            c -> loop.toRight(lleaf)
+          } }
 
         active.children ++= nextChildren
         activeQueue ++= LoopingTree.leafChildren(nextChildren)
