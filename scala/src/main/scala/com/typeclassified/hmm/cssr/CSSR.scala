@@ -6,6 +6,7 @@ import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
 import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
+import com.typeclassified.hmm.cssr.trees.LoopingTree.AltNode
 import com.typeclassified.hmm.cssr.trees._
 
 import scala.collection.mutable
@@ -90,11 +91,11 @@ object CSSR extends Logging {
     *           - create loop
     *         | if non are the same
     *           - do nothing
-    * TBD * - check all new looping nodes for edges:
-    * TBD *   - get all terminal nodes that are not ancestors
-    * TBD *   | if there exists terminal nodes with identical distributions
-    * TBD *     - delete new looping node (under symbol {@code a})
-    * TBD *     - and add existing terminal node as active node's {@code a} child. This is unidirectional and we call it an "edge"
+    *       - check all new looping nodes for edges:
+    *         - get all terminal nodes that are not ancestors
+    *         | if there exists terminal nodes with identical distributions
+    *           - delete new looping node (under symbol {@code a})
+    *           - and add existing terminal node as active node's {@code a} child. This is unidirectional and we call it an "edge"
     *       -  Add all new looping nodes to children of active node, mapped by alphabet symbol
     *       -  Add unexcisable children to queue
     * - end while
@@ -105,12 +106,13 @@ object CSSR extends Logging {
   def grow(tree:ParseTree):LoopingTree = {
     val ltree = new LoopingTree(tree)
     val activeQueue = ListBuffer[LLeaf](ltree.root)
+    val findAlternative = LoopingTree.findAlt(ltree)(_)
+
     while (activeQueue.nonEmpty) {
       val active:LLeaf = activeQueue.remove(0)
       val isHomogeneous:Boolean = active.histories.forall{ LoopingTree.nextHomogeneous(tree) }
 
       if (isHomogeneous) {
-        // do nothing
         debug("we've hit our base case")
       } else {
 
@@ -119,11 +121,12 @@ object CSSR extends Logging {
           .groupBy{ _.observation }
           .map { case (c, pleaves) => {
             val lleaf:LLeaf = new LLeaf(c, ltree, pleaves, Option(active))
-            val loop:Option[Loop] = Tree.firstExcisable(lleaf).flatMap( l => Some(new Loop(l)) )
-            c -> loop.toRight(lleaf)
+            val alternative:Option[LoopingTree.AltNode] = findAlternative(lleaf)
+            c -> alternative.toRight(lleaf)
           } }
 
         active.children ++= nextChildren
+        ltree.terminals = ltree.terminals ++ LoopingTree.leafChildren(nextChildren).toSet[LLeaf]
         activeQueue ++= LoopingTree.leafChildren(nextChildren)
       }
     }

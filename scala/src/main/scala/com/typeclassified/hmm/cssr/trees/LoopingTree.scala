@@ -3,6 +3,7 @@ package com.typeclassified.hmm.cssr.trees
 import breeze.linalg.{sum, DenseVector}
 import com.typeclassified.hmm.cssr.parse.Alphabet
 
+import scala.collection.immutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable
 
@@ -57,18 +58,49 @@ object LoopingTree {
     case (list, Right(a)) => list
   }
 
-  type Node = Either[LLeaf, Loop]
+  type AltNode = Either[Loop, EdgeSet]
+  type Node = Either[LLeaf, AltNode]
+
+  def findLoop(lleaf:LLeaf):Option[Loop] = Tree.firstExcisable(lleaf).flatMap( l => Some(new Loop(l)) )
+
+  def findEdgeSet(ltree: LoopingTree, lleaf: LLeaf):Option[EdgeSet] = {
+    val terminals = ltree.terminals -- Tree.getAncestorsRecursive(lleaf).toSet[LLeaf]
+    val terminalMatches:Set[LLeaf] = terminals.filter(Tree.matches(lleaf))
+    if (terminalMatches.isEmpty) {
+      None
+    } else {
+      val found:Option[EdgeSet] = terminalMatches
+        .find{ _.edgeSet.isDefined }
+        .flatMap{ _.edgeSet }
+
+      if (found.nonEmpty) {
+        val foundEdges = terminalMatches.filter(_.edgeSet.isDefined).map(_.edgeSet.get)
+        assert(foundEdges.forall{ _ == found.get }, "All found edges must be the same.")
+      }
+
+      Option.apply(found.getOrElse( new EdgeSet(lleaf, terminalMatches) ))
+    }
+  }
+
+  def findAlt(loopingTree: LoopingTree)(lleaf: LLeaf):Option[AltNode] = {
+    lazy val edgeSet = findEdgeSet(loopingTree, lleaf)
+
+    LoopingTree.findLoop(lleaf) match {
+      case Some(l) => Some(Left(l))
+      case None => if (edgeSet.isEmpty) None else Some(Right(edgeSet.get))
+    }
+  }
 }
 
 class LoopingTree (val alphabet:Alphabet) extends Tree {
   var root:LLeaf = _
 
-  val terminals:mutable.Set[LLeaf] = mutable.HashSet()
+  var terminals:Set[LLeaf] = HashSet()
 
   def this(ptree: ParseTree) = {
     this(ptree.alphabet)
     root = new LLeaf(ptree.root.observation, this, ListBuffer(ptree.root))
-    terminals.add(root)
+    terminals = terminals + root
   }
 
   def getDepth(depth: Int, nodes:Iterable[LLeaf] = ListBuffer(root)): Array[LLeaf] = {
@@ -83,11 +115,17 @@ class LoopingTree (val alphabet:Alphabet) extends Tree {
   }
 }
 
-class Loop (val loop: LLeaf) {
-  // a simple marker class
-  override def toString: String = getClass.getSimpleName + "(" + loop.toString() + ")"
+// a simple abstract marker class for a looping tree's Loops and Edges
+abstract class LoopWrapper(val value:LLeaf) {
+  override def toString: String = getClass.getSimpleName + "(" + value.toString() + ")"
 }
 
+class Loop (loop: LLeaf) extends LoopWrapper(loop) {
+}
+
+class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {
+
+}
 
 class LLeaf(val observation:Char,
             val tree:LoopingTree,
@@ -100,7 +138,7 @@ class LLeaf(val observation:Char,
 
   var rounded:DenseVector[Double] = if (sum(distribution) > 0) Tree.round(distribution) else distribution
 
-  var exhausted:Boolean = false
+  var edgeSet:Option[EdgeSet] = None
 
   def this(p: ParseLeaf, tree:LoopingTree) = this(p.observation, tree, ListBuffer(p), None)
 
