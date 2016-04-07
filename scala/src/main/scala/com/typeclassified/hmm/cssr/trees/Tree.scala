@@ -44,9 +44,9 @@ abstract class Tree[L <: Leaf[L] : ClassTag ] (val root:L) {
     if (depth <= 0) nodes.toArray else getDepth( depth-1, nodes.flatMap{ _.getChildren() })
   }
 
-  def collectLeaves(layer:ListBuffer[L] = ListBuffer(root), collected:Iterable[L]=ListBuffer() ):Array[L] = {
+  def collectLeaves(layer:Iterable[L] = List(root), collected:Iterable[L]=ListBuffer() ):Array[L] = {
     if (layer.isEmpty) collected.toArray else {
-      val nextLayer:ListBuffer[L] = layer.partition(_.getChildren().isEmpty)._2
+      val nextLayer:Iterable[L] = layer.partition(_.getChildren().isEmpty)._2
       collectLeaves(nextLayer.flatMap(n => n.getChildren()), collected ++ layer)
     }
   }

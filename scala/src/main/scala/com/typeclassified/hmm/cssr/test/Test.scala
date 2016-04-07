@@ -1,16 +1,12 @@
 package com.typeclassified.hmm.cssr.test
 
 import com.typeclassified.hmm.cssr.shared.{EmpiricalDistribution, Probablistic, Level, Logging}
-import com.typeclassified.hmm.cssr.state.State
 import com.typeclassified.hmm.cssr.test.hypothesis.{KolmogorovSmirnov=>KS}
-import com.typeclassified.hmm.cssr.trees.ParseLeaf
-
-import scala.collection.mutable.ListBuffer
 
 object Test extends Logging {
   override def loglevel() = Level.OFF
 
-  def nullHypothesis(state: EmpiricalDistribution[ParseLeaf], testCase: Probablistic, sig:Double): Double = {
+  def nullHypothesis(state: EmpiricalDistribution, testCase: Probablistic, sig:Double): Double = {
     debug("Testing: " + testCase.toString)
     debug(s"Have state information:")
     debug("======================================")

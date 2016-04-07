@@ -25,10 +25,10 @@ object CSSR extends Logging {
 
     val tree: ParseTree = initialization(config)
     val looping = grow(tree)
+    // with the looping tree "grown", we now need to collect histories so that we can later examin our distribution
     refine(looping)
-    // with the looping tree refined, we now need to collect histories so that we may start examining our distribution
-//     collect(tree, looping)
 
+    collect(tree, looping, tree.maxLength)
     val (allStates, transitions) = statesAndTransitions(tree, looping)
     val finalStates = new AllStates(allStates, transitions)
     val machine = new Machine(finalStates, tree)
@@ -38,16 +38,22 @@ object CSSR extends Logging {
   }
 
   def statesAndTransitions(parse:ParseTree, looping: LoopingTree):(Iterable[State], StateToStateTransitions) = {
-    val allStates:Iterable[State] = looping.terminals.map(new State(_))
-    val transitions = mapTransitions(allStates, parse, looping)
+    val stateMap:Map[Terminal, State] = looping.terminals.map{ t => t -> new State(t)}.toMap
+    val allStates:Iterable[State] = stateMap.values
+    val transitions = mapTransitions(stateMap, parse, looping)
     (allStates, transitions)
   }
 
-  def mapTransitions(allStates: Iterable[State], pTree: ParseTree, loopingTree: LoopingTree):StateToStateTransitions = allStates.map {
+  def mapTransitions(stateMap: Map[Terminal, State], pTree: ParseTree, loopingTree: LoopingTree):StateToStateTransitions = stateMap.values.map {
     s => s -> s.histories.map {
-      h => pTree.alphabet.raw.map {
-        c => c -> None // h.getTransitionState(pTree, allStates, c)
-      }.toMap
+      h => pTree.alphabet.raw
+        .map { c => c -> loopingTree.navigateLoopingPath(h.observed + c) }.toMap
+        .mapValues { mNode => {
+          mNode.flatMap { node => {
+            val found = LoopingTree.getLeaf(node)
+            stateMap.getOrElse(found, found.terminalReference).asInstanceOf[Option[State]]
+          } }
+        } }
     }.head
   }.toMap
 
@@ -173,7 +179,7 @@ object CSSR extends Logging {
               .find{ l => !ltree.terminals.contains(l) }
               // if not, we will paint this sub-tree with the origin t-node distribution
               .map { subLeaf => {
-              ltree.collectLeaves(ListBuffer(subLeaf)).foreach(_.distribution == t.distribution)
+              ltree.collectLeaves(ListBuffer(subLeaf)).foreach(_.refineWith(t))
               subLeaf
             } }
 
@@ -181,6 +187,22 @@ object CSSR extends Logging {
           } }
 
     } while (stillDirty)
+  }
+
+  def collect(ptree: ParseTree, ltree:LoopingTree, depth:Int):Unit = {
+    ptree
+      .getDepth(depth)
+      .flatMap(_ => ptree.getDepth(depth - 1))
+      .foreach { pLeaf => attempt(pLeaf.observed, ltree, pLeaf) }
+  }
+
+  def attempt(observed: Iterable[Char], ltree: LoopingTree, pLeaf: ParseLeaf):Unit = {
+    val maybeLLeaf = ltree.navigateLoopingPath(observed)
+    if (maybeLLeaf.isEmpty && observed.nonEmpty) {
+      attempt(observed.tail, ltree, pLeaf)
+    } else {
+      LoopingTree.getLeaf(maybeLLeaf.get).addHistory(pLeaf)
+    }
   }
 }
 

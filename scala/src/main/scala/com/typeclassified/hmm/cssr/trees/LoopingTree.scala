@@ -1,6 +1,7 @@
 package com.typeclassified.hmm.cssr.trees
 
-import com.typeclassified.hmm.cssr.parse.Alphabet
+import breeze.linalg.DenseVector
+import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
 import com.typeclassified.hmm.cssr.shared.EmpiricalDistribution
 
 import scala.collection.immutable.HashSet
@@ -129,7 +130,7 @@ class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {
 
 }
 
-class LLeaf(observation:Char, seededHistories:List[ParseLeaf] = List(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) with EmpiricalDistribution[ParseLeaf] {
+class LLeaf(observation:Char, seededHistories:List[ParseLeaf] = List(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) with EmpiricalDistribution {
   histories = seededHistories
   recalculateHists(histories)
 
@@ -143,21 +144,23 @@ class LLeaf(observation:Char, seededHistories:List[ParseLeaf] = List(), parent:O
 
   def nextLeaf(c: Char): Option[LoopingTree.Node] = children.get(c)
 
-  // this duplicates LoopingTree.getLeaf
-  override def next(c: Char): Option[LLeaf] = children.get(c).flatMap {
-    case Left(lleaf) => Option(lleaf)
-    case _ => None
-  }
-
-  def addHistories(newHistories:ListBuffer[ParseLeaf]):Unit = {
-    histories ++= newHistories
-    recalculateHists(histories)
-  }
+  // this pretty much duplicates LoopingTree.getLeaf
+  override def next(c: Char): Option[LLeaf] = children.get(c).flatMap { node => Some(LoopingTree.getLeaf(node)) }
 
   override def toString():String = {
     val hists = histories.map(_.observed).mkString("[", ",", "]")
     val dist = rounded.toArray.mkString("[", ",", "]")
     s"{rounded:$dist, size: ${histories.size}, histories: $hists}"
+  }
+
+  // temp debugging purposes
+  var originalDistribution:DenseVector[Double] = DenseVector.zeros(AlphabetHolder.alphabet.length)
+  var terminalReference:Option[LLeaf] = None
+
+  def refineWith(lLeaf: LLeaf):Unit = {
+    originalDistribution = distribution
+    distribution = lLeaf.distribution
+    terminalReference = Option(lLeaf)
   }
 }
 
