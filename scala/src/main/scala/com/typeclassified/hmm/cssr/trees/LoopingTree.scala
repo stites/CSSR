@@ -1,6 +1,7 @@
 package com.typeclassified.hmm.cssr.trees
 
 import com.typeclassified.hmm.cssr.parse.Alphabet
+import com.typeclassified.hmm.cssr.state.State
 
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.ListBuffer
@@ -128,16 +129,15 @@ class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {
 
 }
 
-class LLeaf(observation:Char, var histories:List[ParseLeaf] = List(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) {
-  recalculate(histories)
+class LLeaf(observation:Char, seededHistories:List[ParseLeaf] = List(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) with State[ParseLeaf] {
+  histories = seededHistories
+  recalculateHists(histories)
 
   var children:mutable.Map[Char, LoopingTree.Node] = mutable.Map()
 
   var edgeSet:Option[EdgeSet] = None
 
   def this(p: ParseLeaf) = this(p.observation, List(p), None)
-
-  def ++=(lLeaf: LLeaf) = if (Tree.matches(this)(lLeaf)) this.histories ++= lLeaf.histories
 
   override def getChildren():Iterable[LLeaf] = LoopingTree.leafChildren(children)
 
@@ -151,7 +151,7 @@ class LLeaf(observation:Char, var histories:List[ParseLeaf] = List(), parent:Opt
 
   def addHistories(newHistories:ListBuffer[ParseLeaf]):Unit = {
     histories ++= newHistories
-    recalculate(histories)
+    recalculateHists(histories)
   }
 
   override def toString():String = {

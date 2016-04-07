@@ -22,25 +22,15 @@ object EquivalenceClass {
   type State = EquivalenceClass
 }
 
-class EquivalenceClass extends Probablistic {
-  var histories: mutable.LinkedHashSet[ParseLeaf] = mutable.LinkedHashSet[ParseLeaf]()
-
+class EquivalenceClass extends State[ParseLeaf] {
   def addHistory(h: ParseLeaf): Unit = {
-    histories += h
-    normalizeAcrossHistories()
+    histories = histories ++ List(h)
+    recalculateHists(histories, DenseVector.zeros[Double](size))
   }
 
   def rmHistory(x: ParseLeaf): Unit = {
     histories = histories.filter(y => y.observed != x.observed)
-    normalizeAcrossHistories()
-  }
-
-  def normalizeAcrossHistories(): Unit = {
-    frequency = histories.foldRight(DenseVector.zeros[Double](size))((history, totalFreq) => totalFreq + history.frequency)
-
-    totalCounts = frequency.foldRight(0d)(_+_).toInt
-
-    distribution = if (totalCounts == 0) DenseVector.zeros(frequency.length) else frequency / totalCounts
+    recalculateHists(histories, DenseVector.zeros[Double](size))
   }
 
   def shortString: String = {

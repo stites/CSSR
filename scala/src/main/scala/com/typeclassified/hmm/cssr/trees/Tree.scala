@@ -1,7 +1,5 @@
 package com.typeclassified.hmm.cssr.trees
 
-import breeze.linalg.DenseVector
-import breeze.numerics._
 import com.typeclassified.hmm.cssr.shared.{Epsilon, Probablistic}
 
 import scala.collection.mutable.ListBuffer
@@ -9,17 +7,9 @@ import scala.reflect.ClassTag
 
 object Tree {
   implicit val ep:Epsilon = new Epsilon(0.01)
+  implicit val sig:Double = 0.001d
 
-  def matches[L1 <: Leaf[L1], L2 <: Leaf[L2]](u:L1)(w:L2): Boolean = u ~= w
-
-  def matches(u:DenseVector[Double])(w:DenseVector[Double]): Boolean = round(u) == round(w)
-
-  def round(dist:DenseVector[Double]): DenseVector[Double] = {
-    val rndPrecision:Double = 1 / ep.precision
-    (rint(dist * rndPrecision):DenseVector[Double]) / rndPrecision
-  }
-
-  def round[L1 <: Leaf[L1]](u:L1): DenseVector[Double] = round(u.distribution)
+  def matches[L1 <: Leaf[L1], L2 <: Leaf[L2]](u:L1)(w:L2): Boolean = u.testNull(w)
 
   def firstExcisable[L <: Leaf[L]](w:L):Option[L] = {
     // ancestors must be ordered by depth with the root first. Hence, reverse

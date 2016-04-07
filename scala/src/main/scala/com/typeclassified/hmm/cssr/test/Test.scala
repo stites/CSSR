@@ -1,7 +1,7 @@
 package com.typeclassified.hmm.cssr.test
 
-import com.typeclassified.hmm.cssr.shared.{Level, Logging}
-import com.typeclassified.hmm.cssr.state.EquivalenceClass
+import com.typeclassified.hmm.cssr.shared.{Probablistic, Level, Logging}
+import com.typeclassified.hmm.cssr.state.{State, EquivalenceClass}
 import com.typeclassified.hmm.cssr.test.hypothesis.{KolmogorovSmirnov=>KS}
 import com.typeclassified.hmm.cssr.trees.ParseLeaf
 
@@ -32,16 +32,20 @@ object Test extends Logging {
     S --= S.filter(_.histories.isEmpty)
   }
 
-  def nullHypothesis(s: EquivalenceClass, aXt: ParseLeaf, sig:Double): Double = {
-    debug("Testing: " + aXt.toString)
+  def nullHypothesis(state: State[ParseLeaf], testCase: Probablistic, sig:Double): Double = {
+    debug("Testing: " + testCase.toString)
     debug(s"Have state information:")
     debug("======================================")
-    s.histories.foreach{ h => debug(h.toString) }
+    state.histories.foreach{ h => debug(h.toString) }
     debug("======================================")
-    debug(s"Running test -- Count1: ${s.totalCounts} Count2: ${aXt.totalCounts}")
-    debug(s"state: ${s.distribution.toString}\t\tfreq1: ${s.frequency.toString()}")
-    debug(s" leaf: ${aXt.distribution.toString}\t\tfreq2: ${aXt.frequency.toString()}")
-    KS.kstwo(s.distribution, s.totalCounts, aXt.distribution, aXt.totalCounts)
+    debug(s"Running test -- Count1: ${state.totalCounts} Count2: ${testCase.totalCounts}")
+    debug(s"state: ${state.distribution.toString}\t\tfreq1: ${state.frequency.toString()}")
+    debug(s" leaf: ${testCase.distribution.toString}\t\tfreq2: ${testCase.frequency.toString()}")
+    nullHypothesis(state, testCase, sig)
+  }
+
+  def nullHypothesis(state: Probablistic, testCase: Probablistic, sig:Double): Double = {
+    KS.kstwo(state.distribution, state.totalCounts, testCase.distribution, testCase.totalCounts)
   }
 
   def restrictedHypothesesTesting(S: List[EquivalenceClass], s: EquivalenceClass, ax: ParseLeaf, sig: Double )
