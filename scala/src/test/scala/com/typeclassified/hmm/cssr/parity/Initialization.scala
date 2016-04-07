@@ -1,7 +1,6 @@
 package com.typeclassified.hmm.cssr.parity
 
 import com.typeclassified.hmm.cssr.CSSR
-import com.typeclassified.hmm.cssr.CSSR.MutableStates
 import com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.parse.LeafAsserts
 import com.typeclassified.hmm.cssr.shared.{FileHandlers, ProbablisticAsserts}
@@ -15,7 +14,7 @@ class Initialization extends WordSpec with Matchers with ProbablisticAsserts wit
     val config = new Config(binaryAlphabet, data, 4, 0.001)
 
     "initializing CSSR" should {
-      val (tree: ParseTree, allStates: MutableStates) = CSSR.initialization(config)
+      val tree: ParseTree = CSSR.initialization(config)
 
       "have a root with distribution ~= [1/3, 2/3]" in {
         assertApproximateDistribution(tree.root.distribution, Array(1 / 3d, 2 / 3d))

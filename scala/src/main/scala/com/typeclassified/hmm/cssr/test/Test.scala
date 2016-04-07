@@ -10,28 +10,6 @@ import scala.collection.mutable.ListBuffer
 object Test extends Logging {
   override def loglevel() = Level.OFF
 
-  def test(S: ListBuffer[EquivalenceClass], aXt: ParseLeaf, parent:ParseLeaf, s: EquivalenceClass, sig: Double): Unit = {
-    debug(s"Total number of states: ${S.length}")
-    if (nullHypothesis(s, aXt, sig) >= sig) {
-      if (!s.histories.contains(aXt)) {
-        aXt.changeEquivalenceClass(s)
-        s.addHistory(aXt)
-      }
-    } else {
-      debug("Rejecting null hypothesis")
-      val sStar: Option[EquivalenceClass] = restrictedHypothesesTesting(S.toList, s, aXt, sig)
-      if (sStar.nonEmpty) {
-        move(aXt, s, parent, sStar.get, false)
-      } else {
-        info(s"Generating a new equivalence class with: ${aXt.observation}")
-        var sNew = EquivalenceClass()
-        S += sNew
-        move(aXt, s, parent, sNew, true)
-      }
-    }
-    S --= S.filter(_.histories.isEmpty)
-  }
-
   def nullHypothesis(state: State[ParseLeaf], testCase: Probablistic, sig:Double): Double = {
     debug("Testing: " + testCase.toString)
     debug(s"Have state information:")
@@ -48,21 +26,5 @@ object Test extends Logging {
     KS.kstwo(state.distribution, state.totalCounts, testCase.distribution, testCase.totalCounts)
   }
 
-  def restrictedHypothesesTesting(S: List[EquivalenceClass], s: EquivalenceClass, ax: ParseLeaf, sig: Double )
-  :Option[EquivalenceClass] = {
-    val SStar = S.filter(_ ne s)
-    for (sStar <- SStar) {
-      if (nullHypothesis(sStar, ax, sig) >= sig) {
-        return Option(sStar)
-      }
-    }
-    None
-  }
-
-  def move(x: ParseLeaf, from: EquivalenceClass, parent:ParseLeaf, to: EquivalenceClass, rmParent:Boolean=true, paint:Boolean = true): Unit = {
-    x.changeEquivalenceClass(to, paint)
-    to.addHistory(x)
-    from.rmHistory(x) // remove history as we have moved to "painting" the parse tree
-    if (parent != null && rmParent) from.rmHistory(parent)// remove ancestors as we need to disambiguate if progeny
-  }
+  def test(state: Probablistic, testCase: Probablistic, sig:Double): Boolean = nullHypothesis(state, testCase, sig) >= sig
 }

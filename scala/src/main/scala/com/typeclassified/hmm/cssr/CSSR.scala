@@ -2,14 +2,11 @@ package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.Config
 import com.typeclassified.hmm.cssr.shared.Epsilon
-import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.shared.{Level, Logging}
-import com.typeclassified.hmm.cssr.state.{AllStates, Machine, EquivalenceClass}
+import com.typeclassified.hmm.cssr.state.EquivalenceClass
 import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
-import com.typeclassified.hmm.cssr.trees.LoopingTree.AltNode
 import com.typeclassified.hmm.cssr.trees._
 
-import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
@@ -20,35 +17,31 @@ object CSSR extends Logging {
   type State = EquivalenceClass
   type ParentState = EquivalenceClass
   type TransitionState = Option[EquivalenceClass]
-  type OrderedHistorySet = mutable.LinkedHashSet[ParseLeaf]
-  type States = List[State]
   type MutableStates = ListBuffer[State]
 
   type HistoryTransitions = Map[ParseLeaf, TransitionState]
   type StateTransitions = Map[Char, HistoryTransitions]
-  type AllStateTransitions = Map[ParentState, StateTransitions]
   type StateToStateTransitions = Map[ParentState, Map[Char, TransitionState]]
-  type TransitionMemo = Map[String, (ParentState, TransitionState)]
 
-  def run(config: Config):Results  = {
-    val (tree: ParseTree, allStates: MutableStates) = initialization(config)
-    val ls = tree.collectLeaves()
+  def run(config: Config)  = {
     implicit val ep:Epsilon = new Epsilon(0.01)
 
+    val tree: ParseTree = initialization(config)
     val looping = grow(tree)
     refine(looping)
     // with the looping tree refined, we now need to collect histories so that we may start examining our distribution
-    // collect(tree, looping)
+//     collect(tree, looping)
 //     allStates = looping.terminals
 
-    val transitions = mapTransitions(allStates, tree)
-    val finalStates = new AllStates(allStates, transitions)
-    val machine = new Machine(finalStates, tree)
-
-    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates)
-      .out(if (config.out) null else config.dataFile)
+//    val transitions = mapTransitions(allStates, tree)
+//    val finalStates = new AllStates(allStates, transitions)
+//    val machine = new Machine(finalStates, tree)
+//
+//    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates)
+//      .out(if (config.out) null else config.dataFile)
   }
 
+  /*
   def mapTransitions(allStates: MutableStates, pTree: ParseTree):StateToStateTransitions = allStates.map {
     s => s -> s.histories.map {
       h => pTree.alphabet.raw.map {
@@ -56,8 +49,9 @@ object CSSR extends Logging {
       }.toMap
     }.head
   }.toMap
+  */
 
-  def initialization(config: Config): (ParseTree, MutableStates) = {
+  def initialization(config: Config):ParseTree = {
     val alphabetSrc: BufferedSource = Source.fromFile(config.alphabetFile)
     val alphabetSeq: Array[Char] = try alphabetSrc.mkString.toCharArray finally alphabetSrc.close()
 
@@ -66,12 +60,9 @@ object CSSR extends Logging {
 
     val alphabet = Alphabet(alphabetSeq)
     AlphabetHolder.alphabet = alphabet
-    val rootClass = EquivalenceClass()
-    val parseTree = ParseTree.loadData(ParseTree(alphabet, rootClass), dataSeq, config.lMax)
-    rootClass.addHistory(parseTree.root)
-    val allStates = ListBuffer(rootClass)
+    val parseTree = ParseTree.loadData(ParseTree(alphabet), dataSeq, config.lMax)
 
-    (parseTree, allStates)
+    parseTree
   }
 
   /**
@@ -132,7 +123,7 @@ object CSSR extends Logging {
         active.children ++= nextChildren
         // Now that active has children, it cannot be considered a terminal node. Thus, we elide the active node:
         ltree.terminals = ltree.terminals ++ LoopingTree.leafChildren(nextChildren).toSet[LLeaf] - active
-        // FIXME: how do edge-sets handle the removal of an active node?
+        // FIXME: how do edge-sets handle the removal of an active node? Also, are they considered terminal?
         activeQueue ++= LoopingTree.leafChildren(nextChildren)
       }
     }

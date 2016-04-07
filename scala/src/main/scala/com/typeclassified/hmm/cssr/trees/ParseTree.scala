@@ -17,7 +17,6 @@ We then take the 1 child of 0 (= 10)
 We then take the 1 child of 10 (=110)
 */
 object ParseTree extends Logging {
-  def apply(alphabet: Alphabet, equivalenceClass: EquivalenceClass) = new ParseTree(alphabet, equivalenceClass)
   def apply(alphabet: Alphabet) = new ParseTree(alphabet)
 
   def loadData(tree:ParseTree, xs: Array[Char], n: Int): ParseTree = {
@@ -93,7 +92,7 @@ object ParseTree extends Logging {
 
 }
 
-class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) extends Tree[ParseLeaf](new ParseLeaf("", rootEC)) {
+class ParseTree(val alphabet: Alphabet) extends Tree[ParseLeaf](new ParseLeaf("")) {
   var maxLength:Int = _
 
   var dataSize:Double = _
@@ -124,12 +123,10 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
   *
   * @param observed a sequence of observed values.
   **/
-class ParseLeaf(val observed:String, initialEquivClass: EquivalenceClass, parent: Option[ParseLeaf] = None) extends Leaf[ParseLeaf] (if ("".equals(observed)) 0.toChar else observed.head, parent) {
+class ParseLeaf(val observed:String, parent: Option[ParseLeaf] = None) extends Leaf[ParseLeaf] (if ("".equals(observed)) 0.toChar else observed.head, parent) {
   var obsCount:Double = 1
 
   val length: Int = observed.length
-
-  var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 
   val locations:mutable.HashMap[Int, Int] = mutable.HashMap[Int, Int]()
 
@@ -165,7 +162,7 @@ class ParseLeaf(val observed:String, initialEquivClass: EquivalenceClass, parent
     */
   def addChild (xNext:Char, dataIdx:Option[Int] = None): ParseLeaf = {
     val maybeNext = this.next(xNext)
-    val next:ParseLeaf = if (maybeNext.isEmpty) new ParseLeaf(xNext +: observed, currentEquivalenceClass, Option(this)) else maybeNext.get
+    val next:ParseLeaf = if (maybeNext.isEmpty) new ParseLeaf(xNext +: observed, Option(this)) else maybeNext.get
     if (maybeNext.isEmpty) children += next
     next
   }
@@ -180,20 +177,6 @@ class ParseLeaf(val observed:String, initialEquivClass: EquivalenceClass, parent
 
     val props = s"{dist=$vec,\tobservation=${observation.toString},\ttotal=${sum(frequency)}}"
     observed + "\t" * 1 + id + "\t" + props
-  }
-
-  def getTransitionState(tree:ParseTree, S:ListBuffer[EquivalenceClass], b:Char):Option[EquivalenceClass] = {
-    val navigatableHistory = if (observed.length == tree.maxLength) (observed + b).tail else observed + b
-
-    tree
-      .navigateHistoryRev(navigatableHistory.toList)
-      .flatMap{ l => Option(l.currentEquivalenceClass) }
-      .filter{ S.contains(_) }
-  }
-
-  def changeEquivalenceClass(s: EquivalenceClass, paint:Boolean = true): Unit = {
-    this.currentEquivalenceClass = s
-    if (paint) this.children.foreach(_.changeEquivalenceClass(s))
   }
 
   def shortString: String = observed
