@@ -23,8 +23,8 @@ class EquivalenceClassTests extends FlatSpec with Matchers with ProbablisticAsse
 
   it should "add a history to the equivalence class and normalize the histories" in {
     val eq = EquivalenceClass()
-    val leaf = new ParseLeaf("abc", tree, eq)
-    val leaf2 = new ParseLeaf("cbc", tree, eq)
+    val leaf = new ParseLeaf("abc", eq)
+    val leaf2 = new ParseLeaf("cbc", eq)
     val (frequency, totalCounts) = (new DenseVector[Double](Array(1d,2d,3d)), 6d)
     for (l <- List(leaf, leaf2)){
       l.frequency = frequency
@@ -46,8 +46,8 @@ class EquivalenceClassTests extends FlatSpec with Matchers with ProbablisticAsse
   it should "remove a history to the equivalence class and normalize the histories" in {
     val eq = EquivalenceClass()
     val zeros = DenseVector.zeros[Double](3)
-    val leaf = new ParseLeaf("abc", tree, eq)
-    val leaf2 = new ParseLeaf("cbc", tree, eq)
+    val leaf = new ParseLeaf("abc", eq)
+    val leaf2 = new ParseLeaf("cbc", eq)
     val (frequency, totalCounts) = (new DenseVector[Double](Array(1d,2d,3d)), 6d)
     for (l <- List(leaf, leaf2)){
       l.frequency = frequency

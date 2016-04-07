@@ -15,7 +15,7 @@ class TestTests extends FlatSpec with Matchers {
   it should "move a Leaf from one EquivalenceClass to another" in {
     val to   = EquivalenceClass()
     val from = tree.root.currentEquivalenceClass
-    val leaf = new ParseLeaf("abc", tree, from)
+    val leaf = new ParseLeaf("abc", from)
 
     leaf.currentEquivalenceClass should be (from)
 

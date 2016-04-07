@@ -5,6 +5,7 @@ import breeze.numerics._
 import com.typeclassified.hmm.cssr.shared.{Epsilon, Probablistic}
 
 import scala.collection.mutable.ListBuffer
+import scala.reflect.ClassTag
 
 object Tree {
   implicit val ep:Epsilon = new Epsilon(0.01)
@@ -47,14 +48,29 @@ object Tree {
   }
 }
 
-class Tree {
-  // Just a marker class
+abstract class Tree[L <: Leaf[L] : ClassTag ] (val root:L) {
+
+  def getDepth(depth: Int, nodes:Iterable[L] = List(root)): Array[L] = {
+    if (depth <= 0) nodes.toArray else getDepth( depth-1, nodes.flatMap{ _.getChildren() })
+  }
+
+  def collectLeaves(layer:ListBuffer[L] = ListBuffer(root), collected:Iterable[L]=ListBuffer() ):Array[L] = {
+    if (layer.isEmpty) collected.toArray else {
+      val nextLayer:ListBuffer[L] = layer.partition(_.getChildren().isEmpty)._2
+      collectLeaves(nextLayer.flatMap(n => n.getChildren()), collected ++ layer)
+    }
+  }
+
 }
 
-class Leaf[B <: Leaf[_]] (val parent: Option[B] = None) extends Probablistic {
+abstract class Leaf[B <: Leaf[B]] (val observation:Char, val parent: Option[B] = None) extends Probablistic {
   implicit val ep:Epsilon = new Epsilon(0.01)
 
   def ~= [A <: Leaf[A]] (pLeaf:A)(implicit ep:Epsilon):Boolean = {
     (abs(distribution :- pLeaf.distribution) :< ep.precision).reduceRight(_&&_)
   }
+
+  def path():Iterable[Char] = Tree.getAncestorsRecursive(this.asInstanceOf[B]).map(_.observation)
+
+  def getChildren():Iterable[B]
 }

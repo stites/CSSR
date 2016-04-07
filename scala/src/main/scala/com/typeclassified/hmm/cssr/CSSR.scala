@@ -120,13 +120,15 @@ object CSSR extends Logging {
           .flatMap { _.children }
           .groupBy{ _.observation }
           .map { case (c, pleaves) => {
-            val lleaf:LLeaf = new LLeaf(c, ltree, pleaves, Option(active))
+            val lleaf:LLeaf = new LLeaf(c, pleaves, Option(active))
             val alternative:Option[LoopingTree.AltNode] = findAlternative(lleaf)
             c -> alternative.toRight(lleaf)
           } }
 
         active.children ++= nextChildren
-        ltree.terminals = ltree.terminals ++ LoopingTree.leafChildren(nextChildren).toSet[LLeaf]
+        // Now that active has children, it cannot be considered a terminal node. Thus, we elide the active node:
+        ltree.terminals = ltree.terminals ++ LoopingTree.leafChildren(nextChildren).toSet[LLeaf] - active
+        // FIXME: how do edge-sets handle the removal of an active node?
         activeQueue ++= LoopingTree.leafChildren(nextChildren)
       }
     }

@@ -92,26 +92,13 @@ object LoopingTree {
   }
 }
 
-class LoopingTree (val alphabet:Alphabet) extends Tree {
-  var root:LLeaf = _
-
+class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
+  /** the set of non-looping terminal nodes */
   var terminals:Set[LLeaf] = HashSet()
 
   def this(ptree: ParseTree) = {
-    this(ptree.alphabet)
-    root = new LLeaf(ptree.root.observation, this, ListBuffer(ptree.root))
+    this(ptree.alphabet, new LLeaf(ptree.root.observation, ListBuffer(ptree.root)))
     terminals = terminals + root
-  }
-
-  def getDepth(depth: Int, nodes:Iterable[LLeaf] = ListBuffer(root)): Array[LLeaf] = {
-    if (depth <= 0) nodes.toArray else getDepth(depth-1, nodes.flatMap(_.leafChildren()))
-  }
-
-  def collectLeaves( layer:ListBuffer[LLeaf] = ListBuffer(root), collected:Iterable[LLeaf]=ListBuffer() ):Array[LLeaf] = {
-    if (layer.isEmpty) collected.toArray else {
-      val nextLayer = layer.partition(_.children.isEmpty)._2
-      collectLeaves(nextLayer.flatMap(_.leafChildren()), collected ++ layer)
-    }
   }
 }
 
@@ -127,11 +114,7 @@ class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {
 
 }
 
-class LLeaf(val observation:Char,
-            val tree:LoopingTree,
-            val histories:ListBuffer[ParseLeaf] = ListBuffer(),
-            parent:Option[LLeaf] = None
-) extends Leaf[LLeaf] (parent) {
+class LLeaf(observation:Char, val histories:ListBuffer[ParseLeaf] = ListBuffer(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) {
   if (histories.nonEmpty) this.distribution = histories.head.distribution
 
   var children:mutable.Map[Char, LoopingTree.Node] = mutable.Map()
@@ -140,13 +123,11 @@ class LLeaf(val observation:Char,
 
   var edgeSet:Option[EdgeSet] = None
 
-  def this(p: ParseLeaf, tree:LoopingTree) = this(p.observation, tree, ListBuffer(p), None)
+  def this(p: ParseLeaf) = this(p.observation, ListBuffer(p), None)
 
-  def ++=(lLeaf: LLeaf) = {
-    if (Tree.matches(this)(lLeaf)) this.histories ++= lLeaf.histories
-  }
+  def ++=(lLeaf: LLeaf) = if (Tree.matches(this)(lLeaf)) this.histories ++= lLeaf.histories
 
-  def leafChildren():Iterable[LLeaf] = LoopingTree.leafChildren(children)
+  override def getChildren():Iterable[LLeaf] = LoopingTree.leafChildren(children)
 
   override def toString():String = {
     val hists = histories.map(_.observed).mkString("[", ",", "]")

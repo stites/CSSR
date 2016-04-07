@@ -56,7 +56,7 @@ object ParseTree extends Logging {
 
     // calculate conditional histories
     for (depth <- 0 to n) {
-      tree.getDepth(depth).foreach(_.calcNextStepProbabilities(tree.alphabet))
+      tree.getDepth(depth).foreach(_.calcNextStepProbabilities(tree))
     }
 
     // remove the final depth so that we are left only with predictive distributions. Note that this isn't strictly necessary.
@@ -93,9 +93,7 @@ object ParseTree extends Logging {
 
 }
 
-class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) extends Tree {
-  var root:ParseLeaf = new ParseLeaf("", this, rootEC)
-
+class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClass()) extends Tree[ParseLeaf](new ParseLeaf("", rootEC)) {
   var maxLength:Int = _
 
   var dataSize:Double = _
@@ -119,24 +117,6 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
       }
     }
   }
-
-  def getDepth(depth: Int, nodes:ListBuffer[ParseLeaf] = ListBuffer(root)): Array[ParseLeaf] = {
-    if (depth <= 0) {
-      nodes.toArray
-    } else {
-      // [nodes] => [children] ++ [children]
-      getDepth(depth-1, nodes.flatMap(_.children))
-    }
-  }
-
-  def collectLeaves(layer:ListBuffer[ParseLeaf] = ListBuffer(root), collected:ListBuffer[ParseLeaf]=ListBuffer()):Array[ParseLeaf] = {
-    if (layer.isEmpty) {
-      collected.toArray
-    } else {
-      val (_, nextLayer) = layer.partition(_.children.isEmpty)
-      collectLeaves(nextLayer.flatMap(_.children), collected ++ layer)
-    }
-  }
 }
 
 /**
@@ -145,20 +125,12 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
   *   observed        : ABCD
   *   observation     : A
   *
-  * @param observedSequence a sequence of observed values.
-  * @param parseTree
-  * @param initialEquivClass
+  * @param observed a sequence of observed values.
   **/
-class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass: EquivalenceClass, parent: Option[ParseLeaf] = None) extends Leaf[ParseLeaf] (parent) {
+class ParseLeaf(val observed:String, initialEquivClass: EquivalenceClass, parent: Option[ParseLeaf] = None) extends Leaf[ParseLeaf] (if ("".equals(observed)) 0.toChar else observed.head, parent) {
   var obsCount:Double = 1
 
-  val alphabet:Alphabet = parseTree.alphabet
-
-  val observed:String = observedSequence
-
-  val observation: Char = if ("".equals(observed)) 0.toChar else observed.head
-
-  val length: Int = observedSequence.length
+  val length: Int = observed.length
 
   var currentEquivalenceClass: EquivalenceClass = initialEquivClass
 
@@ -166,13 +138,15 @@ class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass
 
   var children:ListBuffer[ParseLeaf] = ListBuffer()
 
+  override def getChildren(): Iterable[ParseLeaf] = children
+
   def addLocation(idx:Int):Unit = {
     val indexCount = if (locations.keySet.contains(idx)) locations(idx) else 0
     locations += (idx -> (indexCount + 1))
   }
 
-  def calcNextStepProbabilities(alphabet: Alphabet):Unit = {
-    val nextCounts:Array[Double] = alphabet.raw
+  def calcNextStepProbabilities(parseTree: ParseTree):Unit = {
+    val nextCounts:Array[Double] = parseTree.alphabet.raw
       .map {
         c => parseTree.navigateHistory(observed + c)
           .flatMap{ l => Option(l.obsCount)}
@@ -193,26 +167,25 @@ class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass
     * the return child will have:
     *   - observation 'A'
     *   - observed "ABC"
-    *
-    * @param xNext
-    * @param dataIdx
-    * @return
     */
   def addChild (xNext:Char, dataIdx:Option[Int] = None): ParseLeaf = {
     val maybeNext = nextObservation(xNext)
-    val next:ParseLeaf = if (maybeNext.isEmpty) new ParseLeaf(xNext +: observed, parseTree, currentEquivalenceClass, Option(this)) else maybeNext.get
+    val next:ParseLeaf = if (maybeNext.isEmpty) new ParseLeaf(xNext +: observed, currentEquivalenceClass, Option(this)) else maybeNext.get
     if (maybeNext.isEmpty) children += next
     next
   }
 
-  def changeEquivalenceClass(s: EquivalenceClass, paint:Boolean = true): Unit = {
-    this.currentEquivalenceClass = s
-    // we ought to update transitions here (but for phase II it's not terribly important)
-    if (paint) this.children.foreach(_.changeEquivalenceClass(s))
-  }
-
   /** to find node BAC, we traverse the tree from NULL -> B -> A -> C. Thus, from node BA, we search for C. */
   def nextObservation(xNext: Char):Option[ParseLeaf] = children.find(_.observation == xNext)
+
+  def fullString: String = {
+    val vec = distribution.toArray.mkString("(", ", ", ")")
+    val id = s"${getClass.getSimpleName}@${hashCode()}"
+    val nTabs = if (observed.length < 4) 3 else 2
+
+    val props = s"{dist=$vec,\tobservation=${observation.toString},\ttotal=${sum(frequency)}}"
+    observed + "\t" * 1 + id + "\t" + props
+  }
 
   def getTransitionState(tree:ParseTree, S:ListBuffer[EquivalenceClass], b:Char):Option[EquivalenceClass] = {
     val navigatableHistory = if (observed.length == tree.maxLength) (observed + b).tail else observed + b
@@ -223,13 +196,9 @@ class ParseLeaf(observedSequence:String, parseTree: ParseTree, initialEquivClass
       .filter{ S.contains(_) }
   }
 
-  def fullString: String = {
-    val vec = distribution.toArray.mkString("(", ", ", ")")
-    val id = s"${getClass.getSimpleName}@${hashCode()}"
-    val nTabs = if (observed.length < 4) 3 else 2
-
-    val props = s"{dist=$vec,\tobservation=${observation.toString},\ttotal=${sum(frequency)}}"
-    observed + "\t" * 1 + id + "\t" + props
+  def changeEquivalenceClass(s: EquivalenceClass, paint:Boolean = true): Unit = {
+    this.currentEquivalenceClass = s
+    if (paint) this.children.foreach(_.changeEquivalenceClass(s))
   }
 
   def shortString: String = observed
