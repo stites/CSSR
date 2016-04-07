@@ -1,9 +1,10 @@
 package com.typeclassified.hmm.cssr
 
 import com.typeclassified.hmm.cssr.cli.Config
+import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.shared.Epsilon
 import com.typeclassified.hmm.cssr.shared.{Level, Logging}
-import com.typeclassified.hmm.cssr.state.EquivalenceClass
+import com.typeclassified.hmm.cssr.state.{AllStates, Machine, State}
 import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
 import com.typeclassified.hmm.cssr.trees._
 
@@ -14,16 +15,12 @@ object CSSR extends Logging {
   override def loglevel() = Level.INFO
 
   // type aliases:
-  type State = EquivalenceClass
-  type ParentState = EquivalenceClass
-  type TransitionState = Option[EquivalenceClass]
-  type MutableStates = ListBuffer[State]
+  type ParentState = State
+  type TransitionState = Option[State]
 
-  type HistoryTransitions = Map[ParseLeaf, TransitionState]
-  type StateTransitions = Map[Char, HistoryTransitions]
   type StateToStateTransitions = Map[ParentState, Map[Char, TransitionState]]
 
-  def run(config: Config)  = {
+  def run(config: Config):Results  = {
     implicit val ep:Epsilon = new Epsilon(0.01)
 
     val tree: ParseTree = initialization(config)
@@ -31,25 +28,28 @@ object CSSR extends Logging {
     refine(looping)
     // with the looping tree refined, we now need to collect histories so that we may start examining our distribution
 //     collect(tree, looping)
-//     allStates = looping.terminals
 
-//    val transitions = mapTransitions(allStates, tree)
-//    val finalStates = new AllStates(allStates, transitions)
-//    val machine = new Machine(finalStates, tree)
-//
-//    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates)
-//      .out(if (config.out) null else config.dataFile)
+    val (allStates, transitions) = statesAndTransitions(tree, looping)
+    val finalStates = new AllStates(allStates, transitions)
+    val machine = new Machine(finalStates, tree)
+
+    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates)
+      .out(if (config.out) null else config.dataFile)
   }
 
-  /*
-  def mapTransitions(allStates: MutableStates, pTree: ParseTree):StateToStateTransitions = allStates.map {
+  def statesAndTransitions(parse:ParseTree, looping: LoopingTree):(Iterable[State], StateToStateTransitions) = {
+    val allStates:Iterable[State] = looping.terminals.map(new State(_))
+    val transitions = mapTransitions(allStates, parse, looping)
+    (allStates, transitions)
+  }
+
+  def mapTransitions(allStates: Iterable[State], pTree: ParseTree, loopingTree: LoopingTree):StateToStateTransitions = allStates.map {
     s => s -> s.histories.map {
       h => pTree.alphabet.raw.map {
-        c => c -> h.getTransitionState(pTree, allStates, c)
+        c => c -> None // h.getTransitionState(pTree, allStates, c)
       }.toMap
     }.head
   }.toMap
-  */
 
   def initialization(config: Config):ParseTree = {
     val alphabetSrc: BufferedSource = Source.fromFile(config.alphabetFile)

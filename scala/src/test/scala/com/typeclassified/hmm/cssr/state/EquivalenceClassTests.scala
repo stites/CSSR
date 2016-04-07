@@ -22,9 +22,9 @@ class EquivalenceClassTests extends FlatSpec with Matchers with ProbablisticAsse
   behavior of "addHistory"
 
   it should "add a history to the equivalence class and normalize the histories" in {
-    val eq = EquivalenceClass()
-    val leaf = new ParseLeaf("abc", eq)
-    val leaf2 = new ParseLeaf("cbc", eq)
+    val eq = new State()
+    val leaf = new ParseLeaf("abc")
+    val leaf2 = new ParseLeaf("cbc")
     val (frequency, totalCounts) = (new DenseVector[Double](Array(1d,2d,3d)), 6d)
     for (l <- List(leaf, leaf2)){
       l.frequency = frequency
@@ -44,10 +44,10 @@ class EquivalenceClassTests extends FlatSpec with Matchers with ProbablisticAsse
   behavior of "rmHistory"
 
   it should "remove a history to the equivalence class and normalize the histories" in {
-    val eq = EquivalenceClass()
+    val eq = new State()
     val zeros = DenseVector.zeros[Double](3)
-    val leaf = new ParseLeaf("abc", eq)
-    val leaf2 = new ParseLeaf("cbc", eq)
+    val leaf = new ParseLeaf("abc")
+    val leaf2 = new ParseLeaf("cbc")
     val (frequency, totalCounts) = (new DenseVector[Double](Array(1d,2d,3d)), 6d)
     for (l <- List(leaf, leaf2)){
       l.frequency = frequency
@@ -67,7 +67,7 @@ class EquivalenceClassTests extends FlatSpec with Matchers with ProbablisticAsse
     assertEquivalenceClassProperties(eq, 0, zeros, 0, zeros)
   }
 
-  def assertEquivalenceClassProperties(eq:EquivalenceClass,
+  def assertEquivalenceClassProperties(eq:State,
                                        numHistories:Int,
                                        frequency: DenseVector[Double],
                                        totalCounts:Double)
@@ -77,7 +77,7 @@ class EquivalenceClassTests extends FlatSpec with Matchers with ProbablisticAsse
     eq.totalCounts should be (totalCounts)
   }
 
-  def assertEquivalenceClassProperties(eq:EquivalenceClass,
+  def assertEquivalenceClassProperties(eq:State,
                                        numHistories:Int,
                                        frequency: DenseVector[Double],
                                        totalCounts:Double,

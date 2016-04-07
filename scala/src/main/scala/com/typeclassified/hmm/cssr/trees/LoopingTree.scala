@@ -1,7 +1,7 @@
 package com.typeclassified.hmm.cssr.trees
 
 import com.typeclassified.hmm.cssr.parse.Alphabet
-import com.typeclassified.hmm.cssr.state.State
+import com.typeclassified.hmm.cssr.shared.EmpiricalDistribution
 
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.ListBuffer
@@ -129,7 +129,7 @@ class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {
 
 }
 
-class LLeaf(observation:Char, seededHistories:List[ParseLeaf] = List(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) with State[ParseLeaf] {
+class LLeaf(observation:Char, seededHistories:List[ParseLeaf] = List(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) with EmpiricalDistribution[ParseLeaf] {
   histories = seededHistories
   recalculateHists(histories)
 

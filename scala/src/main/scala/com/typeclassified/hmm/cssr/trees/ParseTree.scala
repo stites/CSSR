@@ -3,7 +3,7 @@ package com.typeclassified.hmm.cssr.trees
 import breeze.linalg.{DenseVector, sum}
 import com.typeclassified.hmm.cssr.parse.Alphabet
 import com.typeclassified.hmm.cssr.shared.Logging
-import com.typeclassified.hmm.cssr.state.EquivalenceClass
+import com.typeclassified.hmm.cssr.state.State
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
