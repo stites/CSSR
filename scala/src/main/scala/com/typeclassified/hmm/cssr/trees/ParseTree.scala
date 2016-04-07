@@ -101,6 +101,19 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
   var adjustedDataSize:Double = _
 
   def navigateHistoryRev(history: Iterable[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.head, _.tail)
+
+  def navigateHistory(history: Iterable[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.last, _.init)
+
+  def navigateHistory(history: Iterable[Char], active:ParseLeaf = root, current:(Iterable[Char])=>Char, prior:(Iterable[Char])=>Iterable[Char]): Option[ParseLeaf] = {
+    if (history.isEmpty) Option(active) else {
+      val maybeNext:Option[ParseLeaf] = active.next(current(history))
+      if (prior(history).isEmpty || maybeNext.isEmpty) {
+        maybeNext
+      } else {
+        navigateHistory(prior(history), maybeNext.get, current, prior)
+      }
+    }
+  }
 }
 
 /**

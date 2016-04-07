@@ -107,17 +107,12 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
     terminals = terminals + root
   }
 
-  def navigateLoopingPath(history: Iterable[Char]):Option[LoopingTree.Node] = navigateHistory(history, Some(Left(root)), _.head, _.tail)
+  def navigateLoopingPath(history: Iterable[Char]):Option[LoopingTree.Node] = navigateLoopingPath(history, Some(Left(root)), _.head, _.tail)
 
-  def navigateHistory(history: Iterable[Char], active:Option[LoopingTree.Node], current:(Iterable[Char])=>Char, prior:(Iterable[Char])=>Iterable[Char]): Option[LoopingTree.Node] = {
+  def navigateLoopingPath(history: Iterable[Char], active:Option[LoopingTree.Node], current:(Iterable[Char])=>Char, prior:(Iterable[Char])=>Iterable[Char]): Option[LoopingTree.Node] = {
     if (history.isEmpty) active else {
-      val cur = current(history)
-      val next = active.flatMap {
-        case Left(lnode) => lnode.nextLeaf(cur)
-        case Right(Right(edgeset)) => edgeset.value.nextLeaf(cur)
-        case Right(Left(loop)) => loop.value.nextLeaf(cur)
-      }
-      navigateHistory(prior(history), next, current, prior)
+      val next = active.flatMap { node => LoopingTree.getLeaf(node).nextLeaf(current(history)) }
+      navigateLoopingPath(prior(history), next, current, prior)
     }
   }
 }

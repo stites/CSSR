@@ -60,20 +60,6 @@ abstract class Tree[L <: Leaf[L] : ClassTag ] (val root:L) {
       collectLeaves(nextLayer.flatMap(n => n.getChildren()), collected ++ layer)
     }
   }
-
-  def navigateHistory(history: Iterable[Char]): Option[L] = navigateHistory(history, root, _.last, _.init)
-
-  def navigateHistory(history: Iterable[Char], active:L = root, current:(Iterable[Char])=>Char, prior:(Iterable[Char])=>Iterable[Char]): Option[L] = {
-    if (history.isEmpty) Option(active) else {
-      val maybeNext:Option[L] = active.next(current(history))
-      if (prior(history).isEmpty || maybeNext.isEmpty) {
-        maybeNext
-      } else {
-        navigateHistory(prior(history), maybeNext.get, current, prior)
-      }
-    }
-  }
-
 }
 
 abstract class Leaf[B <: Leaf[B]] (val observation:Char, val parent: Option[B] = None) extends Probablistic {
