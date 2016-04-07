@@ -63,12 +63,6 @@ abstract class Tree[L <: Leaf[L] : ClassTag ] (val root:L) {
 }
 
 abstract class Leaf[B <: Leaf[B]] (val observation:Char, val parent: Option[B] = None) extends Probablistic {
-  implicit val ep:Epsilon = new Epsilon(0.01)
-
-  def ~= [A <: Leaf[A]] (pLeaf:A)(implicit ep:Epsilon):Boolean = {
-    (abs(distribution :- pLeaf.distribution) :< ep.precision).reduceRight(_&&_)
-  }
-
   def path():Iterable[Char] = Tree.getAncestorsRecursive(this.asInstanceOf[B]).map(_.observation)
 
   def getChildren():Iterable[B]

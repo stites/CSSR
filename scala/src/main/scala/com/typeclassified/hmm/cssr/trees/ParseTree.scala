@@ -149,9 +149,7 @@ class ParseLeaf(val observed:String, initialEquivClass: EquivalenceClass, parent
           .flatMap{ l => Option(l.obsCount)}
           .getOrElse(0d) }
 
-    frequency = new DenseVector[Double](nextCounts)
-    totalCounts = sum(frequency)
-    distribution = frequency / totalCounts
+    recalculate(nextCounts)
   }
 
   /**

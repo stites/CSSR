@@ -1,6 +1,5 @@
 package com.typeclassified.hmm.cssr.trees
 
-import breeze.linalg.{sum, DenseVector}
 import com.typeclassified.hmm.cssr.parse.Alphabet
 
 import scala.collection.immutable.HashSet
@@ -103,7 +102,7 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
   var terminals:Set[LLeaf] = HashSet()
 
   def this(ptree: ParseTree) = {
-    this(ptree.alphabet, new LLeaf(ptree.root.observation, ListBuffer(ptree.root)))
+    this(ptree.alphabet, new LLeaf(ptree.root.observation, List(ptree.root)))
     terminals = terminals + root
   }
 
@@ -129,16 +128,14 @@ class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {
 
 }
 
-class LLeaf(observation:Char, val histories:ListBuffer[ParseLeaf] = ListBuffer(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) {
-  if (histories.nonEmpty) this.distribution = histories.head.distribution
+class LLeaf(observation:Char, var histories:List[ParseLeaf] = List(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) {
+  recalculate(histories)
 
   var children:mutable.Map[Char, LoopingTree.Node] = mutable.Map()
 
-  var rounded:DenseVector[Double] = if (sum(distribution) > 0) Tree.round(distribution) else distribution
-
   var edgeSet:Option[EdgeSet] = None
 
-  def this(p: ParseLeaf) = this(p.observation, ListBuffer(p), None)
+  def this(p: ParseLeaf) = this(p.observation, List(p), None)
 
   def ++=(lLeaf: LLeaf) = if (Tree.matches(this)(lLeaf)) this.histories ++= lLeaf.histories
 
@@ -146,9 +143,15 @@ class LLeaf(observation:Char, val histories:ListBuffer[ParseLeaf] = ListBuffer()
 
   def nextLeaf(c: Char): Option[LoopingTree.Node] = children.get(c)
 
+  // this duplicates LoopingTree.getLeaf
   override def next(c: Char): Option[LLeaf] = children.get(c).flatMap {
     case Left(lleaf) => Option(lleaf)
     case _ => None
+  }
+
+  def addHistories(newHistories:ListBuffer[ParseLeaf]):Unit = {
+    histories ++= newHistories
+    recalculate(histories)
   }
 
   override def toString():String = {
