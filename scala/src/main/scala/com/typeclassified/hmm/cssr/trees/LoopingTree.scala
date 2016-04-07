@@ -90,6 +90,12 @@ object LoopingTree {
       case None => if (edgeSet.isEmpty) None else Some(Right(edgeSet.get))
     }
   }
+
+  def getLeaf(node:LoopingTree.Node):LLeaf = node match {
+    case Left(lnode) => lnode
+    case Right(Right(edgeset)) => edgeset.value
+    case Right(Left(loop)) => loop.value
+  }
 }
 
 class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
@@ -99,6 +105,20 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
   def this(ptree: ParseTree) = {
     this(ptree.alphabet, new LLeaf(ptree.root.observation, ListBuffer(ptree.root)))
     terminals = terminals + root
+  }
+
+  def navigateLoopingPath(history: Iterable[Char]):Option[LoopingTree.Node] = navigateHistory(history, Some(Left(root)), _.head, _.tail)
+
+  def navigateHistory(history: Iterable[Char], active:Option[LoopingTree.Node], current:(Iterable[Char])=>Char, prior:(Iterable[Char])=>Iterable[Char]): Option[LoopingTree.Node] = {
+    if (history.isEmpty) active else {
+      val cur = current(history)
+      val next = active.flatMap {
+        case Left(lnode) => lnode.nextLeaf(cur)
+        case Right(Right(edgeset)) => edgeset.value.nextLeaf(cur)
+        case Right(Left(loop)) => loop.value.nextLeaf(cur)
+      }
+      navigateHistory(prior(history), next, current, prior)
+    }
   }
 }
 
@@ -128,6 +148,8 @@ class LLeaf(observation:Char, val histories:ListBuffer[ParseLeaf] = ListBuffer()
   def ++=(lLeaf: LLeaf) = if (Tree.matches(this)(lLeaf)) this.histories ++= lLeaf.histories
 
   override def getChildren():Iterable[LLeaf] = LoopingTree.leafChildren(children)
+
+  def nextLeaf(c: Char): Option[LoopingTree.Node] = children.get(c)
 
   override def next(c: Char): Option[LLeaf] = children.get(c).flatMap {
     case Left(lleaf) => Option(lleaf)

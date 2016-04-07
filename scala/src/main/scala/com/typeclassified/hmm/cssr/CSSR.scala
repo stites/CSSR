@@ -36,6 +36,10 @@ object CSSR extends Logging {
     implicit val ep:Epsilon = new Epsilon(0.01)
 
     val looping = grow(tree)
+    refine(looping)
+    // with the looping tree refined, we now need to collect histories so that we may start examining our distribution
+    // collect(tree, looping)
+//     allStates = looping.terminals
 
     val transitions = mapTransitions(allStates, tree)
     val finalStates = new AllStates(allStates, transitions)
@@ -136,7 +140,56 @@ object CSSR extends Logging {
     ltree
   }
 
-  def refine(tree:ParseTree,S:MutableStates,lMax:Double,sig:Double) = {
+  /**
+    * until (no change)
+    *  for each terminal node t
+    *    for each non-looping path w to t
+    *      for each symbol a in the alphabet follow the path wa in the tree
+    *        if wa leads to a terminal node
+    *          | continue
+    *        else (== wa does not lead to a terminal node)
+    *          | copy the sub-looping-tree rooted at (the node reached by) wa to t
+    *            giving all terminal nodes the predictive distribution of t
+    *        break loop
+    *
+    * Questions:
+    *   + what about edge sets?
+    *   + if we let a terminal node's distribution override another terminal node's distribution (via subtree) will order matter?
+    */
+
+  type wa = String
+  type Terminal = LLeaf
+
+  def refine(ltree:LoopingTree) = {
+    var stillDirty = false
+
+    do {
+      val toCheck: Set[(Terminal, wa)] = ltree.terminals
+        .flatMap(tNode => {
+          val w = tNode.path().mkString
+          ltree.alphabet.raw.map(a => (tNode, w + a))
+        } )
+
+      stillDirty = toCheck
+        .foldLeft(false){
+          case (isDirty:Boolean, (t:Terminal, wa:wa)) => {
+            val foundNode:Option[LLeaf] = ltree
+              // navigate the looping tree.
+              .navigateLoopingPath(wa)
+              // pull out which leaf we have ended up at
+              .flatMap { l => Option(LoopingTree.getLeaf(l)) }
+              // check to see if this leaf is not a terminal leaf
+              .find{ l => !ltree.terminals.contains(l) }
+              // if not, we will paint this sub-tree with the origin t-node distribution
+              .map { subLeaf => {
+              ltree.collectLeaves(ListBuffer(subLeaf)).foreach(_.distribution == t.distribution)
+              subLeaf
+            } }
+
+            isDirty || foundNode.nonEmpty // if all of the above did work, then a node exists we need to raise this flag
+          } }
+
+    } while (stillDirty)
   }
 }
 
