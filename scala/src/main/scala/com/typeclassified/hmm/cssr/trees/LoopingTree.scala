@@ -129,6 +129,11 @@ class LLeaf(observation:Char, val histories:ListBuffer[ParseLeaf] = ListBuffer()
 
   override def getChildren():Iterable[LLeaf] = LoopingTree.leafChildren(children)
 
+  override def next(c: Char): Option[LLeaf] = children.get(c).flatMap {
+    case Left(lleaf) => Option(lleaf)
+    case _ => None
+  }
+
   override def toString():String = {
     val hists = histories.map(_.observed).mkString("[", ",", "]")
     val dist = rounded.toArray.mkString("[", ",", "]")

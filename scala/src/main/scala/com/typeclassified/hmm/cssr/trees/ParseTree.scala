@@ -81,7 +81,7 @@ object ParseTree extends Logging {
     def go(history: Iterable[Char], active: ParseLeaf, tree: ParseTree, fullHistory: String, idx:Iterable[Int]): Unit = {
       if (history.nonEmpty) {
         val ((current, cIdx), (older, oIdx)) = splitHistoryClean(history, idx)
-        val maybeNext: Option[ParseLeaf] = active.nextObservation(current)
+        val maybeNext: Option[ParseLeaf] = active.next(current)
         val next = if (maybeNext.isEmpty) active.addChild(current) else maybeNext.get
         if (maybeNext.nonEmpty) next.obsCount += 1
         next.addLocation(cIdx)
@@ -101,22 +101,6 @@ class ParseTree(val alphabet: Alphabet, rootEC: EquivalenceClass=EquivalenceClas
   var adjustedDataSize:Double = _
 
   def navigateHistoryRev(history: Iterable[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.head, _.tail)
-
-  def navigateHistory(history: Iterable[Char]): Option[ParseLeaf] = navigateHistory(history, root, _.last, _.init)
-
-  def navigateHistory(history: Iterable[Char], active:ParseLeaf): Option[ParseLeaf] = navigateHistory(history, active, _.last, _.init)
-
-  def navigateHistory(history: Iterable[Char], active:ParseLeaf = root, current:(Iterable[Char])=>Char, prior:(Iterable[Char])=>Iterable[Char])
-  : Option[ParseLeaf] = {
-    if (history.isEmpty) Option(active) else {
-      val maybeNext:Option[ParseLeaf] = active.nextObservation(current(history))
-      if (prior(history).isEmpty || maybeNext.isEmpty) {
-        maybeNext
-      } else {
-        navigateHistory(prior(history), maybeNext.get)
-      }
-    }
-  }
 }
 
 /**
@@ -169,14 +153,14 @@ class ParseLeaf(val observed:String, initialEquivClass: EquivalenceClass, parent
     *   - observed "ABC"
     */
   def addChild (xNext:Char, dataIdx:Option[Int] = None): ParseLeaf = {
-    val maybeNext = nextObservation(xNext)
+    val maybeNext = this.next(xNext)
     val next:ParseLeaf = if (maybeNext.isEmpty) new ParseLeaf(xNext +: observed, currentEquivalenceClass, Option(this)) else maybeNext.get
     if (maybeNext.isEmpty) children += next
     next
   }
 
   /** to find node BAC, we traverse the tree from NULL -> B -> A -> C. Thus, from node BA, we search for C. */
-  def nextObservation(xNext: Char):Option[ParseLeaf] = children.find(_.observation == xNext)
+  override def next(xNext: Char):Option[ParseLeaf] = children.find(_.observation == xNext)
 
   def fullString: String = {
     val vec = distribution.toArray.mkString("(", ", ", ")")
