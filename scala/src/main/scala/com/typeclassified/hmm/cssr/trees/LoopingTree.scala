@@ -1,6 +1,7 @@
 package com.typeclassified.hmm.cssr.trees
 
 import breeze.linalg.DenseVector
+import com.typeclassified.hmm.cssr.CSSR.Terminal
 import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
 import com.typeclassified.hmm.cssr.shared.EmpiricalDistribution
 
@@ -104,16 +105,48 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
   var terminals:Set[LLeaf] = HashSet()
 
   def this(ptree: ParseTree) = {
-    this(ptree.alphabet, new LLeaf(ptree.root.observation, List(ptree.root)))
+    this(ptree.alphabet, new LLeaf(ptree.root.observed, Set(ptree.root)))
     terminals = terminals + root
   }
 
-  def navigateLoopingPath(history: Iterable[Char]):Option[LoopingTree.Node] = navigateLoopingPath(history, Some(Left(root)), _.head, _.tail)
+  def navigateLoopingPath(history: String):Option[LoopingTree.Node] = {
+    print("navigating: " + history)
+    navigateLoopingPath(history, Some(Left(root)), _.last, _.init)
+  }
 
-  def navigateLoopingPath(history: Iterable[Char], active:Option[LoopingTree.Node], current:(Iterable[Char])=>Char, prior:(Iterable[Char])=>Iterable[Char]): Option[LoopingTree.Node] = {
-    if (history.isEmpty) active else {
+  def navigateLoopingPath(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String): Option[LoopingTree.Node] = {
+    if (history.isEmpty) {
+      println(": " + active.toString)
+      active
+    } else {
       val next = active.flatMap { node => LoopingTree.getLeaf(node).nextLeaf(current(history)) }
       navigateLoopingPath(prior(history), next, current, prior)
+    }
+  }
+
+  def navigateToTerminal(history: String, terminals:Set[Terminal]): Option[LLeaf] = {
+    print("navigating TERMINAL: " + history)
+    navigateToTerminal(history, Some(Left(root)), _.last, _.init, terminals)
+  }
+
+  def navigateToTerminal(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String, terminals:Set[Terminal]): Option[LLeaf] = {
+    val nextLeaf = active.flatMap { node => Option(LoopingTree.getLeaf(node)) }
+    val nextNode = nextLeaf.flatMap { leaf => if (history.isEmpty) None else leaf.nextLeaf(current(history)) }
+    if (nextNode.isEmpty) {
+      println(": " + nextLeaf.toString)
+      val asTerminal = nextLeaf.filter(terminals.contains)
+      if (asTerminal.nonEmpty) {
+        asTerminal
+      } else {
+        val attemptAtTerminal = nextLeaf.flatMap(_.terminalReference)
+        if (attemptAtTerminal.nonEmpty) {
+          attemptAtTerminal
+        } else {
+          nextLeaf
+        }
+      }
+    } else {
+      navigateToTerminal(prior(history), nextNode, current, prior, terminals)
     }
   }
 }
@@ -130,7 +163,7 @@ class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {
 
 }
 
-class LLeaf(observation:Char, seededHistories:List[ParseLeaf] = List(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (observation, parent) with EmpiricalDistribution {
+class LLeaf(val observed:String, seededHistories:Set[ParseLeaf] = Set(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (if ("".equals(observed)) 0.toChar else observed.head, parent) with EmpiricalDistribution {
   histories = seededHistories
   recalculateHists(histories)
 
@@ -138,7 +171,7 @@ class LLeaf(observation:Char, seededHistories:List[ParseLeaf] = List(), parent:O
 
   var edgeSet:Option[EdgeSet] = None
 
-  def this(p: ParseLeaf) = this(p.observation, List(p), None)
+  def this(p: ParseLeaf) = this(p.observed, Set(p), None)
 
   override def getChildren():Iterable[LLeaf] = LoopingTree.leafChildren(children)
 
@@ -150,7 +183,7 @@ class LLeaf(observation:Char, seededHistories:List[ParseLeaf] = List(), parent:O
   override def toString():String = {
     val hists = histories.map(_.observed).mkString("[", ",", "]")
     val dist = rounded.toArray.mkString("[", ",", "]")
-    s"{rounded:$dist, size: ${histories.size}, histories: $hists}"
+    s"{$observed, rounded:$dist, size: ${histories.size}, histories: $hists}"
   }
 
   // temp debugging purposes

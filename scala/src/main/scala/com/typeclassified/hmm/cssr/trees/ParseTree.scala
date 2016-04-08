@@ -124,6 +124,7 @@ class ParseTree(val alphabet: Alphabet) extends Tree[ParseLeaf](new ParseLeaf(""
   * @param observed a sequence of observed values.
   **/
 class ParseLeaf(val observed:String, parent: Option[ParseLeaf] = None) extends Leaf[ParseLeaf] (if ("".equals(observed)) 0.toChar else observed.head, parent) {
+
   var obsCount:Double = 1
 
   val length: Int = observed.length
