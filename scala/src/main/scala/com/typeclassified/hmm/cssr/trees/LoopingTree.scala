@@ -124,29 +124,36 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
     }
   }
 
+  def navigateToLLeaf(history: String):Option[LLeaf] = navigateToLLeaf(history, Some(Left(root)), _.last, _.init)
+
+  def navigateToLLeaf(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String): Option[LLeaf] = {
+    val nextLeaf = active.flatMap { node => Option(LoopingTree.getLeaf(node)) }
+    val nextNode = nextLeaf.flatMap { leaf => if (history.isEmpty) None else leaf.nextLeaf(current(history)) }
+    if (nextNode.isEmpty) {
+      println(": " + nextLeaf.toString)
+      nextLeaf
+    } else {
+      navigateToLLeaf(prior(history), nextNode, current, prior)
+    }
+  }
+
   def navigateToTerminal(history: String, terminals:Set[Terminal]): Option[LLeaf] = {
     print("navigating TERMINAL: " + history)
     navigateToTerminal(history, Some(Left(root)), _.last, _.init, terminals)
   }
 
   def navigateToTerminal(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String, terminals:Set[Terminal]): Option[LLeaf] = {
-    val nextLeaf = active.flatMap { node => Option(LoopingTree.getLeaf(node)) }
-    val nextNode = nextLeaf.flatMap { leaf => if (history.isEmpty) None else leaf.nextLeaf(current(history)) }
-    if (nextNode.isEmpty) {
-      println(": " + nextLeaf.toString)
-      val asTerminal = nextLeaf.filter(terminals.contains)
-      if (asTerminal.nonEmpty) {
-        asTerminal
-      } else {
-        val attemptAtTerminal = nextLeaf.flatMap(_.terminalReference)
-        if (attemptAtTerminal.nonEmpty) {
-          attemptAtTerminal
+
+    val maybeLLeaf = navigateToLLeaf(history, active, current, prior)
+
+    maybeLLeaf.flatMap {
+      lastLeaf => {
+        if (terminals.contains(lastLeaf)) {
+          Option(lastLeaf)
         } else {
-          nextLeaf
+          Option(lastLeaf.terminalReference.getOrElse(lastLeaf /* perhaps this should be None */))
         }
       }
-    } else {
-      navigateToTerminal(prior(history), nextNode, current, prior, terminals)
     }
   }
 }
