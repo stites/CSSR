@@ -163,6 +163,7 @@ object CSSR extends Logging {
           val w = tNode.path().mkString
           ltree.alphabet.raw.map(a => (tNode, w + a))
         } )
+        .filter { case (term, wa) => term.distribution(ltree.alphabet.map(wa.last)) > 0 }
 
       stillDirty = toCheck
         .foldLeft(false){
