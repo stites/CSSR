@@ -30,7 +30,7 @@ object CSSR extends Logging {
     val (allStates, transitions, stateMap) = statesAndTransitions(tree, looping)
     // with the looping tree "grown", we now need to collect histories within each state so that we can later examine our distribution
     collect(tree, looping, tree.maxLength, allStates.toSet, stateMap)
-    allStates.foreach(_.pruneHistories(tree.maxLength - 1))
+    allStates.foreach(_.pruneHistories(tree.maxLength))
 
     val finalStates = new AllStates(allStates, transitions)
     val machine = new Machine(finalStates, tree)
