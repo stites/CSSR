@@ -168,20 +168,18 @@ object CSSR extends Logging {
       stillDirty = toCheck
         .foldLeft(false){
           case (isDirty:Boolean, (t:Terminal, wa:wa)) => {
-            val foundNode:Option[LLeaf] = ltree
-              // navigate the looping tree.
-              .navigateLoopingPath(wa)
-              // pull out which leaf we have ended up at
-              .flatMap { l => Option(LoopingTree.getLeaf(l)) }
-              // check to see if this leaf is not a terminal leaf
-              .find{ l => !ltree.terminals.contains(l) }
-              // if not, we will paint this sub-tree with the origin t-node distribution
-              .map { subLeaf => {
-              ltree.collectLeaves(ListBuffer(subLeaf)).foreach(_.refineWith(t))
-              subLeaf
-            } }
+            // navigate the looping tree, stopping at terminal nodes
+            val foundLLeaf = ltree.navigateToLLeaf(wa)
+            // check to see if this leaf is _not_ a terminal leaf
+            val noTerm = foundLLeaf.find{ l => !ltree.terminals.contains(l) }
 
-            isDirty || foundNode.nonEmpty // if all of the above did work, then a node exists we need to raise this flag
+            // if not, we will paint this sub-tree with the origin t-node distribution
+            noTerm.foreach {
+              subLeaf => ltree.collectLeaves(ListBuffer(subLeaf)).foreach(_.refineWith(t))
+            }
+
+            // if all of the above did work, then a node exists we need to raise this flag
+            isDirty || noTerm.nonEmpty
           } }
 
     } while (stillDirty)
