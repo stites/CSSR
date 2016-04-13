@@ -172,11 +172,11 @@ class ParseLeaf(val observed:String, parent: Option[ParseLeaf] = None) extends L
   override def next(xNext: Char):Option[ParseLeaf] = children.find(_.observation == xNext)
 
   def fullString: String = {
-    val vec = distribution.toArray.mkString("(", ", ", ")")
+    val vec = round(distribution).toArray.mkString("(", ", ", ")")
     val id = s"${getClass.getSimpleName}@${hashCode()}"
     val nTabs = if (observed.length < 4) 3 else 2
 
-    val props = s"{dist=$vec,\tobservation=${observation.toString},\ttotal=${sum(frequency)}}"
+    val props = s"{rDist=$vec,\tobservation=${observation.toString},\ttotal=${sum(frequency)}}"
     observed + "\t" * 1 + id + "\t" + props
   }
 

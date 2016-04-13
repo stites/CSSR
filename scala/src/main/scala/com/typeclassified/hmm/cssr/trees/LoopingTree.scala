@@ -188,9 +188,9 @@ class LLeaf(val observed:String, seededHistories:Set[ParseLeaf] = Set(), parent:
   override def next(c: Char): Option[LLeaf] = children.get(c).flatMap { node => Some(LoopingTree.getLeaf(node)) }
 
   override def toString():String = {
-    val hists = histories.map(_.observed).mkString("[", ",", "]")
-    val dist = rounded.toArray.mkString("[", ",", "]")
-    s"{$observed, rounded:$dist, size: ${histories.size}, histories: $hists}"
+    val rDist = rounded.toArray.mkString("[", ",", "]")
+    val nChildren = children.keys.size
+    s"{$observed, rounded:$rDist, size: ${histories.size}, children: $nChildren}"
   }
 
   // temp debugging purposes

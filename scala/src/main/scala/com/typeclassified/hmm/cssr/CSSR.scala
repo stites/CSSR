@@ -39,6 +39,11 @@ object CSSR extends Logging {
       .out(if (config.out) null else config.dataFile)
   }
 
+  def printParse(parseLeaf: ParseLeaf, nTabs:Int = 0): Unit = {
+    println("\t" * nTabs + parseLeaf.toString)
+    parseLeaf.children.foreach(this.printParse(_, nTabs+1))
+  }
+
   def statesAndTransitions(parse:ParseTree, looping: LoopingTree):(Iterable[State], StateToStateTransitions, Map[Terminal, State]) = {
     val stateMap:Map[Terminal, State] = looping.terminals.map{ t => t -> new State(t)}.toMap
     val allStates:Iterable[State] = stateMap.values
@@ -169,9 +174,9 @@ object CSSR extends Logging {
         .foldLeft(false){
           case (isDirty:Boolean, (t:Terminal, wa:wa)) => {
             // navigate the looping tree, stopping at terminal nodes
-            val foundLLeaf = ltree.navigateToLLeaf(wa)
+            val foundTerminal = ltree.navigateToTerminal(wa, ltree.terminals)
             // check to see if this leaf is _not_ a terminal leaf
-            val noTerm = foundLLeaf.find{ l => !ltree.terminals.contains(l) }
+            val noTerm = foundTerminal.find{ l => !ltree.terminals.contains(l) }
 
             // if not, we will paint this sub-tree with the origin t-node distribution
             noTerm.foreach {
