@@ -190,17 +190,51 @@ object CSSR extends Logging {
         .foldLeft(false){
           case (isDirty:Boolean, (t:Terminal, wa:wa)) => {
             // navigate the looping tree, stopping at terminal nodes
-            val foundTerminal = ltree.navigateToTerminal(wa, ltree.terminals)
+            val foundLeaf = ltree.navigateToLLeafButStopAtLoops(wa)
             // check to see if this leaf is _not_ a terminal leaf
-            val noTerm = foundTerminal.find{ l => !ltree.terminals.contains(l) }
+            val nonTerminating = foundLeaf.find{ l => !ltree.terminals.contains(l) }
+
+            // if we find a "terminal-looping" node (ie- any looping node) that is not a terminal node:
+            //   | if it loops to a terminal node: merge this node into the terminal node
+            //   | else: make its value a terminal node
+            // if we find a "terminal-edgeSet" node: merge this node into the terminal node
+            // FIXME: currently, we actually skip edgesets and don't count them as an "LLeaf"
+            //
+            // if either of the above return None, else we have a sub-looping-tree and return Some.
+            val foundLoop = nonTerminating
+              .find { _.isInstanceOf[Loop] }
+              .flatMap {
+                case (loop:Loop) => {
+                  // if it is not a terminal node: make it a terminal node
+                  if (loop.value.terminalReference.isEmpty && !ltree.terminals.contains(loop)) {
+                    // FIXME: merge the loop's empirical observations as well - but maybe we should do this above...
+                    // ...at any rate, the loop is all we need to prototype this.
+                    loop.value.terminalReference = Option(loop)
+                    ltree.terminals ++= Set(loop)
+                    Option(loop.value)
+                  } else if (loop.value.terminalReference.nonEmpty) {
+                    // merge this node into the terminal node
+                    loop.value.terminalReference.get.addHistories(loop.histories)
+                    loop.terminalReference = loop.value.terminalReference
+                    None
+                  } else {
+                    None
+                  }
+                }
+                case _ => None
+              }
 
             // if not, we will paint this sub-tree with the origin t-node distribution
-            noTerm.foreach {
-              subLeaf => ltree.collectLeaves(ListBuffer(subLeaf)).foreach(_.refineWith(t))
-            }
+            (if (foundLoop.nonEmpty) foundLoop else nonTerminating)
+              .foreach {
+                subLeaf => ltree
+                  .collectLeaves(ListBuffer(subLeaf))    // ignores edgeSets and loops
+                  .filterNot{ ltree.terminals.contains } // terminal nodes cannot be overwritten
+                  .foreach{ _.refineWith(t) }
+              }
 
             // if all of the above did work, then a node exists we need to raise this flag
-            isDirty || noTerm.nonEmpty
+            isDirty || foundLoop.nonEmpty || (nonTerminating.nonEmpty && !nonTerminating.get.isInstanceOf[Loop])
           } }
 
     } while (stillDirty)

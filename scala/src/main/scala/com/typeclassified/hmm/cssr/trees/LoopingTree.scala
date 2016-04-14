@@ -57,13 +57,19 @@ object LoopingTree {
 
   def leafChildren(lleaves:Iterable[(Char, Node)]):Iterable[LLeaf] = lleaves.toMap.values.foldLeft(List[LLeaf]()){
     case (list, Left(a)) => list :+ a
-    case (list, Right(a)) => list
+    case (list, _) => list
+  }
+
+  def lleafChildren(lleaves:Iterable[(Char, Node)]):Iterable[LLeaf] = lleaves.toMap.values.foldLeft(List[LLeaf]()){
+    case (list, Left(a)) => list :+ a
+    case (list, Right(Left(a))) => list :+ a
+    case (list, Right(Right(a))) => list
   }
 
   type AltNode = Either[Loop, EdgeSet]
   type Node = Either[LLeaf, AltNode]
 
-  def findLoop(lleaf:LLeaf):Option[Loop] = Tree.firstExcisable(lleaf).flatMap( l => Some(new Loop(l)) )
+  def findLoop(lleaf:LLeaf):Option[Loop] = Tree.firstExcisable(lleaf).flatMap( l => Some(new Loop(l, lleaf)) )
 
   def findEdgeSet(ltree: LoopingTree, lleaf: LLeaf):Option[EdgeSet] = {
     val terminals = ltree.terminals -- Tree.getAncestorsRecursive(lleaf).toSet[LLeaf]
@@ -137,6 +143,49 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
     }
   }
 
+
+  def navigateToLLeafButStopAtLoops(history: String):Option[LLeaf] = {
+    print("navigating to LLeaf but stopping at loops: " + history)
+    navigateToLLeafButStopAtLoops(history, Some(Left(root)), _.last, _.init)
+  }
+
+  def navigateToLLeafButStopAtLoops(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String): Option[LLeaf] = {
+    val nextLeaf = active.flatMap { node => Option(LoopingTree.getLeaf(node)) }
+    val nextNode = nextLeaf.flatMap { leaf => if (history.isEmpty) None else leaf.nextLeaf(current(history)) }
+    if (nextNode.isEmpty) {
+      val possibleloopOrLeaf = active.flatMap {
+        case Right(Left(node)) => Option(node)
+        case Right(Right(node)) => None // ignore edgesets for now
+        case node => Option(LoopingTree.getLeaf(node))
+      }
+
+      println(": " + possibleloopOrLeaf.toString)
+      possibleloopOrLeaf
+    } else {
+      navigateToLLeafButStopAtLoops(prior(history), nextNode, current, prior)
+    }
+  }
+
+  def navigateToCollectedTerminal(history: String, terminals:Set[Terminal]): Option[LLeaf] = {
+    print("navigating TERMINAL: " + history)
+    navigateToCollectedTerminal(history, Some(Left(root)), _.last, _.init, terminals)
+  }
+
+  def navigateToCollectedTerminal(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String, terminals:Set[Terminal]): Option[LLeaf] = {
+
+    val maybeLLeaf = navigateLoopingPath(history, active, current, prior)
+
+    maybeLLeaf.flatMap {
+      case Left(lleaf) => if (terminals.contains(lleaf)) Option(lleaf) else lleaf.terminalReference
+      case Right(Right(edgeSet)) => edgeSet.edges.headOption
+      case Right(Left(loop)) => {
+        if (terminals.contains(loop)) Option(loop) else {
+          (if (loop.terminalReference.nonEmpty) loop else loop.value).terminalReference
+        }
+      }
+    }
+  }
+
   def navigateToTerminal(history: String, terminals:Set[Terminal]): Option[LLeaf] = {
     print("navigating TERMINAL: " + history)
     navigateToTerminal(history, Some(Left(root)), _.last, _.init, terminals)
@@ -144,7 +193,7 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
 
   def navigateToTerminal(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String, terminals:Set[Terminal]): Option[LLeaf] = {
 
-    val maybeLLeaf = navigateToLLeaf(history, active, current, prior)
+    val maybeLLeaf = navigateToLLeafButStopAtLoops(history, active, current, prior)
 
     maybeLLeaf.flatMap {
       lastLeaf => {
@@ -163,7 +212,12 @@ abstract class LoopWrapper(val value:LLeaf) {
   override def toString: String = getClass.getSimpleName + "(" + value.toString() + ")"
 }
 
-class Loop (loop: LLeaf) extends LoopWrapper(loop) {
+class Loop(val value: LLeaf, observed:String, seededHistories:Set[ParseLeaf] = Set(), parent:Option[LLeaf] = None) extends LLeaf(observed, seededHistories, parent) {
+  def this(value:LLeaf, origin:LLeaf) = this(value, origin.observed, origin.histories, origin.parent)
+
+  var asTerminal:Option[LLeaf] = None
+
+  override def toString: String = getClass.getSimpleName + "(" + value.toString() + ")"
 }
 
 class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {
@@ -180,7 +234,7 @@ class LLeaf(val observed:String, seededHistories:Set[ParseLeaf] = Set(), parent:
 
   def this(p: ParseLeaf) = this(p.observed, Set(p), None)
 
-  override def getChildren():Iterable[LLeaf] = LoopingTree.leafChildren(children)
+  override def getChildren():Iterable[LLeaf] = LoopingTree.lleafChildren(children)
 
   def nextLeaf(c: Char): Option[LoopingTree.Node] = children.get(c)
 
