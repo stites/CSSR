@@ -144,45 +144,49 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
   }
 
 
-  def navigateToLLeafButStopAtLoops(history: String):Option[LLeaf] = {
-    print("navigating to LLeaf but stopping at loops: " + history)
-    navigateToLLeafButStopAtLoops(history, Some(Left(root)), _.last, _.init)
+  def navigateToLLeafButStopAtLoops(history: String, terminals:Set[Terminal]):Option[LLeaf] = {
+    print("navigating to LLeaf but stopping at loops and terms: " + history)
+    navigateToLLeafButStopAtLoops(history, Some(Left(root)), _.last, _.init, Option(terminals))
   }
 
-  def navigateToLLeafButStopAtLoops(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String): Option[LLeaf] = {
-    val nextLeaf = active.flatMap { node => Option(LoopingTree.getLeaf(node)) }
-    val nextNode = nextLeaf.flatMap { leaf => if (history.isEmpty) None else leaf.nextLeaf(current(history)) }
-    if (nextNode.isEmpty) {
-      val possibleloopOrLeaf = active.flatMap {
-        case Right(Left(node)) => Option(node)
-        case Right(Right(node)) => None // ignore edgesets for now
-        case node => Option(LoopingTree.getLeaf(node))
-      }
+  def navigateToLLeafButStopAtLoops(history: String):Option[LLeaf] = {
+    print(s"navigating to LLeaf but stopping at loops: " + history)
+    navigateToLLeafButStopAtLoops(history, Some(Left(root)), _.last, _.init, None)
+  }
 
-      println(": " + possibleloopOrLeaf.toString)
-      possibleloopOrLeaf
-    } else {
-      navigateToLLeafButStopAtLoops(prior(history), nextNode, current, prior)
+  def isTerminal(terminals:Option[Set[Terminal]])(node:LoopingTree.Node):Boolean = {
+    if (terminals.isEmpty) false else {
+      val fromTerminals = isTerminal(terminals.get)(_)
+
+      node match {
+        case Left(lleaf) => fromTerminals(lleaf)
+        case Right(Left(loop)) => fromTerminals(loop)
+        case Right(Right(edgeSet)) => fromTerminals(edgeSet.edges.head)
+      }
     }
   }
 
-  def navigateToCollectedTerminal(history: String, terminals:Set[Terminal]): Option[LLeaf] = {
-    print("navigating TERMINAL: " + history)
-    navigateToCollectedTerminal(history, Some(Left(root)), _.last, _.init, terminals)
-  }
+  def isTerminal(terminals:Set[Terminal])(lleaf:LLeaf):Boolean = terminals.nonEmpty && terminals.contains(lleaf)
 
-  def navigateToCollectedTerminal(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String, terminals:Set[Terminal]): Option[LLeaf] = {
+  def navigateToLLeafButStopAtLoops(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String, terminals:Option[Set[Terminal]]): Option[LLeaf] = {
+    val isTerminalPredicate = isTerminal(terminals)(_)
+    val nextLeaf = active.flatMap { node => Option(LoopingTree.getLeaf(node)) }
+    val nextNode = nextLeaf.flatMap { leaf => if (history.isEmpty) None else leaf.nextLeaf(current(history)) }
+    val nextNodeIsTerminal = nextNode.exists{ isTerminalPredicate }
 
-    val maybeLLeaf = navigateLoopingPath(history, active, current, prior)
-
-    maybeLLeaf.flatMap {
-      case Left(lleaf) => if (terminals.contains(lleaf)) Option(lleaf) else lleaf.terminalReference
-      case Right(Right(edgeSet)) => edgeSet.edges.headOption
-      case Right(Left(loop)) => {
-        if (terminals.contains(loop)) Option(loop) else {
-          (if (loop.terminalReference.nonEmpty) loop else loop.value).terminalReference
-        }
+    if (nextNode.isEmpty || nextNodeIsTerminal) {
+      val possibleloopOrLeaf = active.flatMap {
+        case Right(Left(node)) => Option(node)
+        case Right(Right(edgeSet)) => edgeSet.edges.headOption
+        case node => Option(LoopingTree.getLeaf(node))
       }
+
+      val result:Option[LLeaf] = if (nextNodeIsTerminal) nextNode.map{LoopingTree.getLeaf} else possibleloopOrLeaf
+
+      println(": " + result.toString)
+      result
+    } else {
+      navigateToLLeafButStopAtLoops(prior(history), nextNode, current, prior, terminals)
     }
   }
 
@@ -193,18 +197,21 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
 
   def navigateToTerminal(history: String, active:Option[LoopingTree.Node], current:(String)=>Char, prior:(String)=>String, terminals:Set[Terminal]): Option[LLeaf] = {
 
-    val maybeLLeaf = navigateToLLeafButStopAtLoops(history, active, current, prior)
+    val maybeLLeaf = navigateToLLeafButStopAtLoops(history, active, current, prior, Some(terminals))
 
     maybeLLeaf.flatMap {
       lastLeaf => {
         if (terminals.contains(lastLeaf)) {
           Option(lastLeaf)
         } else {
-          Option(lastLeaf.terminalReference.getOrElse(lastLeaf /* perhaps this should be None */))
+          // Option(lastLeaf.terminalReference.getOrElse(None /* perhaps this should be lastLeaf */))
+          lastLeaf.terminalReference
         }
       }
     }
   }
+
+  def collectLeaves(loops:Iterable[Loop]):Array[LLeaf] = loops.toArray ++ collectLeaves(loops.map(_.value))
 }
 
 // a simple abstract marker class for a looping tree's Loops and Edges
@@ -217,7 +224,7 @@ class Loop(val value: LLeaf, observed:String, seededHistories:Set[ParseLeaf] = S
 
   var asTerminal:Option[LLeaf] = None
 
-  override def toString: String = getClass.getSimpleName + "(" + value.toString() + ")"
+  override def toString: String = s"""Loop{$observed, Loop(${value.toString})}"""
 }
 
 class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {

@@ -29,6 +29,7 @@ object CSSR extends Logging {
 
     val (allStates, transitions, stateMap) = statesAndTransitions(tree, looping)
     // with the looping tree "grown", we now need to collect histories within each state so that we can later examine our distribution
+
     collect(tree, looping, tree.maxLength, allStates.toSet, stateMap)
     allStates.foreach(_.pruneHistories(tree.maxLength))
 
@@ -201,7 +202,7 @@ object CSSR extends Logging {
             // FIXME: currently, we actually skip edgesets and don't count them as an "LLeaf"
             //
             // if either of the above return None, else we have a sub-looping-tree and return Some.
-            val foundLoop = nonTerminating
+            val foundLoop:Option[(Terminal, Boolean)] = nonTerminating
               .find { _.isInstanceOf[Loop] }
               .flatMap {
                 case (loop:Loop) => {
@@ -211,12 +212,13 @@ object CSSR extends Logging {
                     // ...at any rate, the loop is all we need to prototype this.
                     loop.value.terminalReference = Option(loop)
                     ltree.terminals ++= Set(loop)
-                    Option(loop.value)
+                    Option((loop, true))
                   } else if (loop.value.terminalReference.nonEmpty) {
                     // merge this node into the terminal node
-                    loop.value.terminalReference.get.addHistories(loop.histories)
-                    loop.terminalReference = loop.value.terminalReference
-                    None
+                    val terminal = loop.value.terminalReference.get
+                    terminal.addHistories(loop.histories)
+                    loop.terminalReference = Some(terminal)
+                    Option((terminal, false))
                   } else {
                     None
                   }
@@ -224,18 +226,26 @@ object CSSR extends Logging {
                 case _ => None
               }
 
-            // if not, we will paint this sub-tree with the origin t-node distribution
-            (if (foundLoop.nonEmpty) foundLoop else nonTerminating)
+            val refiningLoop = foundLoop.flatMap {
+              case (loop, true) => Some(loop)
+              case (_, false) => None
+            }
+
+            val refiningTerminal = if (foundLoop.nonEmpty) refiningLoop else nonTerminating
+
+            // if not, we will paint this sub-tree with the t-node distribution
+            refiningTerminal
               .foreach {
                 subLeaf => ltree
-                  .collectLeaves(ListBuffer(subLeaf))    // ignores edgeSets and loops
-                  .filterNot{ ltree.terminals.contains } // terminal nodes cannot be overwritten
-                  .foreach{ _.refineWith(t) }
+                  .collectLeaves(ListBuffer(subLeaf)) // ignores edgeSets
+                  .filterNot { ltree.terminals.contains } // terminal nodes cannot be overwritten
+                  .foreach { _.refineWith(refiningTerminal.get) }
               }
 
             // if all of the above did work, then a node exists we need to raise this flag
-            isDirty || foundLoop.nonEmpty || (nonTerminating.nonEmpty && !nonTerminating.get.isInstanceOf[Loop])
-          } }
+            isDirty || refiningLoop.nonEmpty || (nonTerminating.nonEmpty && !nonTerminating.get.isInstanceOf[Loop])
+          }
+        }
 
     } while (stillDirty)
   }
