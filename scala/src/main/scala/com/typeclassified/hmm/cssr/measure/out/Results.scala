@@ -21,13 +21,15 @@ class Results ( val config: Config,
         |""".stripMargin
 
   protected val dotMeta:String =
-    s"""digraph ${config.dataFile.getCanonicalPath} {
+    s"""digraph "${config.dataFile.getCanonicalPath}" {
         |size = \"6,8.5\";
         |ratio = \"fill\";
         |node [shape = circle];
         |node [fontsize = 24];
         |edge [fontsize = 24];
         |""".stripMargin
+
+  def idxAsStr(i:Int):String = String.valueOf(i).map(c => (c.toInt + 17).toChar)
 
   val dotInfo: String = dotMeta + allStates.states
     .zipWithIndex
@@ -39,10 +41,10 @@ class Results ( val config: Config,
           .foldLeft[String]("") {
           case (memo, (prob, k)) if prob <= 0 => memo
           case (memo, (prob, k)) =>
-            memo + s"""$i -> $k [label = "${alphabet.raw(k)}: ${"%.7f".format(prob)}"];\n"""
+            memo + s"""${idxAsStr(i)} -> ${idxAsStr(k)} [label = "${alphabet.raw(k)}: ${"%.7f".format(prob)}"];\n"""
         }
     }
-    .reduceLeft(_+_) + "\n"
+    .reduceLeft(_+_) + "}\n\n"
 
   val measurements: String =
     s"""Results
@@ -63,9 +65,9 @@ class Results ( val config: Config,
     .map {
       case (eqClass, i) =>
         val transitions = allStates.transitions(i)
-          .map{ case (c, s) => c -> s.flatMap{ s=> Option("State " + allStates.stateMap(s))} }
+          .map{ case (c, s) => c -> s.flatMap{ s=> Option("State " + idxAsStr(allStates.stateMap(s)))} }
 
-        s"State $i:\n" +
+        s"State ${idxAsStr(i)}:\n" +
           eqClass.histories.toArray.sortBy(_.observed).map{_.toString}.mkString("\n") +
           s"""
              |Probability Dist: ${eqClass.distribution.toString()}
