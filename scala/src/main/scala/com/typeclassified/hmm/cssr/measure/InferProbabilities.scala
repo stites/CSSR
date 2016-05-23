@@ -16,7 +16,7 @@ object InferProbabilities extends Logging {
   def inferredDistribution(tree: ParseTree, depth:Int, allStates: AllStates):InferredDistribution = {
     val inferred = tree
       .getDepth(depth)
-      .map { h => (h , inferredHistory(h.observed, tree, allStates) ) }
+      .map { h => (h, inferredHistory(h.observed, tree, allStates) ) }
 
     debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
     debug(s"inferred distribution size: ${inferred.length}")
@@ -49,7 +49,7 @@ object InferProbabilities extends Logging {
               isNullState = isNullState || transitionState.isEmpty
 
               if (isNullState) {
-                0d
+                0d /// FIXME: because there exists a null states within misuriwicz (history lengths are too long?), this is currently destroying results
               } else {
                 currentStateIdx  = allStates.states.zipWithIndex.find(_._1 == transitionState.get).get._2
                 val totalPerStateCached = characterTotalPerState * currentState.distribution(tree.alphabet.map(c))
