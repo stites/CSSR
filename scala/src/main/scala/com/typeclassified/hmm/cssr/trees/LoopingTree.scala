@@ -101,7 +101,7 @@ object LoopingTree {
 
   def getLeaf(node:LoopingTree.Node):LLeaf = node match {
     case Left(lnode) => lnode
-    case Right(Right(edgeset)) => edgeset.value
+    case Right(Right(es)) => if (es.edges.nonEmpty) es.edges.head else es.value
     case Right(Left(loop)) => loop.value
   }
 }
