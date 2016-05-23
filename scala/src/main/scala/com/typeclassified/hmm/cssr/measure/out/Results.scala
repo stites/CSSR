@@ -44,8 +44,11 @@ class Results ( val config: Config,
           case (memo, (prob, k)) if prob <= 0 => memo
           case (memo, (prob, k)) =>
             val symbol:Char = alphabet.raw(k)
-            val tState:Int = allStates.stateMap(sTransitions(symbol).get) // At this point, get _must_ be safe
-            memo + s"""${idxAsStr(i)} -> ${idxAsStr(tState)} [label = "$symbol: ${"%.7f".format(prob)}"];\n"""
+            sTransitions(symbol) match {
+              case None => memo
+              case Some(transition) =>
+                memo + s"""${idxAsStr(i)} -> ${idxAsStr(allStates.stateMap(transition))} [label = "$symbol: ${"%.7f".format(prob)}"];\n"""
+            }
         }
     }
     .reduceLeft(_+_) + "}\n\n"
