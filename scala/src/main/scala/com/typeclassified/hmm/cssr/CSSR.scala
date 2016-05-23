@@ -47,17 +47,33 @@ object CSSR extends Logging {
   def statesAndTransitions(parse:ParseTree, looping: LoopingTree):(Iterable[State], StateToStateTransitions, Map[Terminal, State]) = {
     val stateMap:Map[Terminal, State] = looping.terminals.map{ t => t -> new State(t)}.toMap
     val allStates:Iterable[State] = stateMap.values
-    val transitions = mapTransitions(stateMap, parse, looping)
+    val transitions = mapTransitions(looping, stateMap)
     (allStates, transitions, stateMap)
   }
 
-  def mapTransitions(stateMap: Map[Terminal, State], pTree: ParseTree, loopingTree: LoopingTree):StateToStateTransitions = stateMap.values.map {
-    s => s -> s.histories.map {
-      h => pTree.alphabet.raw
-        .map { c => c -> loopingTree.navigateToTerminal(h.observed + c, stateMap.keySet) }.toMap // we are already getting terminal references here
-        .mapValues { mNode => mNode.flatMap { node => stateMap.get(node) } }
-    }.head
-  }.toMap
+  def pathToState(ltree: LoopingTree, terminal: Terminal, char: Char, stateMap:Map[Terminal, State]): Option[State] = {
+    val wa = terminal.path().mkString + char
+    if (terminal.distribution(ltree.alphabet.map(wa.last)) == 0) None else {
+      ltree
+        .navigateToTerminal(wa, ltree.terminals)
+        .flatMap(t => if (stateMap.contains(t)) Option(stateMap(t)) else None)
+    }
+  }
+
+  def mapTransitions(ltree:LoopingTree, stateMap: Map[Terminal, State]):StateToStateTransitions = {
+    val mappings: Map[State, Map[Char, Option[State]]] = stateMap.toArray
+      .map{ case (tNode, state) => {
+        val tStates:Map[Char, Option[State]] = ltree
+          .alphabet
+          .raw
+          .map { a => a -> pathToState(ltree, tNode, a, stateMap) }
+          .toMap
+        state -> tStates
+      } }
+      .toMap
+    // primarily for debugging
+    mappings
+  }
 
   def initialization(config: Config):ParseTree = {
     val alphabetSrc: BufferedSource = Source.fromFile(config.alphabetFile)

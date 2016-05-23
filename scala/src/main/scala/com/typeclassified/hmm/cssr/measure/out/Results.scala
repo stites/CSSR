@@ -3,6 +3,7 @@ package com.typeclassified.hmm.cssr.measure.out
 import java.io._
 
 import _root_.com.typeclassified.hmm.cssr.cli.Config
+import com.typeclassified.hmm.cssr.CSSR.TransitionState
 import com.typeclassified.hmm.cssr.parse.Alphabet
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine}
 import com.typeclassified.hmm.cssr.trees.ParseTree
@@ -29,19 +30,22 @@ class Results ( val config: Config,
         |edge [fontsize = 24];
         |""".stripMargin
 
-  def idxAsStr(i:Int):String = String.valueOf(i).map(c => (c.toInt + 17).toChar)
+  def idxAsStr(i:Int):String = String.valueOf(i)//.map(c => (c.toInt + 17).toChar)
 
   val dotInfo: String = dotMeta + allStates.states
     .zipWithIndex
     .map {
       case (state, i) =>
+        val sTransitions:Map[Char, TransitionState] = allStates.transitionMap(state)
         state.distribution
           .toArray
           .view.zipWithIndex
           .foldLeft[String]("") {
           case (memo, (prob, k)) if prob <= 0 => memo
           case (memo, (prob, k)) =>
-            memo + s"""${idxAsStr(i)} -> ${idxAsStr(k)} [label = "${alphabet.raw(k)}: ${"%.7f".format(prob)}"];\n"""
+            val symbol:Char = alphabet.raw(k)
+            val tState:Int = allStates.stateMap(sTransitions(symbol).get) // At this point, get _must_ be safe
+            memo + s"""${idxAsStr(i)} -> ${idxAsStr(tState)} [label = "$symbol: ${"%.7f".format(prob)}"];\n"""
         }
     }
     .reduceLeft(_+_) + "}\n\n"
