@@ -6,6 +6,7 @@ case class Config (alphabetFile: File = new File("."),
                    dataFile: File = new File("."),
                    lMax: Int = Parser.lMaxDefault,
                    sig: Double = Parser.sigDefault,
+                   stateLabels: Boolean = Parser.stateLabelsDefault,
                    out: Boolean = Parser.outDefault,
                    debug: Boolean = false
                   ) {

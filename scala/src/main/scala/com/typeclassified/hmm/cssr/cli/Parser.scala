@@ -20,6 +20,10 @@ object Parser {
   val out         = "out"
   val outDefault  = false
 
+  // Give states alphabetic labels
+  val stateLabels        = "stateLabels"
+  val stateLabelsDefault = true
+
   val file = "[file]"
   val value = "[value]"
 
@@ -49,6 +53,10 @@ object Parser {
       .action { (x,c) => c.copy(sig = x) }
       .validate { x => if (x > 0 && x < 1) success else failure(s"Value <$sig> must be > 0 && < 1") }
       .text(s"$sig is the significance level used for hypothesis testing. Defaults to $sigDefault")
+
+    opt[Unit](Parser.stateLabels.head, Parser.stateLabels)
+      .action { (_,c) => c.copy(stateLabels = true) }
+      .text(s"$stateLabels will flag whether or not states will be alphabetically labelled. Defaults to $outDefault")
 
     opt[Unit](Parser.out.head, Parser.out)
       .action { (_,c) => c.copy(out = true) }

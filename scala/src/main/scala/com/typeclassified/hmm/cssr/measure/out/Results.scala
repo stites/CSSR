@@ -12,7 +12,8 @@ class Results ( val config: Config,
                 val alphabet: Alphabet,
                 val tree:ParseTree,
                 val machine: Machine,
-                val allStates: AllStates
+                val allStates: AllStates,
+                stateLabels: Boolean
               ) {
 
   val metadata:String =
@@ -30,7 +31,13 @@ class Results ( val config: Config,
         |edge [fontsize = 24];
         |""".stripMargin
 
-  def idxAsStr(i:Int):String = String.valueOf(i)//.map(c => (c.toInt + 17).toChar)
+  def idxAsStr(i:Int):String = {
+    if (stateLabels) {
+      String.valueOf(i).map(c => (c.toInt + 17).toChar)
+    } else {
+      String.valueOf(i)
+    }
+  }
 
   val dotInfo: String = dotMeta + allStates.states
     .zipWithIndex

@@ -35,7 +35,7 @@ object CSSR extends Logging {
     val finalStates = new AllStates(allStates, transitions)
     val machine = new Machine(finalStates, tree)
 
-    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates)
+    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates, config.stateLabels)
       .out(if (config.out) null else config.dataFile)
   }
 
