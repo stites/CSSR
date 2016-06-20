@@ -111,11 +111,6 @@ object CSSR extends Logging {
     *           - create loop
     *         | if non are the same
     *           - do nothing
-    *       - check all new looping nodes for edges:
-    *         - get all terminal nodes that are not ancestors
-    *         | if there exists terminal nodes with identical distributions
-    *           - delete new looping node (under symbol {@code a})
-    *           - and add existing terminal node as active node's {@code a} child. This is unidirectional and we call it an "edge"
     *       -  Add all new looping nodes to children of active node, mapped by alphabet symbol
     *       -  Add unexcisable children to queue
     * - end while
@@ -158,18 +153,24 @@ object CSSR extends Logging {
 
   /**
     * until (no change)
-    *  for each terminal node t
+    *  For each terminal node t
     *    for each non-looping path w to t
     *      for each symbol a in the alphabet follow the path wa in the tree
     *        if wa leads to a terminal node
-    *          | continue
+    *          | store terminal node’s transition state and continue
     *        else (== wa does not lead to a terminal node)
     *          | copy the sub-looping-tree rooted at (the node reached by) wa to t
     *            giving all terminal nodes the predictive distribution of t
+    *          | store terminal node’s transition state and continue
     *        break loop
     *
+    *  For given refined terminal nodes, merge any edgesets:
+    *   - at the end of refinement, find all terminal nodes which have identical distributions.
+    *     | if their transition states are identical
+    *       - then merge these states, mark that change has occured
+    *       - else continue
+    *
     * Questions:
-    *   + what about edge sets?
     *   + if we let a terminal node's distribution override another terminal node's distribution (via subtree) will order matter?
     */
 
