@@ -157,23 +157,26 @@ object CSSR extends Logging {
 
   /**
     * until (no change)
-    *  for each terminal node t
-    *  | for each non-looping path w to t
-    *  |   for each symbol a in the alphabet follow the path wa in the tree
-    *  |     if wa leads to a terminal node
-    *  |       | store transition of (terminal -> transition)
-    *  |       | continue
-    *  |     else (== wa does not lead to a terminal node)
-    *  |       | copy the sub-looping-tree rooted at (the node reached by) wa to t
-    *  |         giving all terminal nodes the predictive distribution of t
-    *  |       | store transition of ( terminal -> terminal (?) )
-    *  |     break loop
-    *  before refinement completes:
-    *    - collect all edge-sets (terminals with identical distributions)
-    *      - if any transitions states are identical:
-    *        - merge these states
-    *        - set change == true to repeat refinement loop.
-    *      - else keep them separate
+    *  For each terminal node t
+    *    for each non-looping path w to t
+    *      for each symbol a in the alphabet follow the path wa in the tree
+    *        if wa leads to a terminal node
+    *          - store terminal node's transition state (terminal -> node(terminal?))
+    *          - continue
+    *        else (== wa does not lead to a terminal node)
+    *          - copy the sub-looping-tree rooted at (the node reached by) wa to t
+    *            giving all terminal nodes the predictive distribution of t
+    *          - store terminal node's transition state (terminal -> node (terminal?))
+    *          - continue
+    *        break loop
+    *
+    *  For given refined terminal nodes, merge any edgesets:
+    *   - at the end of refinement, find all terminal nodes which have identical distributions.
+    *     | if their transition states are identical:
+    *       - merge these states
+    *       - set change == true (to repeat refinement loop).
+    *     | else:
+    *       - continue (keeping states separate)
     *
     * Questions:
     *   + if we let a terminal node's distribution override another terminal node's distribution (via subtree) will order matter?
