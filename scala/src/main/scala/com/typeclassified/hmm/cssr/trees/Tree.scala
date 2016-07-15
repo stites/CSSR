@@ -9,8 +9,23 @@ object Tree {
   implicit val ep:Epsilon = new Epsilon(0.01)
   implicit val sig:Double = 0.001d
 
+  /**
+    * Two words match if and only if they lead to the same prediction for the next step.
+    *
+    * @param u A leaf node from a parse tree, representing a word
+    * @param w A leaf node from a parse tree, representing a word
+    * @return whether or not the two leaves have the same prediction for the next step
+    */
   def matches[L1 <: Leaf[L1], L2 <: Leaf[L2]](u:L1)(w:L2): Boolean = u.testNull(w)
 
+  /**
+    * Given some word {@code w}, and word {@code eq}, where w = eq: we call prefix e
+    * excisable from w iff, for all prefixes p, match(peq, pq). That is, inserting the
+    * extra history e before q makes no difference to predictions.
+    *
+    * @param w A leaf node from a parse tree, representing a word
+    * @return the first possible ancestor leaf which has the same next-step prediction as w
+    */
   def firstExcisable[L <: Leaf[L]](w:L):Option[L] = {
     // ancestors must be ordered by depth with the root first. Hence, reverse
     getAncestors(w).reverse.find{matches(w)}

@@ -76,6 +76,11 @@ object CSSR extends Logging {
     mappings
   }
 
+  /**
+    * Phase I: "Initialization":
+    *
+    * Requires estimates of conditional probabilities to converge, perhaps rapidly.
+    */
   def initialization(config: Config):ParseTree = {
     val alphabetSrc: BufferedSource = Source.fromFile(config.alphabetFile)
     val alphabetSeq: Array[Char] = try alphabetSrc.mkString.toCharArray finally alphabetSrc.close()
@@ -93,31 +98,57 @@ object CSSR extends Logging {
   /**
     * Phase II: "Growing a Looping Tree" algorithm:
     *
-    * - generate the root looping node. add to "active" queue
-    * - while active queue is not empty:
-    *   - remove the first looping node from the queue. With this looping node:
-    *     - check to see if it is homogeneous wrt all next-step histories belonging to collection:
-    *       - for each h in pnodes, for each c in h.children
-    *           if c.distribution ~/= (looping node).distribution, return false for homogeneity.
-    *       | if the node makes it through the loop, return true for homogeneity.
-    *     | if the looping node is homogeneous
-    *       - do nothing, move to next looping node in active queue.
-    *     | if the looping node is not homogeneous
-    *       - create new looping nodes for all valid children (one for each symbol in alphabet - must have empirical observation in dataset).
-    *       - check all new looping nodes for excisability:
-    *         - get all ancestors, ordered by depth (root looping node first)
-    *         - check to see if distributions are the same (?)
-    *         | if the distributions are the same, the node is excisable
-    *           - create loop
-    *         | if non are the same
-    *           - do nothing
-    *       - check all new looping nodes for edges:
-    *         - get all terminal nodes that are not ancestors, if there exists terminal nodes with identical distributions:
-    *           - mark terminal as edge set
-    *           - attach inclusive collection of edges to edge-set. We merge edgesets in Phase III.
-    *       -  Add all new looping nodes to children of active node, mapped by alphabet symbol
-    *       -  Add unexcisable children to queue
-    * - end while
+    * INIT root looping node
+    * INIT queue of active, unchecked nodes
+    * QUEUE root
+    * WHILE queue is not empty
+    *   DEQUEUE first looping node from the queue
+    *   COMPUTE homogeneity(dequeued looping node, parse tree)
+    *   IF node is homogeneous
+    *   THEN continue
+    *   ELSE
+    *     CONSTRUCT new looping nodes for all valid children (one for each symbol in alphabet - must have empirical observation in dataset).
+    *     FOR each new node constructed
+    *       COMPUTE excisability(node, looping tree)
+    *       COMPUTE isEdge(node, looping tree)
+    *       ADD all new looping nodes to children of active node (mapped by symbol)
+    *       ADD unexcisable children to queue (FIXME: what about edgesets?)
+    *   ENDIF
+    * ENDWHILE
+    *
+    * isEdge:
+    *   INPUTS: looping node, looping tree
+    *   COLLECT all terminal nodes that are not ancestors
+    *   IF exists terminal nodes with identical distributions
+    *   THEN
+    *     mark looping node as an edge set
+    *     mark found terminals as an edge set
+    *     // We will merge edgesets in Phase III.
+    *   ENDIF
+    *
+    * Homogeneity:
+    *   INPUTS: looping node, parse tree
+    *   COLLECT all next-step histories from looping node in parse tree
+    *   FOR each history in next-step histories
+    *     FOR each child in history's children
+    *       IF child's distribution ~/=  node's distribution
+    *       THEN RETURN false
+    *       ENDIF
+    *     ENDFOR
+    *   ENDFOR
+    *   RETURN TRUE
+    *
+    * Excisability:
+    *   INPUTS: looping node, looping tree
+    *   COLLECT all ancestors of the looping node from the looping tree, ordered by increasing depth (depth 0, or "root node," first)
+    *   FOR each ancestor
+    *     IF ancestor's distribution == looping node's distribution
+    *     THEN
+    *       the node is excisable: create loop in the tree
+    *       ENDFOR (ie "break")
+    *     ELSE do nothing
+    *     ENDIF
+    *   ENDFOR
     *
     * @param tree A parse tree containing the conditional probabilities of a time series
     * @return A looping tree representing the initial growth of a looping tree
@@ -156,28 +187,42 @@ object CSSR extends Logging {
   }
 
   /**
-    * until (no change)
-    *  For each terminal node t
-    *    for each non-looping path w to t
-    *      for each symbol a in the alphabet follow the path wa in the tree
-    *        if wa leads to a terminal node
-    *          - store terminal node's transition state (terminal -> node(terminal?))
-    *          - continue
-    *        else (== wa does not lead to a terminal node)
-    *          - copy the sub-looping-tree rooted at (the node reached by) wa to t
-    *            giving all terminal nodes the predictive distribution of t
-    *          - store terminal node's transition state (terminal -> node (terminal?))
-    *          - continue
-    *        break loop
+    * SET change = true
+    * UNTIL change == false
+    *   INIT transition map (terminal -> node)
     *
-    *  For given refined terminal nodes, merge any edgesets:
-    *   - at the end of refinement, find all terminal nodes which have identical distributions.
-    *     | if their transition states are identical:
-    *       - merge these states
-    *       - set change == true (to repeat refinement loop).
-    *     | else:
-    *       - continue (keeping states separate)
+    *   // calculate predictive probabilities
+    *   FOR each terminal node (t)
+    *     FOR each non-looping path w to t
+    *       FOR each symbol a in the alphabet follow the path wa in the tree
+    *         IF wa leads to a terminal node
+    *         THEN store terminal's transition in transition map
+    *         ELSEIF wa does not lead to a terminal node
+    *           copy the sub-looping-tree rooted at (the node reached by) wa to t, giving all terminal nodes the predictive distribution of t
+    *           store terminal's transition in transition map
+    *           - continue
+    *         ELSE
+    *           ENDFOR (break inner-most loop)
+    *         ENDIF
+    *       ENDFOR
+    *     ENDFOR
+    *   ENDFOR
     *
+    *   // merge edgesets:
+    *   COLLECT map of (terminal nodes -> edgesets)
+    *     FILTER terminals in transition map keys where terminal.isEdgeSet == true
+    *     GROUPBY a terminal's distribution and the value from the transition map
+    *
+    *
+    *   FOR each terminal node belonging to an edgesets
+    *     SET terminal.edgeset to the corresponding set from the map of (terminal nodes -> edgesets)
+    *
+    *   IF map of (terminal nodes -> edgesets) is nonEmpty
+    *   THEN set change = true
+    *   ENDIF
+    *
+    * ENDUNTIL
+
     * Questions:
     *   + if we let a terminal node's distribution override another terminal node's distribution (via subtree) will order matter?
     */

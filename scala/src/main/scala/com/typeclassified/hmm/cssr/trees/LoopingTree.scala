@@ -28,25 +28,28 @@ object LoopingTree {
   }
 
   def excise(tree:ParseTree, uews: ListBuffer[ParseLeaf])(w:ParseLeaf, e:String):ListBuffer[(ParseLeaf, Option[ParseLeaf])] = {
-    val exciseStr:(String)=>String = excise(w.observed, e)
+    val exciseStr:(String)=>String = (uew) => uew.take(uew.length - e.length - w.observed.length) + w
+
     uews
       .map { uew => (uew, exciseStr(uew.observed)) }
       .map { case (uew, uwStr) => (uew, tree.navigateHistoryRev(uwStr)) }
   }
 
-  def excise(w:String, e:String)(uew: String):String = uew.take(uew.length - e.length - w.length) + w
+  /**
+    * A more "pure" form of excising: given some history {@code uew} with excisable {@code uew}, return {@code uw}.
+    */
+  protected def excise(w:String, e:String)(uew: String):String = uew.take(uew.length - e.length - w.length) + w
 
-  def prefixes(histories: ListBuffer[ParseLeaf], w:String):ListBuffer[ParseLeaf] = histories
-    .filter { _.observed.takeRight(w.length) == w }
-
-  def prefixes(histories: ListBuffer[ParseLeaf], w:ParseLeaf):ListBuffer[ParseLeaf] = prefixes(histories, w.observed)
-
+  /**
+    * Get all prefixed histories from the parsetree for a given depth. For example, given the history "1" and a prefix
+    * depth of 2, we get leaves: 1, 01, 11.
+    */
   def prefixes(tree: ParseTree, w:String, prefixDepth:Int):ListBuffer[ParseLeaf] = {
     val histories = (w.length to prefixDepth)
       .flatMap { n => tree.getDepth(n) }
       .to[ListBuffer]
 
-    prefixes(histories, w)
+    histories.filter { _.observed.takeRight(w.length) == w }
   }
 
   def nextPrefixes(tree: ParseTree, w:ParseLeaf):ListBuffer[ParseLeaf] = nextPrefixes(tree, w.observed)
