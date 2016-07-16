@@ -16,7 +16,7 @@ object Tree {
     * @param w A leaf node from a parse tree, representing a word
     * @return whether or not the two leaves have the same prediction for the next step
     */
-  def matches[L1 <: Leaf[L1], L2 <: Leaf[L2]](u:L1)(w:L2): Boolean = u.testNull(w)
+  def matches[L1 <: Probablistic, L2 <: Probablistic](u:L1)(w:L2): Boolean = u.testNull(w)
 
   /**
     * Given some word {@code w}, and word {@code eq}, where w = eq: we call prefix e

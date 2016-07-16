@@ -60,15 +60,19 @@ object LoopingTree {
 
   def leafChildren(lleaves:Iterable[(Char, Node)]):Iterable[LLeaf] = lleaves.toMap.values.foldLeft(List[LLeaf]()){
     case (list, Left(a)) => list :+ a
-    case (list, _) => list
+    case (list, Right(a)) => a match {
+      case Left(_) => list
+      case Right(e) => list :+ e.value
+    }
   }
 
   def lleafChildren(lleaves:Iterable[(Char, Node)]):Iterable[LLeaf] = lleaves.toMap.values.foldLeft(List[LLeaf]()){
     case (list, Left(a)) => list :+ a
-    case (list, Right(Left(a))) => list :+ a
-    case (list, Right(Right(a))) => list
+    case (list, Right(Left(l))) => list :+ l
+    case (list, Right(Right(e))) => list :+ e.value
   }
 
+  // FIXME: once we figure out edges, we should either (a) make this just a Loop, or (b) make Loops or EdgeSet inherit from {@code AltLeaf extends LLeaf}
   type AltNode = Either[Loop, EdgeSet]
   type Node = Either[LLeaf, AltNode]
 
@@ -77,20 +81,7 @@ object LoopingTree {
   def findEdgeSet(ltree: LoopingTree, lleaf: LLeaf):Option[EdgeSet] = {
     val terminals = ltree.terminals -- Tree.getAncestorsRecursive(lleaf).toSet[LLeaf]
     val terminalMatches:Set[LLeaf] = terminals.filter(Tree.matches(lleaf))
-    if (terminalMatches.isEmpty) {
-      None
-    } else {
-      val found:Option[EdgeSet] = terminalMatches
-        .find{ _.edgeSet.isDefined }
-        .flatMap{ _.edgeSet }
-
-      if (found.nonEmpty) {
-        val foundEdges = terminalMatches.filter(_.edgeSet.isDefined).map(_.edgeSet.get)
-        assert(foundEdges.forall{ _ == found.get }, "All found edges must be the same.")
-      }
-
-      Option.apply(found.getOrElse( new EdgeSet(lleaf, terminalMatches) ))
-    }
+    if (terminalMatches.isEmpty) None else Option.apply(new EdgeSet(lleaf, terminalMatches))
   }
 
   def findAlt(loopingTree: LoopingTree)(lleaf: LLeaf):Option[AltNode] = {
@@ -104,7 +95,7 @@ object LoopingTree {
 
   def getLeaf(node:LoopingTree.Node):LLeaf = node match {
     case Left(lnode) => lnode
-    case Right(Right(es)) => if (es.edges.nonEmpty) es.edges.head else es.value
+    case Right(Right(es)) => es.value
     case Right(Left(loop)) => loop.value
   }
 }
@@ -164,7 +155,7 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
       node match {
         case Left(lleaf) => fromTerminals(lleaf)
         case Right(Left(loop)) => fromTerminals(loop)
-        case Right(Right(edgeSet)) => fromTerminals(edgeSet.edges.head)
+        case Right(Right(edgeSet)) => fromTerminals(edgeSet.value)
       }
     }
   }
@@ -180,7 +171,9 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
     if (nextNode.isEmpty || nextNodeIsTerminal) {
       val possibleloopOrLeaf = active.flatMap {
         case Right(Left(node)) => Option(node)
-        case Right(Right(edgeSet)) => edgeSet.edges.headOption
+        case Right(Right(edgeSet)) => {
+          Option(edgeSet.value)
+        }
         case node => Option(LoopingTree.getLeaf(node))
       }
 
@@ -231,7 +224,7 @@ class Loop(val value: LLeaf, observed:String, seededHistories:Set[ParseLeaf] = S
 }
 
 class EdgeSet (edge: LLeaf, val edges:Set[LLeaf]) extends LoopWrapper(edge) {
-
+  edge.isEdge = true
 }
 
 class LLeaf(val observed:String, seededHistories:Set[ParseLeaf] = Set(), parent:Option[LLeaf] = None) extends Leaf[LLeaf] (if ("".equals(observed)) 0.toChar else observed.head, parent) with EmpiricalDistribution {
@@ -240,7 +233,9 @@ class LLeaf(val observed:String, seededHistories:Set[ParseLeaf] = Set(), parent:
 
   var children:mutable.Map[Char, LoopingTree.Node] = mutable.Map()
 
-  var edgeSet:Option[EdgeSet] = None
+  var edgeSet:Option[mutable.Set[LLeaf]] = None
+
+  var isEdge: Boolean = false
 
   def this(p: ParseLeaf) = this(p.observed, Set(p), None)
 
@@ -251,10 +246,10 @@ class LLeaf(val observed:String, seededHistories:Set[ParseLeaf] = Set(), parent:
   // this pretty much duplicates LoopingTree.getLeaf
   override def next(c: Char): Option[LLeaf] = children.get(c).flatMap { node => Some(LoopingTree.getLeaf(node)) }
 
-  override def toString():String = {
+  override def toString:String = {
     val rDist = rounded.toArray.mkString("[", ",", "]")
     val nChildren = children.keys.size
-    s"{$observed, rounded:$rDist, size: ${histories.size}, children: $nChildren}"
+    s"{$observed, rounded:$rDist, size: ${histories.size}, children: $nChildren, isEdge: $isEdge}"
   }
 
   // temp debugging purposes

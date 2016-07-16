@@ -5,9 +5,10 @@ import com.typeclassified.hmm.cssr.measure.out.Results
 import com.typeclassified.hmm.cssr.shared.Epsilon
 import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 import com.typeclassified.hmm.cssr.state.{AllStates, Machine, State}
-import com.typeclassified.hmm.cssr.parse.{AlphabetHolder, Alphabet}
+import com.typeclassified.hmm.cssr.parse.{Alphabet, AlphabetHolder}
 import com.typeclassified.hmm.cssr.trees._
 
+import scala.collection.{TraversableLike, mutable}
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
@@ -222,7 +223,7 @@ object CSSR extends Logging {
     *   ENDIF
     *
     * ENDUNTIL
-
+    *
     * Questions:
     *   + if we let a terminal node's distribution override another terminal node's distribution (via subtree) will order matter?
     */
@@ -240,14 +241,18 @@ object CSSR extends Logging {
           ltree.alphabet.raw.map(a => (tNode, w + a))
         } )
         .filter { case (term, wa) => term.distribution(ltree.alphabet.map(wa.last)) > 0 }
+      val transitions:mutable.Map[Terminal, LLeaf] = mutable.Map()
 
       stillDirty = toCheck
         .foldLeft(false){
           case (isDirty:Boolean, (t:Terminal, wa:wa)) => {
             // navigate the looping tree, stopping at terminal nodes
             val foundLeaf = ltree.navigateToLLeafButStopAtLoops(wa)
+
             // check to see if this leaf is _not_ a terminal leaf
             val nonTerminating = foundLeaf.find{ l => !ltree.terminals.contains(l) }
+            // TODO: this is a hack to prototype the edgeset issue and may need to move
+            if (nonTerminating.isDefined) transitions.put(t, nonTerminating.get)
 
             // if we find a "terminal-looping" node (ie- any looping node) that is not a terminal node:
             //   | if it loops to a terminal node: merge this node into the terminal node
@@ -300,6 +305,48 @@ object CSSR extends Logging {
             isDirty || refiningLoop.nonEmpty || (nonTerminating.nonEmpty && !nonTerminating.get.isInstanceOf[Loop])
           }
         }
+
+      // Merge EdgeSets:
+      val grouped = transitions
+        .keySet
+        .filter{_.isEdge}
+        .groupBy( term => transitions(term) )
+
+      // FIXME: use traversableLike
+      def headAnd [T] (l:List[T]):(Option[T], List[T]) = (l.headOption, l.tail)
+      def unsafeHeadAnd [T] (l:List[T]):(T, List[T]) = (l.head, l.tail)
+
+      val ess: Set[Set[Terminal]] = grouped
+        .values
+        .flatMap {
+          tSet => {
+            val (head:Terminal, tail:List[Terminal]) = unsafeHeadAnd(tSet.toList)
+            val newSet = mutable.Set(head)
+            head.edgeSet = Some(newSet)
+
+            val edgeSets:Set[Set[Terminal]] = tail.foldLeft(Set(newSet))((ess, t) => {
+              var matchFound = false
+              for (es <- ess) {
+                if (!matchFound && Tree.matches(es.head)(t)) {
+                  es += t
+                  t.edgeSet = Some(es)
+                  matchFound = true
+                }
+              }
+              if (matchFound) ess else {
+                val newSet = mutable.Set(t)
+                t.edgeSet = Some(newSet)
+                ess ++ Set(newSet)
+              }
+            })
+            .map(_.toSet)
+
+            edgeSets
+
+          }
+        }.toSet
+
+      stillDirty = stillDirty || grouped.keySet.nonEmpty
 
     } while (stillDirty)
   }
