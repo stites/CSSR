@@ -1,0 +1,64 @@
+-- This file has been generated from package.yaml by hpack version 0.14.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           cssr
+version:        0.0.0.1
+synopsis:       Initial project template
+description:    Please see README.md
+category:       Hidden Markov Models
+homepage:       https://github.com/stites/CSSR#readme
+bug-reports:    https://github.com/stites/CSSR/issues
+author:         Sam Stites
+maintainer:     sam@stites.io
+copyright:      2016-2017
+license:        BSD
+build-type:     Simple
+cabal-version:  >= 1.10
+
+source-repository head
+  type: git
+  location: https://github.com/stites/CSSR
+
+library
+  hs-source-dirs:
+      src
+  default-extensions: MultiParamTypeClasses OverloadedStrings PatternSynonyms TypeFamilies
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -fno-warn-hi-shadowing
+  build-depends:
+      base
+    , bytestring
+    , containers
+    , hashable
+    , pipes
+    , pipes-bytestring
+    , scientific
+    , statistics
+    , text
+    , unordered-containers
+    , vector
+  default-language: Haskell2010
+
+executable schema-prediction
+  main-is: Main.hs
+  hs-source-dirs:
+      app
+  default-extensions: MultiParamTypeClasses OverloadedStrings PatternSynonyms TypeFamilies
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -fno-warn-hi-shadowing
+  build-depends:
+      base
+    , bytestring
+    , containers
+    , hashable
+    , pipes
+    , pipes-bytestring
+    , scientific
+    , statistics
+    , text
+    , unordered-containers
+    , vector
+    , cssr
+    , optparse-applicative
+  other-modules:
+      Cli
+  default-language: Haskell2010
