@@ -17,7 +17,8 @@ entropyRate = ((-1) *) . sum . map stateER
 discreteEntropy :: Double -> Double -> Double
 discreteEntropy a b = a * log (a / b)
 
-data ParseLeaf =
+data ParseLeaf
+  = ParseLeaf
   { totalCounts :: Integer
   } deriving (Show)
 

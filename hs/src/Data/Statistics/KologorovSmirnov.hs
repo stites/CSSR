@@ -17,7 +17,7 @@ kstwoTest :: Foldable f =>
   -> Double -- ^the number of observations for data2
   -> Double -- ^the siginificance level of the test
   -> Bool -- ^whether or not the pvalue is greater than the significance
-kstwoTest data1 n1 data2 n2 a = (kstwo data1 n1 data2 n2) > a
+kstwoTest data1 n1 data2 n2 a = kstwo data1 n1 data2 n2 > a
 
 ---------------------------------------------------------------------------------
 -- | Kolmogorov-Smirnov probability (D > observed)

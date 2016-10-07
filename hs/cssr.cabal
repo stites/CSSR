@@ -37,6 +37,14 @@ library
     , text
     , unordered-containers
     , vector
+  exposed-modules:
+      Data.CSSR.Debug
+      Data.CSSR.ParseTree
+      Data.CSSR.Test
+      Data.CSSR.Types
+      Data.Statistics.Entropy.Rate
+      Data.Statistics.F1
+      Data.Statistics.KologorovSmirnov
   default-language: Haskell2010
 
 executable schema-prediction

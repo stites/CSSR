@@ -26,8 +26,8 @@ instance Show Arguments where
 
 opts :: ParserInfo Arguments
 opts = info (helper <*> arguments)
-      ( fullDesc
-     ++ progDesc "cssr is pretty cool")
+     ( fullDesc
+     ++ progDesc "cssr is pretty cool"
      ++ verDesc "v0.1.0")
 
 arguments :: Parser Arguments
