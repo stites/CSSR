@@ -235,92 +235,79 @@ object CSSR extends Logging {
     var stillDirty = false
 
     do {
-      val toCheck: Set[(Terminal, wa)] = ltree.terminals
+      val toCheck: Set[(Terminal, LLeaf)] = ltree.terminals
         .flatMap(tNode => {
           val w = tNode.path().mkString
-          ltree.alphabet.raw.map(a => (tNode, w + a))
+          ltree.alphabet.raw.map(a => (tNode, ltree.navigateLoopingTree(w + a)))
         } )
-        .filter { case (term, wa) => term.distribution(ltree.alphabet.map(wa.last)) > 0 }
-      val transitions:mutable.Map[Terminal, LLeaf] = mutable.Map()
+        .filter { case (term, wa) => wa.isEmpty }
+        .map{ case (term, wa) => (term, wa.get) }
+      val transitions:mutable.Set[(Terminal, Terminal)] = mutable.Set()
 
       stillDirty = toCheck
         .foldLeft(false){
-          case (isDirty:Boolean, (t:Terminal, wa:wa)) => {
-            // navigate the looping tree, stopping at terminal nodes
-            val foundLeaf = ltree.navigateToLLeafButStopAtLoops(wa)
-
+          case (isDirty:Boolean, (t:Terminal, wa:LLeaf)) => {
             // check to see if this leaf is _not_ a terminal leaf
-            val nonTerminating = foundLeaf.find{ l => !ltree.terminals.contains(l) }
-            // TODO: this is a hack to prototype the edgeset issue and may need to move
-            if (nonTerminating.isDefined) transitions.put(t, nonTerminating.get)
-
-            // if we find a "terminal-looping" node (ie- any looping node) that is not a terminal node:
-            //   | if it loops to a terminal node: merge this node into the terminal node
-            //   | else: make its value a terminal node
-            // if we find a "terminal-edgeSet" node: merge this node into the terminal node
-            // FIXME: currently, we actually skip edgesets and don't count them as an "LLeaf"
-            //
-            // if either of the above return None, else we have a sub-looping-tree and return Some.
-            val foundLoop:Option[(Terminal, Boolean)] = nonTerminating
-              .find { _.isInstanceOf[Loop] }
-              .flatMap {
-                case (loop:Loop) => {
-                  // if it is not a terminal node: make it a terminal node
-                  if (loop.value.terminalReference.isEmpty && !ltree.terminals.contains(loop)) {
-                    // FIXME: merge the loop's empirical observations as well - but maybe we should do this above...
-                    // ...at any rate, the loop is all we need to prototype this.
-                    loop.value.terminalReference = Option(loop)
-                    ltree.terminals ++= Set(loop)
-                    Option((loop, true))
-                  } else if (loop.value.terminalReference.nonEmpty) {
+            if (ltree.terminals.contains(wa)) {
+              transitions.+=((t, wa))
+              isDirty
+            } else {
+              // if we find a "terminal-looping" node (ie- any looping node) that is not a terminal node:
+              //   | if it loops to a terminal node: merge this node into the terminal node
+              //   | else: make its value a terminal node
+              // if we find a "terminal-edgeSet" node: merge this node into the terminal node
+              //
+              // if either of the above return None, else we have a sub-looping-tree and return Some.
+              wa match {
+                case loop: Loop =>
+                  val alreadyRefined = loop.value.terminalReference.nonEmpty
+                  if (alreadyRefined) {
                     // merge this node into the terminal node
                     val terminal = loop.value.terminalReference.get
                     terminal.addHistories(loop.histories)
                     loop.terminalReference = Some(terminal)
-                    Option((terminal, false))
-                  } else {
-                    None
+                    isDirty // no refinement needed, continue with current isDirty value
+                  } else { // we have a non-terminating loop
+                    // FIXME: merge the loop's empirical observations as well - but maybe we should do this above...
+                    // ...at any rate, the loop is all we need to prototype this.
+                    loop.value.terminalReference = Option(loop)
+                    ltree.terminals ++= Set(loop)
+                    ltree.collectLeaves(ListBuffer(wa))
+                      .filterNot { ltree.terminals.contains } // terminal nodes cannot be overwritten
+                      .foreach { _.refineWith(wa) }
+                    true // loop is now dirty
                   }
-                }
-                case _ => None
+                case _ =>
+                  // refine subtree
+                  if (wa.terminalReference.isEmpty) {
+                    ltree.collectLeaves(ListBuffer(wa))
+                      .filterNot { ltree.terminals.contains } // terminal nodes cannot be overwritten
+                      .foreach { _.refineWith(t) }
+                    true // loop is now dirty
+                  } else {
+                    isDirty
+                  }
               }
-
-            val refiningLoop = foundLoop.flatMap {
-              case (loop, true) => Some(loop)
-              case (_, false) => None
             }
-
-            val refiningTerminal = if (foundLoop.nonEmpty) refiningLoop else nonTerminating
-
-            // if not, we will paint this sub-tree with the t-node distribution
-            refiningTerminal
-              .foreach {
-                subLeaf => ltree
-                  .collectLeaves(ListBuffer(subLeaf)) // ignores edgeSets
-                  .filterNot { ltree.terminals.contains } // terminal nodes cannot be overwritten
-                  .foreach { _.refineWith(refiningTerminal.get) }
-              }
-
-            // if all of the above did work, then a node exists we need to raise this flag
-            isDirty || refiningLoop.nonEmpty || (nonTerminating.nonEmpty && !nonTerminating.get.isInstanceOf[Loop])
           }
         }
 
       // Merge EdgeSets:
-      val grouped = transitions
-        .keySet
-        .filter{_.isEdge}
-        .groupBy( term => transitions(term) )
+      val grouped:Map[CSSR.Terminal, collection.Set[Terminal]] = transitions
+        .filter{ _._1.isEdge }
+        .groupBy{ _._2 }
+        .mapValues{ _.map( _._1 ) }
+        .filter{ _._2.size > 1 } // it's still possible to have an edgeset that doesn't need to be merged
 
       // FIXME: use traversableLike
       def headAnd [T] (l:List[T]):(Option[T], List[T]) = (l.headOption, l.tail)
       def unsafeHeadAnd [T] (l:List[T]):(T, List[T]) = (l.head, l.tail)
 
-      val ess: Set[Set[Terminal]] = grouped
+      grouped
         .values
         .flatMap {
           tSet => {
-            val (head:Terminal, tail:List[Terminal]) = unsafeHeadAnd(tSet.toList)
+            val (head:Terminal, tail:List[Terminal]) = unsafeHeadAnd(tSet.toList.sortBy(_.observed))
             val newSet = mutable.Set(head)
             head.edgeSet = Some(newSet)
 
@@ -342,9 +329,18 @@ object CSSR extends Logging {
             .map(_.toSet)
 
             edgeSets
-
           }
         }.toSet
+        .foreach {
+          set:Set[Terminal] =>
+            // holy moly we need to turn this into a dag and not a cyclic-linked-list-tree
+            val (head:Terminal, tail:List[Terminal]) = unsafeHeadAnd(set.filter{_.parent.nonEmpty}.toList.sortBy(_.observed))
+            tail.foreach {
+              node =>
+                node.parent.get.children.put(node.observation, Left(head))
+                ltree.terminals = ltree.terminals - node
+            }
+        }
 
       stillDirty = stillDirty || grouped.keySet.nonEmpty
 
