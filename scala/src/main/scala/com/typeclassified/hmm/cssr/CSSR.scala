@@ -240,7 +240,7 @@ object CSSR extends Logging {
           val w = tNode.path().mkString
           ltree.alphabet.raw.map(a => (tNode, ltree.navigateLoopingTree(w + a)))
         } )
-        .filter { case (term, wa) => wa.isEmpty }
+        .filterNot { case (term, wa) => wa.isEmpty }
         .map{ case (term, wa) => (term, wa.get) }
       val transitions:mutable.Set[(Terminal, Terminal)] = mutable.Set()
 
@@ -292,18 +292,17 @@ object CSSR extends Logging {
           }
         }
 
-      // Merge EdgeSets:
+      // find possible edge sets to merge
       val grouped:Map[CSSR.Terminal, collection.Set[Terminal]] = transitions
         .filter{ _._1.isEdge }
         .groupBy{ _._2 }
         .mapValues{ _.map( _._1 ) }
-        .filter{ _._2.size > 1 } // it's still possible to have an edgeset that doesn't need to be merged
 
       // FIXME: use traversableLike
       def headAnd [T] (l:List[T]):(Option[T], List[T]) = (l.headOption, l.tail)
       def unsafeHeadAnd [T] (l:List[T]):(T, List[T]) = (l.head, l.tail)
 
-      grouped
+      val toMerge = grouped
         .values
         .flatMap {
           tSet => {
@@ -331,6 +330,10 @@ object CSSR extends Logging {
             edgeSets
           }
         }.toSet
+        .filter{ _.size > 1 } // it's still possible to have an edgeset that doesn't need to be merged
+
+      // perform final updates and merges
+      toMerge
         .foreach {
           set:Set[Terminal] =>
             // holy moly we need to turn this into a dag and not a cyclic-linked-list-tree
@@ -342,7 +345,7 @@ object CSSR extends Logging {
             }
         }
 
-      stillDirty = stillDirty || grouped.keySet.nonEmpty
+      stillDirty = stillDirty || toMerge.nonEmpty
 
     } while (stillDirty)
   }
