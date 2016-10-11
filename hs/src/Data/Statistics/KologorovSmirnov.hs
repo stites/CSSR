@@ -1,4 +1,7 @@
 module Data.Statistics.KologorovSmirnov where
+
+import Data.Function
+
 ---------------------------------------------------------------------------------
 -- | Kolmogorov-Smirnov Hypothesis Test:
 --
@@ -10,10 +13,10 @@ module Data.Statistics.KologorovSmirnov where
 --
 -- TODO: Look up tables for control values and verification
 ---------------------------------------------------------------------------------
-kstwoTest :: Foldable f =>
-  f Double  -- ^the first sample's probability distribution
+kstwoTest ::
+  [Double] -- ^the first sample's probability distribution
   -> Double -- ^the number of observations for data1
-  f Double  -- ^the second sample's probability distribution
+  -> [Double] -- ^the second sample's probability distribution
   -> Double -- ^the number of observations for data2
   -> Double -- ^the siginificance level of the test
   -> Bool -- ^whether or not the pvalue is greater than the significance
@@ -48,13 +51,13 @@ kstwoTest data1 n1 data2 n2 a = kstwo data1 n1 data2 n2 > a
 --
 ---------------------------------------------------------------------------------
 
-kstwo :: Foldable f =>
-  f Double  -- ^the first sample's probability distribution
+kstwo ::
+  [Double] -- ^the first sample's probability distribution
   -> Double -- ^the number of observations for data1
-  f Double  -- ^the second sample's probability distribution
+  -> [Double]  -- ^the second sample's probability distribution
   -> Double -- ^the number of observations for data2
   -> Double -- ^p-value, Probability(D > observed)
-kstwoTest data1 n1 data2 n2 = probks $ ksstatistic data1 data2 * (en + 0.12 + (0.11 / en))
+kstwo data1 n1 data2 n2 = probks $ ksstatistic data1 data2 * (en + 0.12 + (0.11 / en))
   where
     en :: Double
     en = sqrt effectSize
@@ -66,17 +69,20 @@ kstwoTest data1 n1 data2 n2 = probks $ ksstatistic data1 data2 * (en + 0.12 + (0
 ---------------------------------------------------------------------------------
 -- the Kolmogorov-Smirnov statistic
 ---------------------------------------------------------------------------------
-ksstatistic :: Foldable f =>
-  f Double -- ^sample one's pdf, used to calculate the first ecdf
-  -> f Double -- ^sample two's pdf, used to calculate the second ecdf
+ksstatistic ::
+  [Double] -- ^sample one's pdf, used to calculate the first ecdf
+  -> [Double] -- ^sample two's pdf, used to calculate the second ecdf
   -> Double -- ^the KS statistic: the supremum of the tow calculated ecdfs
 ksstatistic data1 data2 =
     -- assert(data1.length == data2.length)
-    max $ zipWith (abs . subtract) (ecdf data1) (ecdf data2)
+    foldr1 max $ map abs $ getAll data1 data2
   where
     -- | calc empirical cumulative distributions. Should have ascending order.
-    ecdf :: Foldable f => f Double -> f Double
+    ecdf :: [Double] -> [Double]
     ecdf = scanr (+) 0
+
+    getAll :: [Double] -> [Double] -> [Double]
+    getAll d1 d2 = zipWith subtract (ecdf d1) (ecdf d2)
 
 ---------------------------------------------------------------------------------
 -- | Kolmogorov-Smirnov probability function, Q_{ks}
@@ -94,11 +100,11 @@ probks alam {-alam stands for "a lambda", I believe-}= go [1..100] 2 0 0
     eps1 = 0.001
     eps2 = 1.0e-8
 
-    go :: Foldable f => f Double -> Double -> Double -> Double -> Double
+    go :: [Double] -> Double -> Double -> Double -> Double
     go    []  fac oldsum termBF = 1  -- Get here only by failing to converge.
     go (j:js) fac oldsum termBF =
       let
-        aterm, term, newterm :: Double
+        aterm, term, newsum :: Double
         term = fac * exp (a2 * j * j)
         newsum = oldsum + term
         aterm = abs term

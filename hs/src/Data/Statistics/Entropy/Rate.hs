@@ -1,15 +1,18 @@
-module Data.Statistics.Entropy where
+module Data.Statistics.Entropy.Rate where
+
+import Data.Function
 
 type Probability = Double
 type Frequency = Integer
 type ProbabilityDistribution = [Probability]
 type FrequencyDistribution = [Frequency]
 
+{-
 entropyRate :: [(ProbabilityDistribution, FrequencyDistribution)] -> Double
 entropyRate = ((-1) *) . sum . map stateER
   where
     stateER :: (ProbabilityDistribution, FrequencyDistribution) -> Double
-    stateER (ps, fs) = foldl' go 0 (zip ps fs)
+    stateER (ps, fs) = foldr go 0 (zip ps fs)
 
     go :: Double -> (Probability, Frequency) -> Double
     go entr (p, f) = if p <= 0 then entr else entr + f * p * log p
@@ -31,7 +34,7 @@ relativeEntropy
   :: InferredDistribution -- ^ dist the inferred distribution of the *histories of max length*.
   -> Integer -- ^ data size
   -> Double
-relativeEntropy dist dataSize = if relEnt < 0 then 0 else relEnt
+relativeEntropy dist dataSize = undefined -- if relEnt < 0 then 0 else relEnt
   where
     inferredPs = map snd dist
     observedPs = map (nonZero . toP . totalCounts . fst) dist
@@ -45,10 +48,9 @@ relativeEntropy dist dataSize = if relEnt < 0 then 0 else relEnt
     go :: Double -> (ParseLeaf, Double) -> Double
     go ent (leaf, infP) =
       let
-        p = obsP leaf
+        p = undefined -- obsP leaf
       in
         ent + (if p > 0 then discreteEntropy p infP else 0)
-
 
 --
 -- Kullback-Leibler Distance:
@@ -63,3 +65,4 @@ klDist
   -> Double
 klDist = sum (uncurry . discreteEntropy) . zip
 
+-}

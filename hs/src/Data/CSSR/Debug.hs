@@ -1,15 +1,24 @@
 module Data.CSSR.Debug where
 
-hypothesisTesting testCase states =
-  intercalate "\n"
-  [ "Testing: " ++ show testCase
-  , "Have state information:"
-  , "======================================"
-  , "state.histories.foreach{ h => debug(h.toString) }"
-  , "======================================"
-  , "Running test -- Count1: " ++ show (totalCounts state) ++ " Count2: " ++ show (totalCounts state)
-  , "state: ${state.distribution.toString}\t\tfreq1: ${state.frequency.toString()}"
-  , " leaf: ${testCase.distribution.toString}\t\tfreq2: ${testCase.frequency.toString()}"
-  ]
+import Data.List
+import Data.CSSR.Types
+
+--hypothesisTesting testCase states =
+--  intercalate "\n"
+--  [ "Testing: " ++ show testCase
+--  , "Have state information:"
+--  , "======================================"
+--  , concat $ map printState (histories states)
+--  , "state.histories.foreach{ h => debug(h.toString) }"
+--  , "======================================"
+--  , "state: ${state.distribution.toString}\t\tfreq1: ${state.frequency.toString()}"
+--  , " leaf: ${testCase.distribution.toString}\t\tfreq2: ${testCase.frequency.toString()}"
+--  ]
+--  where
+--    printState ::
+--    printState state = "Running test -- Count1: "
+--                     ++ show (count state)
+--                     ++ " Count2: "
+--                     ++ show (count state)
 
 
