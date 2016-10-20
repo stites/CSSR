@@ -12,7 +12,7 @@ copyright:   2016-2017
 ghc-options: -threaded -rtsopts -with-rtsopts=-N -fno-warn-hi-shadowing
 
 default-extensions:
-  #  - NoImplicitPrelude
+  #  - NoImplicitPrelude # maybe we can use subhask at some point
   - MultiParamTypeClasses
   - OverloadedStrings
   - PatternSynonyms
@@ -42,13 +42,12 @@ executables:
       - cssr
       - optparse-applicative
 
-# tests:
-#   spec:
-#     source-dirs: test
-#     main: Spec.hs
-#     dependencies:
-#       - cssr
-#       - hspec
-#       - QuickCheck
-# 
-# 
+tests:
+  spec:
+    source-dirs: test
+    main: Spec.hs
+    dependencies:
+      - cssr
+      - hspec
+      - QuickCheck
+
