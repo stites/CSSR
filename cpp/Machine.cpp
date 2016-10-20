@@ -569,7 +569,7 @@ void Machine::PrintDot(char input[], char alpha[]) {
     int nextState;
     double *dist;
 
-    outData << "digraph " << input << " {" << endl;
+    outData << "digraph \"" << input << "\" {" << endl;
     outData << "size = \"6,8.5\";" << endl;
     outData << "ratio = \"fill\";" << endl;
     outData << "node [shape = circle];" << endl;

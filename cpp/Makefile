@@ -1,6 +1,6 @@
 .PHONY: all clean cleanobj
 
-CC          = c++               # to be OS-agnostic
+CC          = g++
 CFLAGS      = -Wextra -Wall -O2
 CFLAGS_MAIN = -g $(CFLAGS)
 MAIN        = CSSR

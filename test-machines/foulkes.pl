@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Program which produces a long data-file simulating Foulkes's HMM
+# Program which produces a long data-file simulating Foulkes HMM
 # The model is constructed so that each state can be unambiguously identified
 # on the basis of the end of the observed history.
 # The states are, in an arbitrary order:
