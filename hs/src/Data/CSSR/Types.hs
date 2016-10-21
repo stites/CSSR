@@ -1,8 +1,6 @@
 module Data.CSSR.Types where
 
-import Data.Vector (Vector)
-import Data.HashMap.Strict (HashMap)
-import Data.HashSet (HashSet)
+import CSSR.Prelude
 
 -- | For the moment, an alphabet only consists of symbols of Chars
 data Alphabet = Alphabet
@@ -17,6 +15,8 @@ data ParseTree = PL
   } deriving (Show)
 
 instance Monoid ParseTree where
+  mappend = undefined
+  mempty = undefined
 
 data HistTree = HL
   { ht_obs :: String
