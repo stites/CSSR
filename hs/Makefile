@@ -1,3 +1,6 @@
+ghci:
+	stack ghci
+
 ghcid:
-	ghcid --height=10 --topmost "--command=stack ghci"
+	ghcid --height=10 --topmost "--command=stack ghci --test"
 
