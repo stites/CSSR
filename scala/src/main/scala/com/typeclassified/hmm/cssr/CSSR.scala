@@ -8,7 +8,7 @@ import com.typeclassified.hmm.cssr.state.{AllStates, Machine, State}
 import com.typeclassified.hmm.cssr.parse.{Alphabet, AlphabetHolder}
 import com.typeclassified.hmm.cssr.trees._
 
-import scala.collection.{TraversableLike, mutable}
+import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
@@ -44,6 +44,23 @@ object CSSR extends Logging {
   def printParse(parseLeaf: ParseLeaf, nTabs:Int = 0): Unit = {
     println("\t" * nTabs + parseLeaf.toString)
     parseLeaf.children.foreach(this.printParse(_, nTabs+1))
+  }
+
+  def printLooping(loopingTree: LoopingTree): Unit = {
+    println(s"printing looping tree with terminals:")
+
+    for(t <- loopingTree.terminals) {
+      println("\t" + t.toString)
+    }
+
+    println(s"leaves:")
+
+    def go(lLeaf: LoopingTree.Node, nTabs:Int = 0): Unit = {
+      println("\t" * nTabs + lLeaf.toString)
+      LoopingTree.getLeaf(lLeaf).children.values.foreach(go(_, nTabs+1))
+    }
+
+    go(Left(loopingTree.root))
   }
 
   def statesAndTransitions(parse:ParseTree, looping: LoopingTree):(Iterable[State], StateToStateTransitions, Map[Terminal, State]) = {
