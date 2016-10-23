@@ -56,11 +56,11 @@ print "\n";
 for ($i = 0; $i < $number_states; $i++) {
     $State_Probs[$i] = $StateCounts[$i]/$repetitions;
     if ($State_Probs[$i]) {
-	$Cmu -= $State_Probs[$i] * log_2($State_Probs[$i]);
-	$hmu += $State_Probs[$i] * binary_entropy($Emit_Zero[$i]);
+        $Cmu -= $State_Probs[$i] * log_2($State_Probs[$i]);
+        $hmu += $State_Probs[$i] * binary_entropy($Emit_Zero[$i]);
     }
 }
-    
+
 
 $FileNamesBase = "EP";
 $MachineFileName = $FileNamesBase . "_machine";
@@ -93,11 +93,11 @@ for ($i = 0; $i < $number_states; $i++) {
     $ZeroProb = sprintf "%.3f", $Emit_Zero[$i];
     $OneProb = sprintf "%.3f", $Emit_One[$i];
     if ($ZeroProb > 0) {
-	print DOT "$Alphabetic_Label[$i] -> $Alphabetic_Label[$Zero_Successor] [label = \"0  |  $ZeroProb\"];\n";
+        print DOT "$Alphabetic_Label[$i] -> $Alphabetic_Label[$Zero_Successor] [label = \"0  |  $ZeroProb\"];\n";
     }
     if ($OneProb > 0) {
-	print DOT "$Alphabetic_Label[$i] -> $Alphabetic_Label[$One_Successor] [label = \"1  |  $OneProb\"];\n"
-	}
+        print DOT "$Alphabetic_Label[$i] -> $Alphabetic_Label[$One_Successor] [label = \"1  |  $OneProb\"];\n"
+    }
 }
 print DOT "}\n";
 close(DOT)|| die "Couldn't close $DotFileName: $!";
@@ -127,17 +127,17 @@ sub make_a_move {
     $old_state = $_[0];
     $r = (rand);
     if ($r <= $Emit_One[$old_state]) {
-	# We enter this if we've produced a 1
-	$symbol = 1;
-	$new_state = $One_Trans[$old_state];
+        # We enter this if we've produced a 1
+        $symbol = 1;
+        $new_state = $One_Trans[$old_state];
     }
     else {
-	# We've emitted a zero, and must go back to state 0
-	if ($old_state == 1) {
-	    die "Forbidden transition!\n";
-	}
-	$symbol = 0;
-	$new_state = $Zero_Trans[$old_state];
+        # We've emitted a zero, and must go back to state 0
+        if ($old_state == 1) {
+            die "Forbidden transition!\n";
+        }
+        $symbol = 0;
+        $new_state = $Zero_Trans[$old_state];
     }
     return(($symbol,$new_state));
 }
@@ -150,13 +150,13 @@ sub binary_entropy {
     $prob_one = 1.0 - $prob_zero;
     # Avoid 0 log 0 by testing for it explicitly!
     if (($prob_zero == 0.0) || ($prob_zero == 1.0)) {
-	$entropy = 0.0;
+      $entropy = 0.0;
     } else {
-	$entropy = $prob_zero * log_2($prob_zero);
-	$entropy += $prob_one * log_2($prob_one);
+      $entropy = $prob_zero * log_2($prob_zero);
+      $entropy += $prob_one * log_2($prob_one);
     }
     return(-$entropy);
-}  
+}
 
 sub log_2 {
     # Input is a positive real number

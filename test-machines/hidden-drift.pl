@@ -1,17 +1,19 @@
 #!/usr/bin/perl
 
-# Program which produces a long data-file simulating a hidden Markov model.
-# The underlying Markov chain is drift on a ring with three sites: the three
-# locations have probabilities (.1, .9) and (.5, .5) and (.8, .3)
-# of going left or going right.  We always start in the center (.5, .5)
-# state.  Each left move is observed as a 0; each right move is observed
-# as a 1.
-# The correct state can be identified by counting the number of 0s since
-# the beginning of the string.
-# The first input is the number of steps to simulate.  That is the only
-# input.
+# Program which produces a long data-file simulating a hidden Markov model. The
+# underlying Markov chain is drift on a ring with three sites: the three
+# locations have probabilities (.1, .9) and (.5, .5) and (.8, .3) of going left
+# or going right.  We always start in the center (.5, .5) state. Each left move
+# is observed as a 0; each right move is observed as a 1.
+#
+# The correct state can be identified by counting the number of 0s since the
+# beginning of the string.
+#
+# The first input is the number of steps to simulate.  That is the only input.
 # The output symbols are unspaced.
+#
 # Output is to std-out, use redirects to put in files.
+#
 # To be used in conjunction with Kris's state-inference program.
 
 
@@ -41,12 +43,12 @@ sub make_a_move {
     $new_location = $_[0];
     $r = (rand);
     if ($r <= $go_left[$new_location]) {
-	   # Going to the left decrements the state by one
-	   $new_location--;
+     # Going to the left decrements the state by one
+     $new_location--;
     }
     else {
-	   # And going to the right increases it
-	   $new_location++;
+     # And going to the right increases it
+     $new_location++;
     }
     # But we need to keep in the range 0--2
     $new_location = $new_location % $number_states;
@@ -58,12 +60,12 @@ sub make_a_measurement {
     $difference = $_[0];
     $measure = 0;
     if ($difference <= 0) {
-	   # If we moved left, give 0
-	   $measure = 0;
+     # If we moved left, give 0
+     $measure = 0;
     }
     else {
-	   # If we moved right, give 1
-	   $measure = 1;
+     # If we moved right, give 1
+     $measure = 1;
     }
     return($measure);
 }
