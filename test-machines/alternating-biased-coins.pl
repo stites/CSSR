@@ -4,7 +4,7 @@
 # 1 with p = .75 and one with p = 0.25.
 
 srand; # Initialize random number generator
-$number_states = 2; # Three states
+$number_states = 2; # two states
 
 #Give the values of the parameter for emitting a 1
 $Emit_One[0] = 0.75;

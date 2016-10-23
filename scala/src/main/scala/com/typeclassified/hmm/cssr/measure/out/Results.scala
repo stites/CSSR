@@ -13,6 +13,9 @@ class Results ( val config: Config,
                 val tree:ParseTree,
                 val machine: Machine,
                 val allStates: AllStates,
+                val parseString:String,
+                val loopingString:String,
+                val refinedString:String,
                 stateLabels: Boolean
               ) {
 
@@ -113,6 +116,9 @@ class Results ( val config: Config,
     })
     saferWriteOp(outStream(file, "_inf.dot"), (dotOut) => dotOut.print(dotInfo) )
     saferWriteOp(outStream(file, "_results"), (statesOut) => statesOut.print(stateDetails) )
+    saferWriteOp(outStream(file, "_parsetree"), (statesOut) => statesOut.print(parseString) )
+    saferWriteOp(outStream(file, "_loopingtree_pre_refinement"), (statesOut) => statesOut.print(loopingString) )
+    saferWriteOp(outStream(file, "_loopingtree_post_refinement"), (statesOut) => statesOut.print(refinedString) )
     // val statesOut = outStream(file, "_state_series")
 
     this

@@ -25,8 +25,11 @@ object CSSR extends Logging {
     implicit val ep:Epsilon = new Epsilon(0.01)
 
     val tree: ParseTree = initialization(config)
+    val parseString = printParse(tree.root)
     val looping = grow(tree)
+    val loopingString = printLooping(looping)
     refine(looping)
+    val refinedString = printLooping(looping)
 
     val (allStates, transitions, stateMap) = statesAndTransitions(tree, looping)
     // with the looping tree "grown", we now need to collect histories within each state so that we can later examine our distribution
@@ -37,30 +40,40 @@ object CSSR extends Logging {
     val finalStates = new AllStates(allStates, transitions)
     val machine = new Machine(finalStates, tree)
 
-    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates, config.stateLabels)
+    new Results(config, AlphabetHolder.alphabet, tree, machine, finalStates, parseString, loopingString, refinedString, config.stateLabels)
       .out(if (config.out) null else config.dataFile)
   }
 
-  def printParse(parseLeaf: ParseLeaf, nTabs:Int = 0): Unit = {
-    println("\t" * nTabs + parseLeaf.toString)
-    parseLeaf.children.foreach(this.printParse(_, nTabs+1))
+  def printParse(parseLeaf: ParseLeaf, nTabs:Int = 0, memo:String=""): String = {
+    val acc = s"$memo${"\t" * nTabs}$parseLeaf\n"
+    val children = parseLeaf.children.map(this.printParse(_, nTabs+1, "")).mkString("\n")
+    acc + children
   }
 
-  def printLooping(loopingTree: LoopingTree): Unit = {
-    println(s"printing looping tree with terminals:")
+  def printLooping(loopingTree: LoopingTree): String = {
+    var s = "printing looping tree with terminals:\n"
 
     for(t <- loopingTree.terminals) {
-      println("\t" + t.toString)
+      s += s"\t$t\n"
     }
 
-    println(s"leaves:")
+    s += "looping tree:\n"
 
-    def go(lLeaf: LoopingTree.Node, nTabs:Int = 0): Unit = {
-      println("\t" * nTabs + lLeaf.toString)
-      LoopingTree.getLeaf(lLeaf).children.values.foreach(go(_, nTabs+1))
+    def go(lLeaf: LoopingTree.Node, nTabs:Int, memo:String): String = {
+      val tabs = "\t" * nTabs
+      var _memo = memo
+
+      lLeaf match {
+        case Left(leaf) =>
+          _memo += s"$tabs$leaf\n"
+          _memo += leaf.children.values.map(go(_, nTabs+1, "")).mkString("\n")
+          _memo
+        case Right(Left(es))    => s"$memo$tabs$es"
+        case Right(Right(loop)) => s"$memo$tabs$loop"
+      }
     }
 
-    go(Left(loopingTree.root))
+    s + go(Left(loopingTree.root), 1, "")
   }
 
   def statesAndTransitions(parse:ParseTree, looping: LoopingTree):(Iterable[State], StateToStateTransitions, Map[Terminal, State]) = {
@@ -248,15 +261,17 @@ object CSSR extends Logging {
   type wa = String
   type Terminal = LLeaf
 
+  def stepFromTerminal(ltree: LoopingTree)(terminal: Terminal):Array[(Terminal, Option[LLeaf])] = {
+    val w = terminal.path().mkString
+    ltree.alphabet.raw.map(a => (terminal, ltree.navigateLoopingTree(w + a)))
+  }
+
   def refine(ltree:LoopingTree) = {
     var stillDirty = false
 
     do {
       val toCheck: Set[(Terminal, LLeaf)] = ltree.terminals
-        .flatMap(tNode => {
-          val w = tNode.path().mkString
-          ltree.alphabet.raw.map(a => (tNode, ltree.navigateLoopingTree(w + a)))
-        } )
+        .flatMap { stepFromTerminal(ltree)(_) }
         .filterNot { case (term, wa) => wa.isEmpty }
         .map{ case (term, wa) => (term, wa.get) }
 
@@ -315,10 +330,6 @@ object CSSR extends Logging {
         .filter{ _._1.isEdge }
         .groupBy{ _._2 }
         .mapValues{ _.map( _._1 ) }
-
-      // FIXME: use traversableLike
-      def headAnd [T] (l:List[T]):(Option[T], List[T]) = (l.headOption, l.tail)
-      def unsafeHeadAnd [T] (l:List[T]):(T, List[T]) = (l.head, l.tail)
 
       val toMerge = grouped
         .values

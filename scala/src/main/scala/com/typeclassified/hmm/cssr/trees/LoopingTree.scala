@@ -137,12 +137,12 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
   }
 
   def navigateToLLeafButStopAtLoops(history: String, terminals:Set[Terminal]):Option[LLeaf] = {
-    print("navigating to LLeaf but stopping at loops and terms: " + history)
+    //print("navigating to LLeaf but stopping at loops and terms: " + history)
     navigateToLLeafButStopAtLoops(history, Some(Left(root)), _.last, _.init, Option(terminals))
   }
 
   def navigateToLLeafButStopAtLoops(history: String):Option[LLeaf] = {
-    print(s"navigating to LLeaf but stopping at loops: " + history)
+    //print(s"navigating to LLeaf but stopping at loops: " + history)
     navigateToLLeafButStopAtLoops(history, Some(Left(root)), _.last, _.init, None)
   }
 
@@ -177,7 +177,7 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
 
       val result:Option[LLeaf] = if (nextNodeIsTerminal) nextNode.map{LoopingTree.getLeaf} else possibleloopOrLeaf
 
-      println(": " + result.toString)
+      //println(": " + result.toString)
       result
     } else {
       navigateToLLeafButStopAtLoops(prior(history), nextNode, current, prior, terminals)
@@ -185,7 +185,7 @@ class LoopingTree(val alphabet:Alphabet, root:LLeaf) extends Tree[LLeaf](root) {
   }
 
   def navigateToTerminal(history: String, terminals:Set[Terminal]): Option[LLeaf] = {
-    print("navigating TERMINAL: " + history)
+    //print("navigating TERMINAL: " + history)
     navigateToTerminal(history, Some(Left(root)), _.last, _.init, terminals)
   }
 
