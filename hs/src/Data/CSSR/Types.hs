@@ -8,16 +8,6 @@ data Alphabet = Alphabet
   , symToIdx :: HashMap Char Int
   } deriving (Show, Eq)
 
-data ParseTree = PL
-  { pt_obs :: String
-  , count :: Integer
-  , pt_children :: HashMap Char ParseTree
-  } deriving (Show)
-
-instance Monoid ParseTree where
-  mappend = undefined
-  mempty = undefined
-
 data HistTree = HL
   { ht_obs :: String
   , frequency :: Vector Integer

@@ -1,10 +1,16 @@
 {-# LANGUAGE OverloadedLists #-}
-module Data.CSSR.ParseTree where
+module Data.Parse.Tree where
 
-import Data.HashSet (HashSet)
-import qualified Data.HashSet as HS
+import Prelude.CSSR
 
-import Data.CSSR.Types
+data ParseTree = PLeaf
+  { obs :: String
+  , count :: Integer
+  , children :: HashMap Char ParseTree
+  } deriving (Show)
+
+mkRoot :: ParseTree
+mkRoot = PLeaf "" 0 mempty
 
 ---------------------------------------------------------------------------------
 -- We encounter the history say "110"
