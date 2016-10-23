@@ -242,6 +242,7 @@ object CSSR extends Logging {
         } )
         .filterNot { case (term, wa) => wa.isEmpty }
         .map{ case (term, wa) => (term, wa.get) }
+
       val transitions:mutable.Set[(Terminal, Terminal)] = mutable.Set()
 
       stillDirty = toCheck
@@ -312,18 +313,22 @@ object CSSR extends Logging {
 
             val edgeSets:Set[Set[Terminal]] = tail.foldLeft(Set(newSet))((ess, t) => {
               var matchFound = false
+              def doesMatch(other:Terminal):Boolean = Tree.matches(t)(other) && grouped(t) == grouped(other)
+
               for (es <- ess) {
-                if (!matchFound && Tree.matches(es.head)(t)) {
+                if (!matchFound && doesMatch(es.head)) {
                   es += t
                   t.edgeSet = Some(es)
                   matchFound = true
                 }
               }
+
               if (matchFound) ess else {
                 val newSet = mutable.Set(t)
                 t.edgeSet = Some(newSet)
                 ess ++ Set(newSet)
               }
+
             })
             .map(_.toSet)
 
@@ -349,6 +354,9 @@ object CSSR extends Logging {
 
     } while (stillDirty)
   }
+
+  def headAnd [T] (l:List[T]):(Option[T], List[T]) = (l.headOption, l.tail)
+  def unsafeHeadAnd [T] (l:List[T]):(T, List[T]) = (l.head, l.tail)
 
   def collect(ptree: ParseTree, ltree:LoopingTree, depth:Int, states:Set[State], stateMap: Map[Terminal, State]):Unit = {
     val collectables = ptree.getDepth(depth) ++ ptree.getDepth(depth - 1)
