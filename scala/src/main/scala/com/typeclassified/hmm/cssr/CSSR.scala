@@ -263,7 +263,18 @@ object CSSR extends Logging {
 
   def stepFromTerminal(ltree: LoopingTree)(terminal: Terminal):Array[(Terminal, Option[LLeaf])] = {
     val w = terminal.path().mkString
-    ltree.alphabet.raw.map(a => (terminal, ltree.navigateLoopingTree(w + a)))
+    val alphabet = ltree.alphabet.raw
+
+    def navigateToNext(alphaIdx:Int) = ltree.navigateLoopingTree(w + alphabet(alphaIdx))
+    val paths = mutable.ArrayBuffer[(Terminal, Option[LLeaf])]()
+
+    for ((i, p) <- terminal.distribution.activeIterator) {
+      if (p > 0) {
+        paths ++= Array((terminal, navigateToNext(i))) // kill me now
+      }
+    }
+
+    paths.toArray
   }
 
   def refine(ltree:LoopingTree) = {
@@ -331,6 +342,12 @@ object CSSR extends Logging {
         .groupBy{ _._2 }
         .mapValues{ _.map( _._1 ) }
 
+      val tMap:Map[CSSR.Terminal, collection.Set[Terminal]] = transitions
+        .groupBy{ _._2 }
+        .mapValues{ _.map( _._1 ) }
+
+      val grouped_ = tMap.groupBy{ case (from, tos) => from.distribution }
+
       val toMerge = grouped
         .values
         .flatMap {
@@ -341,7 +358,7 @@ object CSSR extends Logging {
 
             val edgeSets:Set[Set[Terminal]] = tail.foldLeft(Set(newSet))((ess, t) => {
               var matchFound = false
-              def doesMatch(other:Terminal):Boolean = Tree.matches(t)(other) && grouped(t) == grouped(other)
+              def doesMatch(other:Terminal):Boolean = Tree.matches(t)(other) && tMap(t) == tMap(other)
 
               for (es <- ess) {
                 if (!matchFound && doesMatch(es.head)) {

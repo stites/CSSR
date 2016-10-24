@@ -2,7 +2,6 @@ package com.typeclassified.hmm.cssr.measure
 
 import com.typeclassified.hmm.cssr.state.AllStates
 import com.typeclassified.hmm.cssr.trees.{ParseLeaf, ParseTree}
-import com.typeclassified.hmm.cssr.shared.Level.Level
 import com.typeclassified.hmm.cssr.shared.{Level, Logging}
 
 object InferProbabilities extends Logging {
@@ -20,7 +19,7 @@ object InferProbabilities extends Logging {
 
     debug(s"inferred distribution total: ${inferred.map{_._2}.sum}")
     debug(s"inferred distribution size: ${inferred.length}")
-    inferred.map{ case (l, p) => (l.observed, p) }.foreach{ i => println(i) }
+    // inferred.map{ case (l, p) => (l.observed, p) }.foreach{ i => println(i) }
 
     inferred
   }
