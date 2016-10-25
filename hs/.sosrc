@@ -1,0 +1,18 @@
+- pattern: app/(.*)\.hs
+  command: stack build
+
+- pattern: .*\.hs
+  command: codex update --force
+
+- pattern: package.yaml
+  command: hpack
+
+- pattern: test/(.*)\.hs
+  command: stack test --test-arguments "--color"
+
+- pattern:
+  - app/.*\.hs
+  - src/.*\.hs
+  command:
+  - hlint \0
+
