@@ -30,6 +30,7 @@ dependencies:
   - text
   - unordered-containers
   - vector
+  - microlens-platform
 
 library:
   source-dirs: src
