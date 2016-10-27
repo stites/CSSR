@@ -54,11 +54,11 @@ union (PLeaf o0 c0 p0 cs0 ls0) (PLeaf o1 c1 p1 cs1 ls1)
     unionLocs :: Locations -> Locations -> Locations
     unionLocs = HM.unionWith (+)
 
-current :: [Event] -> Event
-current = last
+current :: Vector Event -> Event
+current = V.last
 
-prior :: [Event] -> [Event]
-prior = init
+prior :: Vector Event -> Vector Event
+prior = V.init
 
 mkRoot :: PLeaf
 mkRoot = PLeaf "" 0 Nothing mempty mempty
@@ -66,14 +66,14 @@ mkRoot = PLeaf "" 0 Nothing mempty mempty
 findChild :: PLeaf -> Event -> Maybe PLeaf
 findChild lf c = HM.lookup c (children lf)
 
-navigate :: PLeaf -> [Event] -> Maybe PLeaf
+navigate :: PLeaf -> Vector Event -> Maybe PLeaf
 navigate active      [] = Just active
 navigate active history =
   case findChild active (current history) of
     Just next -> navigate next (prior history)
     Nothing   -> Nothing
 
-navigateTree :: ParseTree -> [Event] -> Maybe PLeaf
+navigateTree :: ParseTree -> Vector Event -> Maybe PLeaf
 navigateTree ParseTree{..} = navigate root
 
 addLocation :: PLeaf -> Idx -> PLeaf
@@ -122,8 +122,13 @@ streamToWindows n es = V.imap mapper es
     mapper :: Int -> Event -> Vector Event
     mapper i _ = V.slice i n es
 
--- buildBranch :: Vector Event -> PLeaf -> PLeaf -> PLeaf
--- buildBranch es actives topRef =
+buildBranch :: Vector Event -> PLeaf -> PLeaf -> PLeaf
+buildBranch es active topRef = undefined
+  where
+    current' = current es
+    next'    = prior es
+
+
 
 buildTree :: DataFileContents -> (Int, PLeaf)
 buildTree chars = go chars root (0, root)
