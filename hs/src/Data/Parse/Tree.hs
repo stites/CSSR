@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Data.Parse.Tree
   -- ( PLeaf
@@ -18,7 +19,6 @@ data ParseTree = ParseTree
   , root :: PLeaf
   } deriving (Show, Eq)
 
-
 data PLeaf = PLeaf
   { obs :: String
   , count :: Integer
@@ -27,15 +27,15 @@ data PLeaf = PLeaf
   , locations :: Locations
   } deriving (Show, Eq)
 
+type Children = HashMap Char PLeaf
+type Parent = Maybe PLeaf
+
+
 current :: [Char] -> Char
 current = last
 
 prior :: [Char] -> [Char]
 prior = init
-
-
-type Children = HashMap Char PLeaf
-type Parent = Maybe PLeaf
 
 mkRoot :: PLeaf
 mkRoot = PLeaf "" 0 Nothing mempty mempty
@@ -43,20 +43,15 @@ mkRoot = PLeaf "" 0 Nothing mempty mempty
 findChild :: PLeaf -> Char -> Maybe PLeaf
 findChild lf c = HM.lookup c (children lf)
 
-navigate :: [Char] -> PLeaf -> Maybe PLeaf
-navigate      [] active = Just active
-navigate history active =
-  case (findChild active current') of
-    Just next -> navigate prior' next
+navigate :: PLeaf -> [Char] -> Maybe PLeaf
+navigate active      [] = Just active
+navigate active history =
+  case findChild active (current history) of
+    Just next -> navigate next (prior history)
     Nothing   -> Nothing
 
-  where
-    current' :: Char
-    current' = current history
-
-    prior' :: [Char]
-    prior' = prior history
-
+navigateTree :: ParseTree -> [Char] -> Maybe PLeaf
+navigateTree ParseTree{..} = navigate root
 
 addLocation :: PLeaf -> Idx -> PLeaf
 addLocation lf i = _locations (increment i) lf
