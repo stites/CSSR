@@ -8,7 +8,10 @@ module Data.Parse.Tree
 
 import qualified Data.HashSet as HS
 import qualified Data.HashMap.Strict as HM
-import Lens.Micro.Platform -- FIXME: why can't I include this in CSSR.Prelude???
+
+-- FIXME: why can't I include this in CSSR.Prelude???
+import Lens.Micro.Platform
+import Data.Monoid
 
 import CSSR.Prelude
 import CSSR.TypeAliases
@@ -18,6 +21,14 @@ data ParseTree = ParseTree
   , dataSize :: Double
   , root :: PLeaf
   } deriving (Show, Eq)
+
+instance Monoid ParseTree where
+  mempty = ParseTree 0 0 mkRoot
+  (ParseTree len0 size0 root0) `mappend` (ParseTree len1 size1 root1)
+  -- FIXME: I know! at least this will work until I figure out the right way to
+  -- do this (with symbols?)
+    | len0 /= len1 = error "can't append ParseTrees of unequal max length"
+    | otherwise = ParseTree len0 (size0 + size1) (union root0 root1)
 
 data PLeaf = PLeaf
   { obs :: String
@@ -30,6 +41,15 @@ data PLeaf = PLeaf
 type Children = HashMap Char PLeaf
 type Parent = Maybe PLeaf
 
+union (PLeaf o0 c0 p0 cs0 ls0) (PLeaf o1 c1 p1 cs1 ls1)
+  | o0 /= o1 || p0 /= p1 = error "can't union Parse Leaves of different observations"
+  | otherwise = PLeaf o0 (c0+c1) p0 (unionChilds cs0 cs1) (unionLocs ls0 ls1)
+  where
+    unionChilds :: Children -> Children -> Children
+    unionChilds = HM.unionWith union
+
+    unionLocs :: Locations -> Locations -> Locations
+    unionLocs = HM.unionWith (+)
 
 current :: [Char] -> Char
 current = last
@@ -81,8 +101,9 @@ takeLengthOf = zipWith (flip const)
 
 --windows :: Int -> [a] -> [[a]]
 --windows n xs = takeLengthOf (drop (n-1) xs) (windows' n xs)
+type DataFileContents = [Char]
 
-loadData :: PLeaf -> [Char] -> Int -> PLeaf
+loadData :: ParseTree -> DataFileContents -> Int -> ParseTree
 loadData tree chars n = undefined
   where
     banned :: HashSet Char
@@ -91,6 +112,52 @@ loadData tree chars n = undefined
     filtered :: [Char]
     filtered = filter (\x -> not (HS.member x banned)) chars
 
+{-
+  def loadData(tree:ParseTree, xs: Array[Char], n: Int): ParseTree = {
+    val banned = "\r\n".toSet
+    // terrible for something we can probably fuse into the following:
+    val filteredCharactersCount = xs.count(banned.contains)
+
+    tree.maxLength = n
+    tree.dataSize = xs.length - filteredCharactersCount
+    tree.adjustedDataSize =  xs.length - filteredCharactersCount
+    val checkpoints:Set[Double] = (1 until 4).map(i => tree.dataSize * i / 4 ).toSet
+
+    for (seq <- xs.view
+      .iterator
+      .filterNot(banned.contains)
+      .zipWithIndex
+      .sliding(n+1)
+      .withPartial(false)) {
+      val obs = seq.map(_._1).mkString
+      val idxs = seq.map(_._2)
+      if (checkpoints.contains(idxs.head)) {
+        info(s"${idxs.head / tree.dataSize * 100}% of data streamed")
+      }
+      cleanInsert(tree, obs, idxs)
+    }
+
+    // mostly for test cases.
+    val last:Int = if (n > tree.adjustedDataSize) tree.adjustedDataSize.toInt else n
+
+    for (i <- (0 to last).reverse) {
+      val left = xs.take(i).filterNot(banned.contains)
+      val lIdxs = 0 until i
+      cleanInsert(tree, left , lIdxs )
+    }
+
+    info("data streaming complete")
+
+    // calculate conditional histories
+    for (depth <- 0 to n) {
+      tree.getDepth(depth).foreach(_.calcNextStepProbabilities(tree))
+    }
+
+    // remove the final depth so that we are left only with predictive distributions. Note that this isn't strictly necessary.
+    tree.getDepth(n).foreach{ _.children = ListBuffer() }
+    tree
+  }
+-}
 
 {-
 type CurrentHistory = (Char, Int)
