@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Data.Parse.Tree
   -- ( PLeaf
@@ -32,11 +33,11 @@ instance Monoid ParseTree where
     | otherwise = ParseTree len0 (size0 + size1) (union root0 root1)
 
 data PLeaf = PLeaf
-  { obs :: String
-  , count :: Integer
-  , parent :: Parent
-  , children :: Children
-  , locations :: Locations
+  { _obs :: Vector Event
+  , _count :: Integer
+  , _parent :: Parent
+  , _children :: Children
+  , _locations :: Locations
   } deriving (Show, Eq)
 
 type Event = Char
@@ -61,10 +62,13 @@ prior :: Vector Event -> Vector Event
 prior = V.init
 
 mkRoot :: PLeaf
-mkRoot = PLeaf "" 0 Nothing mempty mempty
+mkRoot = PLeaf [] 0 Nothing mempty mempty
+
+mkLeaf :: Vector Event -> PLeaf -> PLeaf
+mkLeaf obs p = PLeaf obs 1 (Just p) mempty mempty
 
 findChild :: PLeaf -> Event -> Maybe PLeaf
-findChild lf c = HM.lookup c (children lf)
+findChild lf c = HM.lookup c (_children lf)
 
 navigate :: PLeaf -> Vector Event -> Maybe PLeaf
 navigate active      [] = Just active
@@ -76,20 +80,13 @@ navigate active history =
 navigateTree :: ParseTree -> Vector Event -> Maybe PLeaf
 navigateTree ParseTree{..} = navigate root
 
+makeLenses ''PLeaf
+
 addLocation :: PLeaf -> Idx -> PLeaf
-addLocation lf i = _locations (increment i) lf
+addLocation lf i = over locations (increment i) lf
   where
     increment :: Idx -> Locations -> Locations
     increment i locs = HM.insertWith (+) i 1 locs
-
-    _locations :: (Locations -> Locations) -> PLeaf -> PLeaf
-    _locations f p = PLeaf
-      {       obs = obs p
-      ,     count = count p
-      ,    parent = parent p
-      ,  children = children p
-      , locations = f (locations p)
-      }
 
 ---------------------------------------------------------------------------------
 -- We encounter the history say "110"
@@ -123,10 +120,17 @@ streamToWindows n es = V.imap mapper es
     mapper i _ = V.slice i n es
 
 buildBranch :: Vector Event -> PLeaf -> PLeaf -> PLeaf
-buildBranch es active topRef = undefined
+buildBranch [] active@PLeaf{..} topRef = topRef
+buildBranch es active@PLeaf{..} topRef = undefined
   where
-    current' = current es
-    next'    = prior es
+    e :: Event
+    e = current es
+
+    newLeaf :: PLeaf
+    newLeaf = mkLeaf (V.snoc _obs e) active
+
+    child :: PLeaf
+    child = maybe newLeaf (over count (+1)) $ findChild active e
 
 
 
@@ -277,3 +281,5 @@ cleanInsert tree observed idx = go observed (root tree) tree observed idx
 --              next.addLocation(cIdx)
 --              go(older, next, tree, fullHistory, oIdx)
   -}
+
+
