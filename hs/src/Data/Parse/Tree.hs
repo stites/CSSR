@@ -12,13 +12,14 @@ import qualified Data.HashMap.Strict as HM
 -- FIXME: why can't I include this in CSSR.Prelude???
 import Lens.Micro.Platform
 import Data.Monoid
+import qualified Data.Vector as V
 
 import CSSR.Prelude
 import CSSR.TypeAliases
 
 data ParseTree = ParseTree
   { maxLength :: Int
-  , dataSize :: Double
+  , dataSize :: Int
   , root :: PLeaf
   } deriving (Show, Eq)
 
@@ -38,8 +39,10 @@ data PLeaf = PLeaf
   , locations :: Locations
   } deriving (Show, Eq)
 
-type Children = HashMap Char PLeaf
+type Event = Char
+type Children = HashMap Event PLeaf
 type Parent = Maybe PLeaf
+type Alphabet = [Event]
 
 union (PLeaf o0 c0 p0 cs0 ls0) (PLeaf o1 c1 p1 cs1 ls1)
   | o0 /= o1 || p0 /= p1 = error "can't union Parse Leaves of different observations"
@@ -51,26 +54,26 @@ union (PLeaf o0 c0 p0 cs0 ls0) (PLeaf o1 c1 p1 cs1 ls1)
     unionLocs :: Locations -> Locations -> Locations
     unionLocs = HM.unionWith (+)
 
-current :: [Char] -> Char
+current :: [Event] -> Event
 current = last
 
-prior :: [Char] -> [Char]
+prior :: [Event] -> [Event]
 prior = init
 
 mkRoot :: PLeaf
 mkRoot = PLeaf "" 0 Nothing mempty mempty
 
-findChild :: PLeaf -> Char -> Maybe PLeaf
+findChild :: PLeaf -> Event -> Maybe PLeaf
 findChild lf c = HM.lookup c (children lf)
 
-navigate :: PLeaf -> [Char] -> Maybe PLeaf
+navigate :: PLeaf -> [Event] -> Maybe PLeaf
 navigate active      [] = Just active
 navigate active history =
   case findChild active (current history) of
     Just next -> navigate next (prior history)
     Nothing   -> Nothing
 
-navigateTree :: ParseTree -> [Char] -> Maybe PLeaf
+navigateTree :: ParseTree -> [Event] -> Maybe PLeaf
 navigateTree ParseTree{..} = navigate root
 
 addLocation :: PLeaf -> Idx -> PLeaf
@@ -101,22 +104,94 @@ takeLengthOf = zipWith (flip const)
 
 --windows :: Int -> [a] -> [[a]]
 --windows n xs = takeLengthOf (drop (n-1) xs) (windows' n xs)
-type DataFileContents = [Char]
 
-loadData :: ParseTree -> DataFileContents -> Int -> ParseTree
-loadData tree chars n = undefined
+type DataFileContents = Vector Event
+
+isInvalid :: Event -> Bool
+isInvalid = flip HS.member ['\r', '\n']
+
+isValid :: Event -> Bool
+isValid = not . isInvalid
+
+takeEvents :: Int -> Vector Event -> Vector Event
+takeEvents n = V.take n . V.filter isValid
+
+streamToWindows :: Int -> Vector Event -> Vector (Vector Event)
+streamToWindows n es = V.imap mapper es
   where
-    banned :: HashSet Char
-    banned = HS.fromList "\r\n"
+    mapper :: Int -> Event -> Vector Event
+    mapper i _ = V.slice i n es
 
-    filtered :: [Char]
-    filtered = filter (\x -> not (HS.member x banned)) chars
+-- buildBranch :: Vector Event -> PLeaf -> PLeaf -> PLeaf
+-- buildBranch es actives topRef =
+
+buildTree :: DataFileContents -> (Int, PLeaf)
+buildTree chars = go chars root (0, root)
+  where
+    root :: PLeaf
+    root = mkRoot
+
+    go :: DataFileContents -> PLeaf -> (Int, PLeaf) -> (Int, PLeaf)
+    go alldata active (nFiltered, root) = undefined
+
+loadData :: DataFileContents -> Int -> ParseTree
+loadData chars n = ParseTree
+  { maxLength = n
+  , dataSize = length chars - undefined -- nFiltered
+  , root = undefined -- root
+  }
+
+-- cleanInsert :: Foldable f
+--             => PLeaf
+--             -> f Event
+--             -> f Int
+--             -> PLeaf
+-- cleanInsert tree observed idx = go observed (root tree) tree observed idx
+--   where
+--     go :: Foldable f
+--        -> PLeaf
+--        -> f Event
+--        -> ParseLeaf
+--        -> PLeaf
+--        -> [Event]
+--        -> f Int
+--        -> PLeaf
+--     go memo      [] active tree fullHistory idx = memo
+--     go memo history active tree fullHistory idx =
+--       let
+--         ((current, cIdx), (older, oIdx)) = splitHistoryClean history idx
+--         next = lookup active current :: Maybe ParseLeaf
+--         next' = maybe (addChild tree active current) next
+--       in
+--         undefined
+--
+--           if (next.nonEmpty) next.obsCount += 1
+--              next.addLocation(cIdx)
+--              go(older, next, tree, fullHistory, oIdx)
+
+--dataWithIndex :: DataFileContents -> [(Int, Event)]
+--dataWithIndex = zipWith
+--    for (seq <- xs.view
+--      .iterator
+--      .filterNot(invalid.contains)
+--      .zipWithIndex
+--      .sliding(n+1)
+--      .withPartial(false)) {
+--      val obs = seq.map(_._1).mkString
+--      val idxs = seq.map(_._2)
+--      if (checkpoints.contains(idxs.head)) {
+--        info(s"${idxs.head / tree.dataSize * 100}% of data streamed")
+--      }
+--      cleanInsert(tree, obs, idxs)
+--    }
+
+
 
 {-
-  def loadData(tree:ParseTree, xs: Array[Char], n: Int): ParseTree = {
-    val banned = "\r\n".toSet
+  def loadData(tree:ParseTree, xs: Array[Event], n: Int): ParseTree = {
+    val invalid = "\r\n".toSet
     // terrible for something we can probably fuse into the following:
-    val filteredCharactersCount = xs.count(banned.contains)
+    val filteredCharactersCount = xs.count(invalid.contains)
 
     tree.maxLength = n
     tree.dataSize = xs.length - filteredCharactersCount
@@ -125,7 +200,7 @@ loadData tree chars n = undefined
 
     for (seq <- xs.view
       .iterator
-      .filterNot(banned.contains)
+      .filterNot(invalid.contains)
       .zipWithIndex
       .sliding(n+1)
       .withPartial(false)) {
@@ -141,7 +216,7 @@ loadData tree chars n = undefined
     val last:Int = if (n > tree.adjustedDataSize) tree.adjustedDataSize.toInt else n
 
     for (i <- (0 to last).reverse) {
-      val left = xs.take(i).filterNot(banned.contains)
+      val left = xs.take(i).filterNot(invalid.contains)
       val lIdxs = 0 until i
       cleanInsert(tree, left , lIdxs )
     }
@@ -160,9 +235,9 @@ loadData tree chars n = undefined
 -}
 
 {-
-type CurrentHistory = (Char, Int)
-type OlderHistory = (Iterable[Char], Iterable[Int])
-protected def splitHistoryClean (observed: Iterable[Char], idx:Iterable[Int]): (CurrentHistory , OlderHistory) = {
+type CurrentHistory = (Event, Int)
+type OlderHistory = (Iterable[Event], Iterable[Int])
+protected def splitHistoryClean (observed: Iterable[Event], idx:Iterable[Int]): (CurrentHistory , OlderHistory) = {
   ((getCurrent(observed), getCurrent(idx)), (getPrior(observed), getPrior(idx)))
 }
 
@@ -171,17 +246,17 @@ type GetPrior[A >: AnyVal] = (List[A])=>List[A]
 
 cleanInsert :: Foldable f
             => PLeaf
-            -> f Char
+            -> f Event
             -> f Int
             -> PLeaf
 cleanInsert tree observed idx = go observed (root tree) tree observed idx
   where
     go :: Foldable f
        -> PLeaf
-       -> f Char
+       -> f Event
        -> ParseLeaf
        -> PLeaf
-       -> [Char]
+       -> [Event]
        -> f Int
        -> PLeaf
     go memo      [] active tree fullHistory idx = memo
