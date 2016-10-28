@@ -143,82 +143,19 @@ navigate lf history = lf ^? ix history
 -- We take the 0 child of the root
 -- We then take the 1 child of 0 (=10)
 -- We then take the 1 child of 10 (=110)
----------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+-- mkRoot & over (path (fromList "abc") . count) (+1)
 
-data Tree a = Tree a (HashMap Char (Tree a)) deriving (Show)
-
-
--------------------------------------------------
--- Vector pattern synonyms
--------------------------------------------------
-pattern VNil  :: Vector a
-pattern VNil <- (V.null -> True)
-  where
-    VNil = mempty
-
-pattern VCons :: a -> Vector a -> Vector a
-pattern VCons x xs <- (uncons -> Just (x, xs))
-  where
-    VCons = V.cons
-
-uncons :: Vector a -> Maybe (a, Vector a)
-uncons v = if V.null v
-           then Nothing
-           else Just (V.head v, V.tail v)
-
--------------------------------------------------
-
-apAdjust :: (Hashable k, Eq k, Applicative f) => (v -> f v) -> k -> HashMap k v -> f (HashMap k v)
-apAdjust fn k hm =
-  case HM.lookup k hm of
-    Nothing -> pure hm
-    Just v -> HM.insert k <$> fn v <*> pure hm
-
--- path :: forall a f. Applicative f => Vector Event -> (a -> f a) -> Tree a -> f (Tree a)
-path :: forall a . Vector Event -> Traversal' (Tree a) a
-path         VNil fn (Tree a childs) = Tree <$> fn a <*> pure childs
-path (VCons c cs) fn (Tree a childs) = Tree <$> fn a <*>  nextChilds
-  where
-    nextChilds = apAdjust (path cs fn) c childs
-
-buildBranch :: forall a f. Applicative f => a -> Vector Event -> (a -> f a) -> Tree a -> f (Tree a)
-buildBranch def         VNil fn (Tree a childs) = Tree <$> fn a <*> pure childs
-buildBranch def (VCons c cs) fn (Tree a childs) = Tree <$> fn a <*> nextChilds
-  where
-    nextChilds :: Applicative f => f (HashMap Event (Tree a))
-    nextChilds =
-      case HM.lookup c childs of
-        Just child -> HM.insert c <$> buildBranch def cs fn child <*> pure childs
-        Nothing -> HM.insert c <$> buildNew cs (fn def) <*> pure childs
-
-    buildNew :: Vector Event -> f a -> f (Tree a)
-    buildNew         VNil def' = Tree <$> def' <*> pure mempty
-    buildNew (VCons c cs) def' = Tree <$> def' <*> (HM.singleton c <$> buildNew cs def')
-
--- apAlter :: (Hashable k, Eq k, Applicative f) => (Maybe v -> f (Maybe v)) -> k -> HashMap k v -> f (HashMap k v)
--- apAlter fn k hm =
---   case HM.lookup k hm of
---     Nothing -> pure hm
-
---     Just v -> HM.insert k <$> fn v <*> pure hm
-
---    |     |
--- 0101010101010101
---    -
---    --
---    ---
-
-
-
-_buildBranch :: forall f. Applicative f
+path :: forall f. Applicative f
              => Vector Event
              -> (PLeafBody -> f PLeafBody)
              -> PLeaf
              -> f PLeaf
-_buildBranch events fn = __buildBranch 0
+path events fn = _path 0
   where
-    __buildBranch :: Int -> PLeaf -> f PLeaf
-    __buildBranch depth (PLeaf body childs) =
+    _path :: Int -> PLeaf -> f PLeaf
+    _path depth (PLeaf body childs) =
       assert (V.take depth events ==  _obs body) $
         if depth == V.length events - 1
         then PLeaf <$> fn body <*> pure childs
@@ -232,7 +169,7 @@ _buildBranch events fn = __buildBranch 0
             nextDepth = depth + 1 :: Int
           in
             case HM.lookup c childs of
-              Just child -> HM.insert c <$> __buildBranch (depth + 1) child <*> pure childs
+              Just child -> HM.insert c <$> _path (depth + 1) child <*> pure childs
               Nothing -> HM.insert c <$> buildNew depth <*> pure childs
 
 
