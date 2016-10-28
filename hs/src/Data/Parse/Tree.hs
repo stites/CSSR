@@ -24,6 +24,7 @@ import qualified Data.HashSet as HS
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector as V
 import Data.Hashable
+import Lens.Micro.Internal
 
 import CSSR.Prelude
 import CSSR.TypeAliases
@@ -51,7 +52,34 @@ data ParseTree (n :: Nat)  = ParseTree
 height :: forall n . KnownNat n => ParseTree n -> Integer
 height _ = natVal @n Proxy
 
-data PLeaf = PLeaf PLeafBody Children deriving (Show, Eq)
+data PLeaf = PLeaf
+  { _body :: PLeafBody
+  , _children :: Children
+  } deriving (Show, Eq)
+
+type instance Index PLeaf = Vector Event
+type instance IxValue PLeaf = PLeaf
+
+instance Ixed PLeaf where
+  ix :: Vector Event -> Traversal' PLeaf (IxValue PLeaf)
+  ix histories = go 0
+    where
+      go depth f p@(PLeaf body childs)
+        | V.length histories == depth = f p
+        | otherwise =
+          case HM.lookup c childs of
+            Nothing -> pure p
+            Just child -> goAgain <$> go (depth+1) f child
+        where
+          c :: Event
+          c = histories V.! depth
+
+          goAgain :: PLeaf -> PLeaf
+          goAgain child' = PLeaf body (HM.insert c child' childs)
+
+-- make a note: steal mitchell's brain
+-- study all of the monoids
+-- do in-depth dives for each of the lens modules
 
 data PLeafBody = PLeafBody
   { _obs       :: Vector Event
@@ -64,6 +92,23 @@ type Event = Char
 type Children = HashMap Event PLeaf
 type Parent = Maybe PLeaf
 -- type Alphabet = [Event]
+
+makeLenses ''PLeafBody
+makeLenses ''PLeaf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 current :: Vector Event -> Event
 current = V.last
@@ -83,20 +128,8 @@ mkRoot = PLeaf (PLeafBody [] 0 mempty) mempty
 mkLeaf :: Vector Event -> PLeaf
 mkLeaf obs = PLeaf (PLeafBody obs 0 mempty) mempty
 
-findChild :: PLeaf -> Event -> Maybe PLeaf
-findChild (PLeaf _ children) c = HM.lookup c children
-
 navigate :: PLeaf -> Vector Event -> Maybe PLeaf
-navigate active      [] = Just active
-navigate active history =
-  case findChild active (current history) of
-    Just next -> navigate next (prior history)
-    Nothing   -> Nothing
-
-navigateTree :: ParseTree n -> Vector Event -> Maybe PLeaf
-navigateTree ParseTree{..} = navigate root
-
-makeLenses ''PLeafBody
+navigate lf history = lf ^? ix history
 
 -- addLocation :: PLeaf -> Idx -> PLeaf
 -- addLocation lf i = over locations (increment i) lf

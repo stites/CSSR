@@ -31,6 +31,7 @@ dependencies:
   - unordered-containers
   - vector
   - microlens-platform
+  - microlens
 
 library:
   source-dirs: src

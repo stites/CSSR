@@ -38,6 +38,7 @@ library
     , unordered-containers
     , vector
     , microlens-platform
+    , microlens
   exposed-modules:
       CSSR.Prelude
       CSSR.TypeAliases
@@ -70,6 +71,7 @@ executable schema-prediction
     , unordered-containers
     , vector
     , microlens-platform
+    , microlens
     , cssr
     , optparse-applicative
   other-modules:
@@ -96,6 +98,7 @@ test-suite spec
     , unordered-containers
     , vector
     , microlens-platform
+    , microlens
     , cssr
     , hspec
     , QuickCheck
