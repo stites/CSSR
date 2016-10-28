@@ -11,6 +11,6 @@ import qualified Data.Vector as X (Vector)
 import qualified Data.HashMap.Strict as X (HashMap)
 import qualified Data.HashSet as X (HashSet)
 
-import qualified Lens.Micro.Platform
-import qualified Data.Monoid
+import Lens.Micro.Platform
+import Data.Monoid
 

@@ -9,10 +9,6 @@ module Data.Parse.Tree
 
 import qualified Data.HashSet as HS
 import qualified Data.HashMap.Strict as HM
-
--- FIXME: why can't I include this in CSSR.Prelude???
-import Lens.Micro.Platform
-import Data.Monoid
 import qualified Data.Vector as V
 
 import CSSR.Prelude
