@@ -1,55 +1,69 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Data.Parse.Tree
   -- ( PLeaf
   -- ) where
   where
 
+import GHC.TypeLits
+import Data.Proxy
+import Control.Monad.ST
+import Data.STRef
+import Control.Exception (assert)
 import qualified Data.HashSet as HS
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector as V
+import Data.Hashable
 
 import CSSR.Prelude
 import CSSR.TypeAliases
 
-data ParseTree = ParseTree
-  { maxLength :: Int
-  , dataSize :: Int
-  , root :: PLeaf
+data ParseTree (n :: Nat)  = ParseTree
+  { root :: PLeaf
   } deriving (Show, Eq)
 
-instance Monoid ParseTree where
-  mempty = ParseTree 0 0 mkRoot
-  (ParseTree len0 size0 root0) `mappend` (ParseTree len1 size1 root1)
-  -- FIXME: I know! at least this will work until I figure out the right way to
-  -- do this (with symbols?)
-    | len0 /= len1 = error "can't append ParseTrees of unequal max length"
-    | otherwise = ParseTree len0 (size0 + size1) (union root0 root1)
+-- data LoopingTree = LoopingTree
+--   { root :: LLeaf
+--   , terminals:: Set LLeaf
+--   , edges :: Set LLeaf
+--   } deriving (Show, Eq)
+--
+-- data LLeaf = LLeaf
+--   { obs       :: Vector Event
+--   , histories :: Set PLeaf
+--   , children  :: HashMap Char LLeaf
+--   , distribution :: Vector Float
+--   , isTerminal :: Bool
+--   , isEdge :: Bool
+--   , isLoop :: Bool
+--   }
 
-data PLeaf = PLeaf
-  { _obs :: Vector Event
-  , _count :: Integer
-  , _parent :: Parent
-  , _children :: Children
+height :: forall n . KnownNat n => ParseTree n -> Integer
+height _ = natVal @n Proxy
+
+data PLeaf = PLeaf PLeafBody Children deriving (Show, Eq)
+
+data PLeafBody = PLeafBody
+  { _obs       :: Vector Event
+  , _count     :: Integer
   , _locations :: Locations
   } deriving (Show, Eq)
+
 
 type Event = Char
 type Children = HashMap Event PLeaf
 type Parent = Maybe PLeaf
-type Alphabet = [Event]
-
-union (PLeaf o0 c0 p0 cs0 ls0) (PLeaf o1 c1 p1 cs1 ls1)
-  | o0 /= o1 || p0 /= p1 = error "can't union Parse Leaves of different observations"
-  | otherwise = PLeaf o0 (c0+c1) p0 (unionChilds cs0 cs1) (unionLocs ls0 ls1)
-  where
-    unionChilds :: Children -> Children -> Children
-    unionChilds = HM.unionWith union
-
-    unionLocs :: Locations -> Locations -> Locations
-    unionLocs = HM.unionWith (+)
+-- type Alphabet = [Event]
 
 current :: Vector Event -> Event
 current = V.last
@@ -57,14 +71,20 @@ current = V.last
 prior :: Vector Event -> Vector Event
 prior = V.init
 
-mkRoot :: PLeaf
-mkRoot = PLeaf [] 0 Nothing mempty mempty
+currentInv :: Vector Event -> Event
+currentInv = V.head
 
-mkLeaf :: Vector Event -> PLeaf -> PLeaf
-mkLeaf obs p = PLeaf obs 1 (Just p) mempty mempty
+priorInv :: Vector Event -> Vector Event
+priorInv = V.tail
+
+mkRoot :: PLeaf
+mkRoot = PLeaf (PLeafBody [] 0 mempty) mempty
+
+mkLeaf :: Vector Event -> PLeaf
+mkLeaf obs = PLeaf (PLeafBody obs 0 mempty) mempty
 
 findChild :: PLeaf -> Event -> Maybe PLeaf
-findChild lf c = HM.lookup c (_children lf)
+findChild (PLeaf _ children) c = HM.lookup c children
 
 navigate :: PLeaf -> Vector Event -> Maybe PLeaf
 navigate active      [] = Just active
@@ -73,24 +93,162 @@ navigate active history =
     Just next -> navigate next (prior history)
     Nothing   -> Nothing
 
-navigateTree :: ParseTree -> Vector Event -> Maybe PLeaf
+navigateTree :: ParseTree n -> Vector Event -> Maybe PLeaf
 navigateTree ParseTree{..} = navigate root
 
-makeLenses ''PLeaf
+makeLenses ''PLeafBody
 
-addLocation :: PLeaf -> Idx -> PLeaf
-addLocation lf i = over locations (increment i) lf
-  where
-    increment :: Idx -> Locations -> Locations
-    increment i locs = HM.insertWith (+) i 1 locs
+-- addLocation :: PLeaf -> Idx -> PLeaf
+-- addLocation lf i = over locations (increment i) lf
+--   where
+--     increment :: Idx -> Locations -> Locations
+--     increment i locs = HM.insertWith (+) i 1 locs
 
 ---------------------------------------------------------------------------------
 -- We encounter the history say "110"
 -- We go to the parse tree at the root
 -- We take the 0 child of the root
--- We then take the 1 child of 0 (= 10)
+-- We then take the 1 child of 0 (=10)
 -- We then take the 1 child of 10 (=110)
 ---------------------------------------------------------------------------------
+
+data Tree a = Tree a (HashMap Char (Tree a)) deriving (Show)
+
+
+-------------------------------------------------
+-- Vector pattern synonyms
+-------------------------------------------------
+pattern VNil  :: Vector a
+pattern VNil <- (V.null -> True)
+  where
+    VNil = mempty
+
+pattern VCons :: a -> Vector a -> Vector a
+pattern VCons x xs <- (uncons -> Just (x, xs))
+  where
+    VCons = V.cons
+
+uncons :: Vector a -> Maybe (a, Vector a)
+uncons v = if V.null v
+           then Nothing
+           else Just (V.head v, V.tail v)
+
+-------------------------------------------------
+
+apAdjust :: (Hashable k, Eq k, Applicative f) => (v -> f v) -> k -> HashMap k v -> f (HashMap k v)
+apAdjust fn k hm =
+  case HM.lookup k hm of
+    Nothing -> pure hm
+    Just v -> HM.insert k <$> fn v <*> pure hm
+
+-- path :: forall a f. Applicative f => Vector Event -> (a -> f a) -> Tree a -> f (Tree a)
+path :: forall a . Vector Event -> Traversal' (Tree a) a
+path         VNil fn (Tree a childs) = Tree <$> fn a <*> pure childs
+path (VCons c cs) fn (Tree a childs) = Tree <$> fn a <*>  nextChilds
+  where
+    nextChilds = apAdjust (path cs fn) c childs
+
+buildBranch :: forall a f. Applicative f => a -> Vector Event -> (a -> f a) -> Tree a -> f (Tree a)
+buildBranch def         VNil fn (Tree a childs) = Tree <$> fn a <*> pure childs
+buildBranch def (VCons c cs) fn (Tree a childs) = Tree <$> fn a <*> nextChilds
+  where
+    nextChilds :: Applicative f => f (HashMap Event (Tree a))
+    nextChilds =
+      case HM.lookup c childs of
+        Just child -> HM.insert c <$> buildBranch def cs fn child <*> pure childs
+        Nothing -> HM.insert c <$> buildNew cs (fn def) <*> pure childs
+
+    buildNew :: Vector Event -> f a -> f (Tree a)
+    buildNew         VNil def' = Tree <$> def' <*> pure mempty
+    buildNew (VCons c cs) def' = Tree <$> def' <*> (HM.singleton c <$> buildNew cs def')
+
+-- apAlter :: (Hashable k, Eq k, Applicative f) => (Maybe v -> f (Maybe v)) -> k -> HashMap k v -> f (HashMap k v)
+-- apAlter fn k hm =
+--   case HM.lookup k hm of
+--     Nothing -> pure hm
+
+--     Just v -> HM.insert k <$> fn v <*> pure hm
+
+--    |     |
+-- 0101010101010101
+--    -
+--    --
+--    ---
+
+
+
+_buildBranch :: forall f. Applicative f
+             => Vector Event
+             -> (PLeafBody -> f PLeafBody)
+             -> PLeaf
+             -> f PLeaf
+_buildBranch events fn = __buildBranch 0
+  where
+    __buildBranch :: Int -> PLeaf -> f PLeaf
+    __buildBranch depth (PLeaf body childs) =
+      assert (V.take depth events ==  _obs body) $
+        if depth == V.length events - 1
+        then PLeaf <$> fn body <*> pure childs
+        else PLeaf <$> fn body <*> nextChilds
+
+      where
+        nextChilds :: f (HashMap Event PLeaf)
+        nextChilds =
+          let
+            c = V.unsafeIndex events depth  :: Event
+            nextDepth = depth + 1 :: Int
+          in
+            case HM.lookup c childs of
+              Just child -> HM.insert c <$> __buildBranch (depth + 1) child <*> pure childs
+              Nothing -> HM.insert c <$> buildNew depth <*> pure childs
+
+
+        buildNew :: Int -> f PLeaf
+        buildNew depth
+          | depth == V.length events - 1 = PLeaf <$> newBody events <*> pure mempty
+          | otherwise = PLeaf <$> newBody es <*> childs
+          where
+              c :: Event
+              c = V.unsafeIndex events (depth + 1)
+
+              es :: Vector Event
+              es = V.take (depth + 1) events
+
+              newBody :: Vector Event -> f PLeafBody
+              newBody es' = fn (PLeafBody es' 0 mempty)
+
+              childs :: f (HashMap Char PLeaf)
+              childs = HM.singleton c <$> buildNew (depth + 1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 takeLengthOf :: [a] -> [b] -> [b]
 takeLengthOf = zipWith (flip const)
@@ -115,20 +273,22 @@ streamToWindows n es = V.imap mapper es
     mapper :: Int -> Event -> Vector Event
     mapper i _ = V.slice i n es
 
-buildBranch :: Vector Event -> PLeaf -> PLeaf -> PLeaf
-buildBranch [] active@PLeaf{..} topRef = topRef
-buildBranch es active@PLeaf{..} topRef = undefined
-  where
-    e :: Event
-    e = current es
-
-    newLeaf :: PLeaf
-    newLeaf = mkLeaf (V.snoc _obs e) active
-
-    child :: PLeaf
-    child = maybe newLeaf (over count (+1)) $ findChild active e
-
-
+-- buildBranch :: Vector Event -> IO PLeaf
+-- buildBranch [] parent = return mkRoot
+-- buildBranch es parent = do
+--   let e   = currentInv es
+--       es' = priorInv es
+--
+--   undefined -- V.cons mkRoot $ V.map
+--  where
+--    e :: Event
+--    e = current es
+--
+--    newLeaf :: PLeaf
+--    newLeaf = mkLeaf (V.snoc _obs e)
+--
+--    child :: PLeaf
+--    child = maybe newLeaf (over count (+1)) $ findChild active e
 
 buildTree :: DataFileContents -> (Int, PLeaf)
 buildTree chars = go chars root (0, root)
@@ -139,11 +299,9 @@ buildTree chars = go chars root (0, root)
     go :: DataFileContents -> PLeaf -> (Int, PLeaf) -> (Int, PLeaf)
     go alldata active (nFiltered, root) = undefined
 
-loadData :: DataFileContents -> Int -> ParseTree
+loadData :: DataFileContents -> Int -> ParseTree n
 loadData chars n = ParseTree
-  { maxLength = n
-  , dataSize = length chars - undefined -- nFiltered
-  , root = undefined -- root
+  { root = undefined -- root
   }
 
 -- cleanInsert :: Foldable f
@@ -277,5 +435,4 @@ cleanInsert tree observed idx = go observed (root tree) tree observed idx
 --              next.addLocation(cIdx)
 --              go(older, next, tree, fullHistory, oIdx)
   -}
-
 
