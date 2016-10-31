@@ -68,8 +68,8 @@ instance Ixed PLeaf where
           goAgain :: PLeaf -> PLeaf
           goAgain child' = PLeaf body (HM.insert c child' childs)
 
-navigate :: PLeaf -> Vector Event -> Maybe PLeaf
-navigate lf history = lf ^? ix history
+navigate :: ParseTree -> Vector Event -> Maybe PLeaf
+navigate tree history = (root tree) ^? ix history
 
 
 -- mkRoot & over (path (fromList "abc") . count) (+1)
