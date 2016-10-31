@@ -8,7 +8,7 @@ import com.typeclassified.hmm.cssr.state.{AllStates, Machine, State}
 import com.typeclassified.hmm.cssr.parse.{Alphabet, AlphabetHolder}
 import com.typeclassified.hmm.cssr.trees._
 
-import scala.collection.mutable
+import scala.collection.{Set, mutable}
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ListBuffer
 
@@ -286,14 +286,15 @@ object CSSR extends Logging {
         .filterNot { case (term, wa) => wa.isEmpty }
         .map{ case (term, wa) => (term, wa.get) }
 
-      val transitions:mutable.Set[(Terminal, Terminal)] = mutable.Set()
+      val transitions:mutable.Map[Terminal, Set[Terminal]] = mutable.Map()
 
       stillDirty = toCheck
         .foldLeft(false){
           case (isDirty:Boolean, (t:Terminal, wa:LLeaf)) => {
             // check to see if this leaf is _not_ a terminal leaf
             if (ltree.terminals.contains(wa)) {
-              transitions.+=((t, wa))
+              val tos = transitions.getOrElse(t, Set())
+              transitions.put(t, tos + wa)
               isDirty
             } else {
               // if we find a "terminal-looping" node (ie- any looping node) that is not a terminal node:
@@ -336,36 +337,29 @@ object CSSR extends Logging {
           }
         }
 
-      // find possible edge sets to merge
-      val grouped:Map[CSSR.Terminal, collection.Set[Terminal]] = transitions
-        .filter{ _._1.isEdge }
+      val transitionGroups:Iterable[Set[Terminal]] = transitions
+        // group by transitions
         .groupBy{ _._2 }
-        .mapValues{ _.map( _._1 ) }
-
-      val tMap:Map[CSSR.Terminal, collection.Set[Terminal]] = transitions
-        .groupBy{ _._2 }
-        .mapValues{ _.map( _._1 ) }
-
-      val grouped_ = tMap.groupBy{ case (from, tos) => from.distribution }
-
-      val toMerge = grouped
+        // throw away transitions, look only at grouped terminals
+        .mapValues(_.keySet)
         .values
+        // split groups by matching distribution
+
+      val toMerge = transitionGroups
         .flatMap {
           tSet => {
             val (head:Terminal, tail:List[Terminal]) = unsafeHeadAnd(tSet.toList.sortBy(_.observed))
             val newSet = mutable.Set(head)
             head.edgeSet = Some(newSet)
 
+            // just in case there are actually multiple edgsets found with matching transitions
             val edgeSets:Set[Set[Terminal]] = tail.foldLeft(Set(newSet))((ess, t) => {
               var matchFound = false
-              def doesMatch(other:Terminal):Boolean = Tree.matches(t)(other) && tMap(t) == tMap(other)
 
-              for (es <- ess) {
-                if (!matchFound && doesMatch(es.head)) {
-                  es += t
-                  t.edgeSet = Some(es)
-                  matchFound = true
-                }
+              for (es <- ess if !matchFound && Tree.matches(t)(es.head)) {
+                es += t
+                t.edgeSet = Some(es)
+                matchFound = true
               }
 
               if (matchFound) ess else {
@@ -373,14 +367,15 @@ object CSSR extends Logging {
                 t.edgeSet = Some(newSet)
                 ess ++ Set(newSet)
               }
-
             })
             .map(_.toSet)
 
             edgeSets
           }
-        }.toSet
-        .filter{ _.size > 1 } // it's still possible to have an edgeset that doesn't need to be merged
+        }
+        // don't look at singleton groups
+        .filter{ _.size > 1 }
+
 
       // perform final updates and merges
       toMerge
@@ -408,7 +403,7 @@ object CSSR extends Logging {
 
     collectables
       .foreach { pLeaf => {
-        val maybeLLeaf = ltree.navigateToTerminal(pLeaf.observed.toString, states.flatMap(_.terminals))
+        val maybeLLeaf = ltree.navigateToTerminal(pLeaf.observed.toString, states.flatMap(_.terminals).toSet)
         val maybeState = maybeLLeaf.flatMap { terminal => stateMap.get(terminal) }
 
         maybeState.foreach { state => state.addHistory(pLeaf) }
